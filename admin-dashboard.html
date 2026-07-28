@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Talking-Thread</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&amp;family=Instrument+Sans:wght@400;500;600&amp;display=swap">
+<!-- Reuses the public site's design tokens (colors/fonts) for visual consistency —
+     this stylesheet is not modified, only read from, by the admin dashboard. -->
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-body">
+
+<!-- Shown while checking auth, or if the visitor isn't a signed-in admin -->
+<div id="adminGate" class="admin-gate">
+  <div class="admin-gate-box">
+    <h2>Checking your session…</h2>
+    <p>One moment.</p>
+  </div>
+</div>
+
+<div id="adminShell" class="admin-shell" style="display:none;">
+  <aside class="admin-sidebar">
+    <div class="admin-logo">Talking<em>-Thread</em><small>Admin Dashboard</small></div>
+    <nav class="admin-nav">
+      <a href="admin-dashboard.html" class="active">
+        <svg viewBox="0 0 24 24"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg>
+        Orders
+      </a>
+    </nav>
+    <div class="admin-sidebar-foot">Signed in as<br><strong id="adminWhoName" style="color:var(--ivory)">—</strong></div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <div>
+        <h1>Orders</h1>
+        <p>View every customer order, and update fulfilment or payment status.</p>
+      </div>
+      <div class="admin-who">
+        <div class="admin-notif" id="adminNotifWrap">
+          <button type="button" class="admin-notif-bell" id="adminNotifBell" aria-label="Order notifications" aria-expanded="false">
+            <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <span class="admin-notif-badge" id="adminNotifBadge" style="display:none;">0</span>
+          </button>
+          <div class="admin-notif-panel" id="adminNotifPanel">
+            <div class="admin-notif-panel-head">
+              <span>Order Notifications</span>
+              <span class="admin-notif-live"><span class="admin-notif-live-dot"></span>Live</span>
+            </div>
+            <div class="admin-notif-list" id="adminNotifList">
+              <div class="admin-notif-empty">No new orders yet this session.</div>
+            </div>
+          </div>
+        </div>
+        <button id="adminLogoutBtn" type="button">Sign Out</button>
+      </div>
+    </div>
+
+    <div class="admin-toast-stack" id="adminToastStack"></div>
+
+    <div class="admin-filters">
+      <input type="search" id="adminSearch" placeholder="Search order #, name, email, phone…">
+      <select id="adminStatusFilter">
+        <option value="">All statuses</option>
+        <option value="pending">Pending</option>
+        <option value="confirmed">Confirmed</option>
+        <option value="processing">Processing</option>
+        <option value="shipped">Shipped</option>
+        <option value="delivered">Delivered</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <span class="admin-count" id="adminOrderCount"></span>
+    </div>
+
+    <div class="admin-orders" id="adminOrdersList">
+      <div class="admin-loading">Loading orders…</div>
+    </div>
+  </main>
+</div>
+
+<!-- Served automatically by our own backend's socket.io server — no external CDN, works locally and in production alike -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/admin.js" defer></script>
+</body>
+</html>

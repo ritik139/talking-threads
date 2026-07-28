@@ -1,0 +1,12 @@
+# Talking-Thread — robots.txt
+# Replace https://www.talking-thread.com with your real production domain
+# in this file, in sitemap.xml, and in the canonical/OG tags in each page's <head>.
+
+User-agent: *
+Allow: /
+Disallow: /cart.html
+Disallow: /login.html
+Disallow: /register.html
+Disallow: /wishlist.html
+
+Sitemap: https://www.talking-thread.com/sitemap.xml

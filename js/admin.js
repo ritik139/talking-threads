@@ -251,16 +251,18 @@
         const card = sel.closest('.admin-order-card');
         const orderId = card.getAttribute('data-order-id');
         const newStatus = sel.value;
+        const order = allOrders.find(o => o._id === orderId);
+        const previousStatus = order ? order.status : sel.dataset.previousValue;
         try {
           await apiRequest(`/orders/${encodeURIComponent(orderId)}/status`, {
             method: 'PUT',
             body: JSON.stringify({ status: newStatus })
           });
-          const order = allOrders.find(o => o._id === orderId);
           if (order) order.status = newStatus;
           render();
         } catch (err) {
           alert(err.message || 'Could not update order status.');
+          sel.value = previousStatus; // the save failed — don't leave the dropdown showing an unsaved change
         }
       });
     });
@@ -272,16 +274,18 @@
         const card = sel.closest('.admin-order-card');
         const orderId = card.getAttribute('data-order-id');
         const newStatus = sel.value;
+        const order = allOrders.find(o => o._id === orderId);
+        const previousStatus = order ? order.paymentStatus : sel.dataset.previousValue;
         try {
           await apiRequest(`/orders/${encodeURIComponent(orderId)}/payment-status`, {
             method: 'PUT',
             body: JSON.stringify({ paymentStatus: newStatus })
           });
-          const order = allOrders.find(o => o._id === orderId);
           if (order) order.paymentStatus = newStatus;
           render();
         } catch (err) {
           alert(err.message || 'Could not update payment status.');
+          sel.value = previousStatus; // the save failed — don't leave the dropdown showing an unsaved change
         }
       });
     });
@@ -343,17 +347,70 @@
     } catch (e) { /* Web Audio not available — silently skip the sound */ }
   }
 
-  function showBrowserNotification(payload) {
-    if (!('Notification' in window)) return;
-    const fire = () => {
-      new Notification(`New order: ${payload.orderNumber}`, {
-        body: `${payload.customer.name} · ₹${Number(payload.total).toLocaleString('en-IN')}`,
-        tag: payload.orderId
-      });
+  // Registered once, lazily, the first time we actually need it — see
+  // ensureServiceWorker() below. Populated with the ServiceWorkerRegistration once ready.
+  let swRegistration = null;
+
+  // Mobile Chrome/Firefox on Android reject `new Notification(...)` called directly from
+  // a page script (it throws "Illegal constructor" — see sw.js for the full explanation)
+  // and require ServiceWorkerRegistration.showNotification() instead. Desktop browsers and
+  // iOS Safari don't have that restriction (iOS Safari doesn't support the Notification API
+  // in a regular browser tab at all, service worker or not — see notes in the fix summary).
+  async function ensureServiceWorker() {
+    if (swRegistration) return swRegistration;
+    if (!('serviceWorker' in navigator)) return null;
+    try {
+      await navigator.serviceWorker.register('/sw.js');
+      // .ready resolves once a worker is actually active for this page — registering
+      // alone isn't enough, since the very first registration is briefly "installing".
+      swRegistration = await navigator.serviceWorker.ready;
+      return swRegistration;
+    } catch (e) {
+      console.warn('Service worker registration failed — falling back to the plain Notification API where supported.', e);
+      return null;
+    }
+  }
+
+  async function requestNotificationPermission() {
+    if (!('Notification' in window)) return 'unsupported';
+    if (!window.isSecureContext) {
+      console.warn('Notifications require HTTPS (or localhost). This page is not a secure context, so browser notifications cannot be enabled here.');
+      return 'insecure-context';
+    }
+    if (Notification.permission === 'granted' || Notification.permission === 'denied') {
+      return Notification.permission;
+    }
+    // Must be called from a real user gesture (e.g. a click) — modern mobile browsers
+    // silently ignore or auto-block permission prompts triggered without one, which was
+    // the main reason phones never actually ended up with permission granted.
+    return Notification.requestPermission();
+  }
+
+  async function showBrowserNotification(payload) {
+    if (!('Notification' in window)) return; // e.g. iOS Safari in a regular browser tab
+    if (!window.isSecureContext) return; // Notifications require HTTPS/localhost
+    if (Notification.permission !== 'granted') return; // don't prompt here — see notifBell handler
+
+    const title = `New order: ${payload.orderNumber}`;
+    const options = {
+      body: `${payload.customer.name} · ₹${Number(payload.total).toLocaleString('en-IN')}`,
+      tag: payload.orderId
     };
-    if (Notification.permission === 'granted') fire();
-    else if (Notification.permission !== 'denied') {
-      Notification.requestPermission().then((perm) => { if (perm === 'granted') fire(); });
+
+    try {
+      const registration = await ensureServiceWorker();
+      if (registration && registration.showNotification) {
+        // The mobile-safe path — works on Android Chrome/Firefox and desktop alike.
+        await registration.showNotification(title, options);
+      } else {
+        // No service worker available (e.g. registration failed) — fall back to the plain
+        // constructor, which still works fine on desktop browsers.
+        new Notification(title, options);
+      }
+    } catch (e) {
+      // Never let a notification failure break the chime/toast/badge that follow this
+      // call in the socket handler.
+      console.warn('Could not display a browser notification for this order.', e);
     }
   }
 
@@ -433,6 +490,10 @@
   }
 
   function initRealtimeNotifications() {
+    // Registering early (rather than waiting for the first order) means the service
+    // worker is already active by the time a notification needs to be shown.
+    ensureServiceWorker();
+
     if (typeof io !== 'function') {
       console.warn('Socket.IO client not loaded — real-time notifications are disabled, but the dashboard still works normally.');
       return;
@@ -451,6 +512,12 @@
     if (notifBell && notifPanel) {
       notifBell.addEventListener('click', (e) => {
         e.stopPropagation();
+        // Piggyback the permission prompt on this click — it's the one guaranteed user
+        // gesture in this flow, which mobile browsers require before they'll honour a
+        // Notification.requestPermission() call at all.
+        if ('Notification' in window && Notification.permission === 'default') {
+          requestNotificationPermission();
+        }
         const isOpen = notifPanel.classList.toggle('is-open');
         notifBell.setAttribute('aria-expanded', String(isOpen));
         if (isOpen) { unreadCount = 0; updateBadge(); }

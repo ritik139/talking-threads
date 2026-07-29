@@ -33,8 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const mobilePanel = document.querySelector('.mobile-panel');
   if (menuToggle && mobilePanel) {
     menuToggle.addEventListener('click', () => {
-      menuToggle.classList.toggle('open');
+      const isOpen = menuToggle.classList.toggle('open');
       mobilePanel.classList.toggle('open');
+      menuToggle.setAttribute('aria-expanded', String(isOpen));
     });
   }
 
@@ -60,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!toast) {
       toast = document.createElement('div');
       toast.className = 'toast';
-      toast.innerHTML = '<svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span></span>';
+      toast.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span></span>';
       document.body.appendChild(toast);
     }
     toast.querySelector('span').textContent = message;
@@ -260,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mediaInner = photo
       ? `<img src="${photo}" alt="${p.name}" loading="lazy">`
       : `<div class="ph-inner">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
         <span class="ph-label">Product Image</span>
         <span class="ph-dim">1200 x 1500</span>
       </div>`;
@@ -271,8 +272,8 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     ${tag ? `<span class="pc-tag">${tag}</span>` : ''}
     <div class="pc-actions">
-      <button class="pc-icon-btn" data-wish-toggle data-name="${p.name}" data-price="${priceStr}" data-img="${photo}" aria-label="Add ${p.name} to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
-      <button class="pc-icon-btn" data-quick-add data-name="${p.name}" data-price="${priceStr}" data-img="${photo}" aria-label="Quick add ${p.name} to bag"><svg viewBox="0 0 24 24"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg></button>
+      <button class="pc-icon-btn" data-wish-toggle data-name="${p.name}" data-price="${priceStr}" data-img="${photo}" aria-label="Add ${p.name} to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
+      <button class="pc-icon-btn" data-quick-add data-name="${p.name}" data-price="${priceStr}" data-img="${photo}" aria-label="Quick add ${p.name} to bag"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg></button>
     </div>
   </div>
   <a href="${href}" class="pc-info">
@@ -773,7 +774,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="img-placeholder ar-square">
             ${item.img
               ? `<img src="${item.img}" alt="${item.name}">`
-              : `<div class="ph-inner"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span class="ph-label">${item.name}</span></div>`}
+              : `<div class="ph-inner"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span class="ph-label">${item.name}</span></div>`}
           </div>
           <div>
             <div class="ci-title">${item.name}</div>
@@ -823,31 +824,147 @@ document.addEventListener('DOMContentLoaded', () => {
     Store.setCart = function (c) { origSetCart(c); render(); };
     render();
 
+    /* ---------- Checkout modal: shipping address + payment method ---------- */
     const checkoutBtn = document.getElementById('checkoutBtn');
+    const checkoutModal = document.getElementById('checkoutModal');
+    const checkoutForm = document.getElementById('checkoutForm');
+    const checkoutError = document.getElementById('checkoutError');
+    const checkoutModalClose = document.getElementById('checkoutModalClose');
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    const orderConfirmation = document.getElementById('orderConfirmation');
+    const ocSummary = document.getElementById('ocSummary');
+    const ocDetails = document.getElementById('ocDetails');
+    let lastFocusedEl = null;
+
+    function showCheckoutError(message) {
+      if (!checkoutError) return;
+      checkoutError.textContent = message;
+      checkoutError.classList.remove('is-hidden');
+    }
+    function hideCheckoutError() {
+      if (!checkoutError) return;
+      checkoutError.classList.add('is-hidden');
+      checkoutError.textContent = '';
+    }
+
+    function openCheckoutModal() {
+      if (!checkoutModal) return;
+      lastFocusedEl = document.activeElement;
+      hideCheckoutError();
+      checkoutModal.classList.remove('is-hidden');
+      checkoutModal.setAttribute('aria-hidden', 'false');
+      const firstField = document.getElementById('co-name');
+      if (firstField) firstField.focus();
+      document.addEventListener('keydown', onCheckoutKeydown);
+    }
+    function closeCheckoutModal() {
+      if (!checkoutModal) return;
+      checkoutModal.classList.add('is-hidden');
+      checkoutModal.setAttribute('aria-hidden', 'true');
+      document.removeEventListener('keydown', onCheckoutKeydown);
+      if (lastFocusedEl && typeof lastFocusedEl.focus === 'function') lastFocusedEl.focus();
+    }
+    function onCheckoutKeydown(e) {
+      if (e.key === 'Escape') closeCheckoutModal();
+    }
+
     if (checkoutBtn) {
-      checkoutBtn.addEventListener('click', async () => {
+      checkoutBtn.addEventListener('click', () => {
         if (!Store.getCart().length) return;
         if (!Auth.isLoggedIn()) {
           showToast('Please sign in to complete your order.');
           setTimeout(() => { window.location.href = 'login.html'; }, 1100);
           return;
         }
-        const originalLabel = checkoutBtn.textContent;
-        checkoutBtn.textContent = 'Placing order…';
-        checkoutBtn.disabled = true;
+        openCheckoutModal();
+      });
+    }
+    if (checkoutModalClose) checkoutModalClose.addEventListener('click', closeCheckoutModal);
+    if (checkoutModal) {
+      checkoutModal.addEventListener('click', (e) => { if (e.target === checkoutModal) closeCheckoutModal(); });
+    }
+
+    /* Show the matching payment-detail fields for whichever method is selected.
+       Card/UPI fields are for UX parity only — see the submit handler below for why
+       their values are never sent to the server. */
+    const paymentRadios = checkoutForm ? checkoutForm.querySelectorAll('input[name="paymentMethod"]') : [];
+    function syncPaymentFields() {
+      const selected = checkoutForm.querySelector('input[name="paymentMethod"]:checked');
+      const method = selected ? selected.value : 'cod';
+      const pfCard = document.getElementById('pf-card');
+      const pfUpi = document.getElementById('pf-upi');
+      if (pfCard) pfCard.style.display = method === 'card' ? 'grid' : 'none';
+      if (pfUpi) pfUpi.style.display = method === 'upi' ? 'block' : 'none';
+    }
+    paymentRadios.forEach((r) => r.addEventListener('change', syncPaymentFields));
+    if (checkoutForm) syncPaymentFields();
+
+    if (checkoutForm) {
+      checkoutForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideCheckoutError();
+
+        if (!checkoutForm.checkValidity()) {
+          checkoutForm.reportValidity();
+          return;
+        }
+
+        const selectedPayment = checkoutForm.querySelector('input[name="paymentMethod"]:checked');
+        const shippingAddress = {
+          fullName: document.getElementById('co-name').value.trim(),
+          phone: document.getElementById('co-phone').value.trim(),
+          line1: document.getElementById('co-line1').value.trim(),
+          line2: document.getElementById('co-line2').value.trim(),
+          city: document.getElementById('co-city').value.trim(),
+          state: document.getElementById('co-state').value.trim(),
+          postalCode: document.getElementById('co-postal').value.trim(),
+          country: document.getElementById('co-country').value.trim()
+        };
+        const notes = document.getElementById('co-notes').value.trim();
+        // Deliberately not sent to the backend: this isn't a PCI-compliant payment
+        // processor, and the Order model doesn't store raw card/UPI details — the
+        // fields above exist only so the checkout UI matches the chosen method.
+
+        const originalLabel = placeOrderBtn.textContent;
+        placeOrderBtn.textContent = 'Placing order…';
+        placeOrderBtn.disabled = true;
+
         try {
           const data = await apiRequest('/orders', {
             method: 'POST',
-            body: JSON.stringify({ paymentMethod: 'cod' })
+            body: JSON.stringify({
+              shippingAddress,
+              paymentMethod: selectedPayment ? selectedPayment.value : 'cod',
+              notes
+            })
           });
+
           Store.setCart([]);
-          render();
+          closeCheckoutModal();
+
+          const layout = document.getElementById('cartLayout');
+          const emptyState = document.getElementById('cartEmpty');
+          if (layout) layout.style.display = 'none';
+          if (emptyState) emptyState.style.display = 'none';
+          if (orderConfirmation) {
+            orderConfirmation.classList.remove('is-hidden');
+            orderConfirmation.style.display = 'block';
+            if (ocSummary) ocSummary.textContent = data.message || `Order ${data.order.orderNumber} placed successfully.`;
+            if (ocDetails) {
+              ocDetails.innerHTML = `
+                <div class="summary-row"><span>Order Number</span><span>${data.order.orderNumber}</span></div>
+                <div class="summary-row"><span>Payment Method</span><span>${(data.order.paymentMethod || 'cod').toUpperCase()}</span></div>
+                <div class="summary-row total"><span>Total</span><span>&#8377;${Number(data.order.total || 0).toLocaleString('en-IN')}</span></div>
+              `;
+            }
+          }
           showToast('Your order has been placed successfully!');
+          checkoutForm.reset();
         } catch (err) {
-          showToast(err.message || 'Could not place your order — please try again.');
+          showCheckoutError(err.message || 'Could not place your order — please try again.');
         } finally {
-          checkoutBtn.textContent = originalLabel;
-          checkoutBtn.disabled = false;
+          placeOrderBtn.textContent = originalLabel;
+          placeOrderBtn.disabled = false;
         }
       });
     }
@@ -874,7 +991,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="img-placeholder ar-portrait">
               ${item.img
                 ? `<img src="${item.img}" alt="${item.name}">`
-                : `<div class="ph-inner"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span class="ph-label">${item.name}</span></div>`}
+                : `<div class="ph-inner"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span class="ph-label">${item.name}</span></div>`}
             </div>
           </div>
           <div class="pc-info">
@@ -1191,7 +1308,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let html = '';
       const rounded = Math.round(rating);
       for (let i = 1; i <= count; i++) {
-        html += `<svg viewBox="0 0 24 24" class="${i <= rounded ? 'is-filled' : ''}"><path d="${STAR_PATH}"/></svg>`;
+        html += `<svg viewBox="0 0 24 24" class="${i <= rounded ? 'is-filled' : ''}" aria-hidden="true" focusable="false"><path d="${STAR_PATH}"/></svg>`;
       }
       return html;
     }
@@ -1242,7 +1359,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div>
                 <div class="review-name-row">
                   <strong>${safeName}</strong>
-                  ${review.verifiedPurchase ? '<span class="verified-badge"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Verified Purchase</span>' : ''}
+                  ${review.verifiedPurchase ? '<span class="verified-badge"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 6L9 17l-5-5"/></svg>Verified Purchase</span>' : ''}
                 </div>
                 <div class="review-date">${formatDate(review.createdAt)}</div>
               </div>
@@ -1464,7 +1581,7 @@ document.addEventListener('DOMContentLoaded', () => {
       link.href = 'my-orders.html';
       link.className = 'icon-btn';
       link.setAttribute('aria-label', 'My Orders');
-      link.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-2.5-1.6L13 21l-1-1.6-1 1.6-2.5-1.6L6 21V3z"/><path d="M9 8h6M9 12h4"/></svg>';
+      link.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3h12v18l-2.5-1.6L13 21l-1-1.6-1 1.6-2.5-1.6L6 21V3z"/><path d="M9 8h6M9 12h4"/></svg>';
       const cartIcon = headerIcons.querySelector('a[href="cart.html"]');
       if (cartIcon) headerIcons.insertBefore(link, cartIcon);
       else headerIcons.appendChild(link);

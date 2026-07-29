@@ -38,23 +38,23 @@
 <header class="site-header">
   <div class="nav">
     <a href="index.html" class="logo"><svg class="logo-mark" width="24" height="24" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="9" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 13c3.2-4.2 11.8-4.2 15 0" stroke="currentColor" stroke-width="1.3" fill="none" stroke-dasharray="2 2.6" stroke-linecap="round"/></svg> Talking<em>-Thread</em></a>
-    <nav class="nav-links">
+    <nav class="nav-links" aria-label="Primary">
       <a href="index.html" class="">Home</a>
 <a href="collections.html" class="">Collections</a>
 <a href="shop.html" class="">Shop</a>
 <a href="about.html" class="">About</a>
 <a href="journal.html" class="">Journal</a>
-<a href="reviews.html" class="active">Reviews</a>
+<a href="reviews.html" class="active" aria-current="page">Reviews</a>
 <a href="contact.html" class="">Contact</a>
     </nav>
     <div class="header-icons">
-      <a href="login.html" class="icon-btn" aria-label="Account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.6"/><path d="M4.6 20c1.4-4.1 4.4-6.1 7.4-6.1s6 2 7.4 6.1"/></svg></a>
-      <a href="wishlist.html" class="icon-btn" aria-label="Wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg><span class="count" data-wish-count>0</span></a>
-      <a href="cart.html" class="icon-btn" aria-label="Shopping bag"><svg viewBox="0 0 24 24"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg><span class="count" data-cart-count>0</span></a>
+      <a href="login.html" class="icon-btn" aria-label="Account"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8.2" r="3.6"/><path d="M4.6 20c1.4-4.1 4.4-6.1 7.4-6.1s6 2 7.4 6.1"/></svg></a>
+      <a href="wishlist.html" class="icon-btn" aria-label="Wishlist"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg><span class="count" data-wish-count aria-live="polite">0</span></a>
+      <a href="cart.html" class="icon-btn" aria-label="Shopping bag"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg><span class="count" data-cart-count aria-live="polite">0</span></a>
     </div>
-    <button class="menu-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <button class="menu-toggle" aria-label="Toggle menu" aria-haspopup="true" aria-expanded="false" aria-controls="mobile-nav-panel" type="button"><span></span><span></span><span></span></button>
   </div>
-  <div class="mobile-panel">
+  <nav class="mobile-panel" id="mobile-nav-panel" aria-label="Mobile">
     <a href="index.html">Home</a>
 <a href="collections.html">Collections</a>
 <a href="shop.html">Shop</a>
@@ -65,7 +65,7 @@
     <a href="wishlist.html">Wishlist</a>
     <a href="cart.html">Shopping Bag</a>
     <a href="login.html">Account</a>
-  </div>
+  </nav>
 </header>
 <main id="main-content">
 
@@ -84,7 +84,7 @@
       <div class="rs-average">
         <div class="rs-num" id="rsAverage">&mdash;</div>
         <div class="stars stars-lg" id="rsAverageStars" aria-hidden="true"></div>
-        <div class="rs-count" id="rsCount">Loading reviews&hellip;</div>
+        <div class="rs-count" id="rsCount" aria-live="polite">Loading reviews&hellip;</div>
       </div>
       <div class="rs-breakdown" id="rsBreakdown" aria-hidden="true">
         <div class="rs-bar-row"><span class="rs-bar-label">5 star</span><span class="rs-bar-track"><span class="rs-bar-fill" data-star="5" style="width:0%"></span></span><span class="rs-bar-count" data-star-count="5">0</span></div>
@@ -101,11 +101,11 @@
     <div class="reviews-toolbar">
       <div class="rating-chips" id="ratingChips">
         <button type="button" class="rating-chip is-active" data-rating="">All Reviews</button>
-        <button type="button" class="rating-chip" data-rating="5"><svg viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>5</button>
-        <button type="button" class="rating-chip" data-rating="4"><svg viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>4</button>
-        <button type="button" class="rating-chip" data-rating="3"><svg viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>3</button>
-        <button type="button" class="rating-chip" data-rating="2"><svg viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>2</button>
-        <button type="button" class="rating-chip" data-rating="1"><svg viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>1</button>
+        <button type="button" class="rating-chip" data-rating="5"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>5</button>
+        <button type="button" class="rating-chip" data-rating="4"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>4</button>
+        <button type="button" class="rating-chip" data-rating="3"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>3</button>
+        <button type="button" class="rating-chip" data-rating="2"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>2</button>
+        <button type="button" class="rating-chip" data-rating="1"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>1</button>
       </div>
       <select class="sort-select" id="reviewsSortSelect" aria-label="Sort reviews">
         <option value="newest">Newest First</option>
@@ -115,11 +115,11 @@
       </select>
     </div>
 
-    <div class="reviews-grid" id="reviewsGrid"></div>
+    <div class="reviews-grid" id="reviewsGrid" aria-live="polite"></div>
 
     <div class="empty-state" id="reviewsEmpty" style="display:none;">
-      <svg viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
-      <h3>No reviews yet</h3>
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+      <h2>No reviews yet</h2>
       <p>Be the first to share how your piece turned out.</p>
       <a href="#writeReview" class="btn btn-primary">Write a Review</a>
     </div>
@@ -145,11 +145,11 @@
 
         <span class="star-input-label">Your Rating</span>
         <div class="star-input" id="rvStarInput" role="radiogroup" aria-label="Rating">
-          <button type="button" data-value="1" aria-label="1 star"><svg viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></button>
-          <button type="button" data-value="2" aria-label="2 stars"><svg viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></button>
-          <button type="button" data-value="3" aria-label="3 stars"><svg viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></button>
-          <button type="button" data-value="4" aria-label="4 stars"><svg viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></button>
-          <button type="button" data-value="5" aria-label="5 stars"><svg viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></button>
+          <button type="button" data-value="1" aria-label="1 star"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></button>
+          <button type="button" data-value="2" aria-label="2 stars"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></button>
+          <button type="button" data-value="3" aria-label="3 stars"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></button>
+          <button type="button" data-value="4" aria-label="4 stars"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></button>
+          <button type="button" data-value="5" aria-label="5 stars"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></button>
         </div>
 
         <div class="field">
@@ -172,7 +172,7 @@
       </form>
 
       <div class="empty-state" id="reviewsSignedOut" style="display:none;">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.6"/><path d="M4.6 20c1.4-4.1 4.4-6.1 7.4-6.1s6 2 7.4 6.1"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8.2" r="3.6"/><path d="M4.6 20c1.4-4.1 4.4-6.1 7.4-6.1s6 2 7.4 6.1"/></svg>
         <h3>Please sign in</h3>
         <p>Sign in to your account to write a review.</p>
         <a href="login.html" class="btn btn-primary">Sign In</a>
@@ -194,7 +194,7 @@
             <p>Heirloom embroidery, hand-stitched to order in Jaipur. Founded by Ritik Parihar, every piece is made to
               be kept, gifted, and talked about.</p>
             <div class="social-icons">
-              <a href="https://www.instagram.com/ritik_parihar0404/" aria-label="Instagram" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24">
+              <a href="https://www.instagram.com/ritik_parihar0404/" aria-label="Instagram" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                   <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
                   <circle cx="12" cy="12" r="4" />
                   <circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none" />
@@ -226,15 +226,15 @@
           <div class="footer-col">
             <h4>Contact</h4>
             <a href="mailto:hello@talking-thread.studio" class="footer-contact-link">
-              <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1" /><path d="M3.5 6.5L12 13l8.5-6.5" /></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="1" /><path d="M3.5 6.5L12 13l8.5-6.5" /></svg>
               hello@talking-thread.studio
             </a>
             <a href="tel:+919876543210" class="footer-contact-link">
-              <svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2C9.5 21 3 14.5 3 6a2 2 0 012-2z" /></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2C9.5 21 3 14.5 3 6a2 2 0 012-2z" /></svg>
               +91 98765 43210
             </a>
             <p class="footer-address">
-              <svg viewBox="0 0 24 24"><path d="M12 21s-7-6.4-7-11.5A7 7 0 0119 9.5C19 14.6 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.3" /></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21s-7-6.4-7-11.5A7 7 0 0119 9.5C19 14.6 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.3" /></svg>
               C-12 Malviya Nagar, Jaipur, Rajasthan 302017, India
             </p>
           </div>
@@ -247,7 +247,7 @@
           </div>
           <form class="newsletter-form footer-newsletter-form"
             data-demo-form="Thank you for subscribing — welcome to Talking-Thread.">
-            <input type="email" placeholder="Your email address" required aria-label="Email address">
+            <input type="email" name="email" autocomplete="email" placeholder="Your email address" required aria-label="Email address">
             <button type="submit">Subscribe</button>
           </form>
         </div>
@@ -256,10 +256,10 @@
         <div class="footer-bottom">
           <span>&copy; <span id="footer-year">2026</span> Talking-Thread. All rights reserved. Founded by Ritik Parihar.</span>
           <span class="payment-icons">
-            <span class="payment-icon" title="Visa"><svg viewBox="0 0 24 16"><rect x="1" y="1" width="22" height="14" rx="2" /><line x1="1" y1="6" x2="23" y2="6" /></svg>Visa</span>
-            <span class="payment-icon" title="Mastercard"><svg viewBox="0 0 24 16"><rect x="1" y="1" width="22" height="14" rx="2" /><circle cx="9.5" cy="8" r="4" /><circle cx="14.5" cy="8" r="4" /></svg>Mastercard</span>
-            <span class="payment-icon" title="UPI"><svg viewBox="0 0 24 16"><rect x="1" y="1" width="22" height="14" rx="2" /><path d="M6 5v4a3 3 0 006 0V5M14 5l3 6M17 5l-3 6" /></svg>UPI</span>
-            <span class="payment-icon" title="PayPal"><svg viewBox="0 0 24 16"><rect x="1" y="1" width="22" height="14" rx="2" /><path d="M8 4h4.5a2.5 2.5 0 010 5H9l-1 4" /></svg>PayPal</span>
+            <span class="payment-icon" title="Visa"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect x="1" y="1" width="22" height="14" rx="2" /><line x1="1" y1="6" x2="23" y2="6" /></svg>Visa</span>
+            <span class="payment-icon" title="Mastercard"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect x="1" y="1" width="22" height="14" rx="2" /><circle cx="9.5" cy="8" r="4" /><circle cx="14.5" cy="8" r="4" /></svg>Mastercard</span>
+            <span class="payment-icon" title="UPI"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect x="1" y="1" width="22" height="14" rx="2" /><path d="M6 5v4a3 3 0 006 0V5M14 5l3 6M17 5l-3 6" /></svg>UPI</span>
+            <span class="payment-icon" title="PayPal"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect x="1" y="1" width="22" height="14" rx="2" /><path d="M8 4h4.5a2.5 2.5 0 010 5H9l-1 4" /></svg>PayPal</span>
           </span>
         </div>
       </div>

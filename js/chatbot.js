@@ -94,11 +94,11 @@
   }
 
   /* ---------------- DOM build ---------------- */
-  var ICON_CHAT = '<svg class="tt-icon-chat" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.3"/><path stroke-linecap="round" d="M5.1 12c2.9-3.9 10.9-3.9 13.8 0" stroke-dasharray="1.8 2.3"/></svg>';
-  var ICON_CLOSE = '<svg class="tt-icon-close" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>';
-  var ICON_SEND = '<svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg>';
-  var ICON_AVATAR = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M6.5 12c2.6-3.4 8.4-3.4 11 0" stroke-dasharray="1.6 2"/></svg>';
-  var ICON_X_PLAIN = '<svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>';
+  var ICON_CHAT = '<svg class="tt-icon-chat" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.3"/><path stroke-linecap="round" d="M5.1 12c2.9-3.9 10.9-3.9 13.8 0" stroke-dasharray="1.8 2.3"/></svg>';
+  var ICON_CLOSE = '<svg class="tt-icon-close" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>';
+  var ICON_SEND = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-linecap="round" stroke-linejoin="round" d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg>';
+  var ICON_AVATAR = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8"/><path d="M6.5 12c2.6-3.4 8.4-3.4 11 0" stroke-dasharray="1.6 2"/></svg>';
+  var ICON_X_PLAIN = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>';
 
   function el(html) {
     var d = document.createElement("div");

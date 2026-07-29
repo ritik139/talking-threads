@@ -109,11 +109,17 @@
   display: inline-block;
 }
 .tt-chat-close{
+  position: relative;
   background: none; border: none; cursor: pointer;
   color: var(--paper); opacity: .75;
   display: flex; align-items: center; justify-content: center;
   padding: 4px;
   flex-shrink: 0;
+}
+.tt-chat-close::before{
+  content: "";
+  position: absolute;
+  inset: -9px;
 }
 .tt-chat-close:hover{ opacity: 1; }
 .tt-chat-close svg{ width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.6; }
@@ -222,6 +228,7 @@
 .tt-chat-form input:focus{ outline: none; border-color: var(--tt-accent); }
 .tt-chat-form input::placeholder{ color: var(--ink-faint); }
 .tt-chat-form button{
+  position: relative;
   width: 38px; height: 38px;
   border-radius: 50%;
   background: var(--tt-accent);
@@ -230,6 +237,11 @@
   flex-shrink: 0;
   cursor: pointer;
   transition: background .2s;
+}
+.tt-chat-form button::before{
+  content: "";
+  position: absolute;
+  inset: -3px;
 }
 .tt-chat-form button:hover{ background: var(--tt-accent-dark); }
 .tt-chat-form button:disabled{ opacity: .4; cursor: not-allowed; }

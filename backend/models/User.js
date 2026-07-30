@@ -47,6 +47,15 @@ const userSchema = new mongoose.Schema(
 
 userSchema.pre('save', async function hashPassword(next) {
   if (!this.password || !this.isModified('password')) return next();
+
+  // Guard against re-hashing a value that's already a bcrypt hash. Without this,
+  // any script that loads a user (e.g. a migration import) and calls .save()
+  // with the password field already set to a hash will hash it a second time,
+  // silently breaking login for that user. $2a$ / $2b$ / $2y$ are all valid
+  // bcrypt prefixes (PHP/Laravel systems commonly use $2y$).
+  const isAlreadyBcryptHash = /^\$2[aby]\$\d{2}\$.{53}$/.test(this.password);
+  if (isAlreadyBcryptHash) return next();
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();

@@ -9,6 +9,6 @@ router.use(protect);
 router.get('/', ctrl.getWishlist);
 router.post('/toggle', ctrl.toggleWishlist);
 router.post('/merge', ctrl.mergeWishlist);
-router.delete('/:index', ctrl.removeWishlistItem);
+router.delete('/:id', ctrl.removeWishlistItem);
 
 module.exports = router;

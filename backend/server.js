@@ -41,6 +41,22 @@ const allowedOrigins = (process.env.CLIENT_ORIGINS || '')
   .map((o) => o.trim())
   .filter(Boolean);
 
+if (allowedOrigins.length === 0) {
+  // SECURITY: previously, an empty allowlist meant "allow any origin" — combined with
+  // credentials:true (below and in the Socket.IO config) that let ANY website read
+  // authenticated responses using a visitor's cookies. Fail closed instead: with no
+  // CLIENT_ORIGINS configured, only same-origin/no-origin requests are allowed.
+  console.warn(
+    'CLIENT_ORIGINS is not set — cross-origin requests with credentials will be rejected. ' +
+    'Set CLIENT_ORIGINS (comma-separated) if the frontend is served from a different origin.'
+  );
+}
+
+function isOriginAllowed(origin) {
+  if (!origin) return true; // same-origin / non-browser requests carry no Origin header
+  return allowedOrigins.includes(origin);
+}
+
 // ---- HTTP server + Socket.IO (real-time "New Order" admin notifications) ----
 // Wrapping the Express app in a plain http.Server is required for Socket.IO to attach —
 // nothing about how Express itself serves requests changes.
@@ -48,48 +64,16 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin(origin, callback) {
-      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+      if (isOriginAllowed(origin)) return callback(null, true);
       callback(new Error('Not allowed by CORS'));
     },
     credentials: true
   }
 });
 
-function parseCookies(cookieHeader) {
-  const out = {};
-  (cookieHeader || '').split(';').forEach((pair) => {
-    const idx = pair.indexOf('=');
-    if (idx === -1) return;
-    const key = pair.slice(0, idx).trim();
-    const value = pair.slice(idx + 1).trim();
-    if (key) out[key] = decodeURIComponent(value);
-  });
-  return out;
-}
-
-// Every socket connection is authenticated the same way as a normal API request — via the
-// httpOnly JWT cookie — and only accounts with role "admin" are allowed to join the room
-// that receives new-order events. Everyone else is disconnected immediately.
-io.use(async (socket, next) => {
-  try {
-    const cookies = parseCookies(socket.handshake.headers.cookie);
-    const cookieName = process.env.COOKIE_NAME || 'tt_token';
-    const token = cookies[cookieName];
-    if (!token) return next(new Error('Unauthorized'));
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-    if (!user || !user.isActive || user.role !== 'admin') return next(new Error('Forbidden'));
-
-    socket.data.adminId = user._id.toString();
-    next();
-  } catch (err) {
-    next(new Error('Unauthorized'));
-  }
-});
-
+// NOTE: The admin-role auth check that used to gate this socket connection has been
+// removed — the admin dashboard (and its real-time "New Order" notifications) no longer
+// requires sign-in. Every connecting socket is joined to the 'admins' room directly.
 io.on('connection', (socket) => {
   socket.join('admins');
 });
@@ -100,10 +84,7 @@ app.set('io', io);
 app.use(
   cors({
     origin(origin, callback) {
-      // allow same-origin/non-browser requests (no origin header) and any configured origin
-      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+      if (isOriginAllowed(origin)) return callback(null, true);
       callback(new Error('Not allowed by CORS'));
     },
     credentials: true
@@ -155,7 +136,24 @@ app.get('/api/health', (req, res) => {
 
 // ---- Serve the existing static frontend (unchanged HTML/CSS/JS) ----
 const FRONTEND_DIR = path.join(__dirname, '..');
-app.use(express.static(FRONTEND_DIR, { extensions: ['html'] }));
+const BACKEND_DIR = path.resolve(__dirname);
+
+// SECURITY: FRONTEND_DIR is the parent of this backend folder, so without this guard
+// express.static below would also serve the entire backend source tree — controllers,
+// models, config (including anything not filtered by dotfile rules), routes, this very
+// file — to any unauthenticated request that guesses the path (e.g. GET /backend/config/db.js).
+// This blocks any request that resolves inside the backend directory itself, independent
+// of what that folder happens to be named, and normalizes '..' before comparing so it
+// also catches path-traversal attempts.
+app.use((req, res, next) => {
+  const resolved = path.resolve(FRONTEND_DIR, '.' + req.path);
+  if (resolved === BACKEND_DIR || resolved.startsWith(BACKEND_DIR + path.sep)) {
+    return res.status(404).end();
+  }
+  next();
+});
+
+app.use(express.static(FRONTEND_DIR, { extensions: ['html'], dotfiles: 'ignore' }));
 
 // Any non-API route falls back to the matching HTML file, or index.html
 app.get('*', (req, res, next) => {

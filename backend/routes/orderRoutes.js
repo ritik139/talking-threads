@@ -6,10 +6,28 @@ const ctrl = require('../controllers/orderController');
 
 const router = express.Router();
 
-router.use(protect);
+// NOTE: Admin Dashboard (Orders) routes below are intentionally left WITHOUT
+// `protect`/`adminOnly` — the admin dashboard no longer requires sign-in.
+// `protect` is now applied per-route (instead of router.use(protect)) so that
+// normal user routes (create/list/view/cancel my own orders) still require
+// login exactly as before, while the admin-only routes are open.
+router.get('/admin/all', ctrl.getAllOrders);
+router.put(
+  '/:id/status',
+  [body('status').isIn(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']).withMessage('Invalid order status')],
+  validate,
+  ctrl.updateOrderStatus
+);
+router.put(
+  '/:id/payment-status',
+  [body('paymentStatus').isIn(['pending', 'paid', 'refunded']).withMessage('Invalid payment status')],
+  validate,
+  ctrl.updatePaymentStatus
+);
 
 router.post(
   '/',
+  protect,
   [
     body('shippingAddress.fullName').trim().notEmpty().withMessage('Full name is required'),
     body('shippingAddress.phone').trim().notEmpty().withMessage('Phone number is required'),
@@ -24,23 +42,8 @@ router.post(
   validate,
   ctrl.createOrder
 );
-router.get('/', ctrl.getMyOrders);
-router.get('/admin/all', adminOnly, ctrl.getAllOrders);
-router.get('/:id', ctrl.getOrder);
-router.put('/:id/cancel', ctrl.cancelOrder);
-router.put(
-  '/:id/status',
-  adminOnly,
-  [body('status').isIn(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']).withMessage('Invalid order status')],
-  validate,
-  ctrl.updateOrderStatus
-);
-router.put(
-  '/:id/payment-status',
-  adminOnly,
-  [body('paymentStatus').isIn(['pending', 'paid', 'refunded']).withMessage('Invalid payment status')],
-  validate,
-  ctrl.updatePaymentStatus
-);
+router.get('/', protect, ctrl.getMyOrders);
+router.get('/:id', protect, ctrl.getOrder);
+router.put('/:id/cancel', protect, ctrl.cancelOrder);
 
 module.exports = router;

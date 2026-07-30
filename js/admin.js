@@ -36,58 +36,17 @@
   const whoName = document.getElementById('adminWhoName');
   const logoutBtn = document.getElementById('adminLogoutBtn');
 
-  function showGate(html) {
-    shell.style.display = 'none';
-    gate.style.display = 'flex';
-    gate.innerHTML = html;
-  }
-
-  const SIGN_IN_GATE = `
-    <div class="admin-gate-box">
-      <h2>Admin sign-in required</h2>
-      <p>Please sign in with an admin account to view the Orders dashboard.</p>
-      <a href="login.html" class="btn">Go to Sign In</a>
-    </div>`;
-
-  const FORBIDDEN_GATE = `
-    <div class="admin-gate-box">
-      <h2>Admins only</h2>
-      <p>You're signed in, but this account doesn't have admin access.</p>
-      <a href="index.html" class="btn">Back to the Shop</a>
-    </div>`;
-
-  const ERROR_GATE = (msg) => `
-    <div class="admin-gate-box">
-      <h2>Something went wrong</h2>
-      <p>${msg}</p>
-      <a href="admin-dashboard.html" class="btn">Retry</a>
-    </div>`;
-
   /* ============================================================
-     Auth gate
+     Dashboard init — opens directly, no admin sign-in/role check.
      ============================================================ */
   async function init() {
-    let me;
-    try {
-      me = await apiRequest('/auth/me');
-    } catch (err) {
-      showGate(SIGN_IN_GATE);
-      return;
-    }
-    const user = me && me.user;
-    if (!user || user.role !== 'admin') {
-      showGate(FORBIDDEN_GATE);
-      return;
-    }
-
-    gate.style.display = 'none';
+    if (gate) gate.style.display = 'none';
     shell.style.display = 'grid';
-    if (whoName) whoName.textContent = user.name || user.email;
+    if (whoName) whoName.textContent = 'Admin';
 
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', async () => {
-        try { await apiRequest('/auth/logout', { method: 'POST' }); } catch (e) { /* ignore */ }
-        window.location.href = 'login.html';
+      logoutBtn.addEventListener('click', () => {
+        window.location.href = 'index.html';
       });
     }
 
@@ -120,23 +79,31 @@
   function addressLines(addr) {
     if (!addr) return 'No shipping address on file.';
     const parts = [addr.line1, addr.line2, [addr.city, addr.state].filter(Boolean).join(', '), addr.postalCode, addr.country]
-      .filter(Boolean);
+      .filter(Boolean)
+      .map(escapeAdminHtml);
     return parts.length ? parts.join('<br>') : 'No shipping address on file.';
   }
 
   function orderCard(order) {
-    const customerName = (order.shippingAddress && order.shippingAddress.fullName) || (order.user && order.user.name) || 'Guest';
-    const customerEmail = (order.user && order.user.email) || '—';
-    const customerPhone = (order.shippingAddress && order.shippingAddress.phone) || (order.user && order.user.phone) || '—';
+    const customerNameRaw = (order.shippingAddress && order.shippingAddress.fullName) || (order.user && order.user.name) || 'Guest';
+    const customerEmailRaw = (order.user && order.user.email) || '—';
+    const customerPhoneRaw = (order.shippingAddress && order.shippingAddress.phone) || (order.user && order.user.phone) || '—';
+    const customerName = escapeAdminHtml(customerNameRaw);
+    const customerEmail = escapeAdminHtml(customerEmailRaw);
+    const customerPhone = escapeAdminHtml(customerPhoneRaw);
+    // Used only inside the mailto: href — encodeURIComponent handles the URL context,
+    // escapeAdminHtml (above) handles the HTML/attribute context; both are needed since
+    // this value is customer-controlled.
+    const customerEmailHref = encodeURIComponent(customerEmailRaw);
     const status = order.status || 'pending';
     const paymentStatus = order.paymentStatus || 'pending';
 
     const itemsRows = (order.items || []).map(i => `
       <tr>
-        <td>${i.name || ''}</td>
-        <td>${i.size || '—'} / ${i.color || '—'}</td>
-        <td>${i.qty || 1}</td>
-        <td>${i.price || ''}</td>
+        <td>${escapeAdminHtml(i.name || '')}</td>
+        <td>${escapeAdminHtml(i.size || '—')} / ${escapeAdminHtml(i.color || '—')}</td>
+        <td>${Number(i.qty) || 1}</td>
+        <td>${escapeAdminHtml(i.price || '')}</td>
       </tr>
     `).join('');
 
@@ -158,7 +125,7 @@
           <div class="admin-block">
             <h4>Customer</h4>
             <p><strong>${customerName}</strong></p>
-            <p><a href="mailto:${customerEmail}">${customerEmail}</a></p>
+            <p><a href="mailto:${customerEmailHref}">${customerEmail}</a></p>
             <p>${customerPhone}</p>
           </div>
           <div class="admin-block">

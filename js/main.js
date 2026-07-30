@@ -173,15 +173,29 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ============================================================
      STORE STATE (cart + wishlist) — persisted in localStorage
      ============================================================ */
+  function genId(prefix) {
+    return prefix + '_' + Date.now() + Math.random().toString(16).slice(2);
+  }
+
   const Store = {
     getCart() { return JSON.parse(localStorage.getItem('tt_cart') || '[]'); },
     setCart(c) { localStorage.setItem('tt_cart', JSON.stringify(c)); Store.refreshCounts(); },
-    getWishlist() { return JSON.parse(localStorage.getItem('tt_wishlist') || '[]'); },
+    getWishlist() {
+      const wl = JSON.parse(localStorage.getItem('tt_wishlist') || '[]');
+      // Backfill a stable id on any item saved before ids existed, so remove/move-to-bag
+      // (which now key off id, not array position) keep working for pre-existing wishlists.
+      let changed = false;
+      wl.forEach(item => {
+        if (!item.id) { item.id = genId('wl'); changed = true; }
+      });
+      if (changed) localStorage.setItem('tt_wishlist', JSON.stringify(wl));
+      return wl;
+    },
     setWishlist(w) { localStorage.setItem('tt_wishlist', JSON.stringify(w)); Store.refreshCounts(); },
 
     addToCart(item) {
       const cart = Store.getCart();
-      cart.push(Object.assign({ id: 'ci_' + Date.now() + Math.random().toString(16).slice(2) }, item));
+      cart.push(Object.assign({ id: genId('ci') }, item));
       Store.setCart(cart);
       if (Auth.isLoggedIn()) {
         apiRequest('/cart', { method: 'POST', body: JSON.stringify(item) }).catch(() => {});
@@ -204,11 +218,18 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleWishlist(product) {
       let wl = Store.getWishlist();
       const exists = wl.find(i => i.name === product.name);
-      if (exists) { wl = wl.filter(i => i.name !== product.name); }
-      else { wl.push(product); }
+      let itemForApi;
+      if (exists) {
+        wl = wl.filter(i => i.id !== exists.id);
+        itemForApi = product;
+      } else {
+        const item = Object.assign({ id: genId('wl') }, product);
+        wl.push(item);
+        itemForApi = item;
+      }
       Store.setWishlist(wl);
       if (Auth.isLoggedIn()) {
-        apiRequest('/wishlist/toggle', { method: 'POST', body: JSON.stringify(product) }).catch(() => {});
+        apiRequest('/wishlist/toggle', { method: 'POST', body: JSON.stringify(itemForApi) }).catch(() => {});
       }
       return !exists;
     },
@@ -256,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const priceStr = p.displayPrice || ('₹' + Number(p.price || 0).toLocaleString('en-IN'));
     const wasStr = p.compareAtPrice ? '₹' + Number(p.compareAtPrice).toLocaleString('en-IN') : '';
     const colorDots = (p.colors || []).map(c => `<span style="--swatch:${SWATCH_HEX[c] || '#ccc'}"></span>`).join('');
-    const photo = p.images && p.images.length ? p.images[0] : '';
+    const photo = (p.images && p.images.length && p.images[0]) ? p.images[0] : '';
     const href = productHref(p);
     const mediaInner = photo
       ? `<img src="${photo}" alt="${p.name}" loading="lazy">`
@@ -320,7 +341,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function resolveProductImage(btn, mediaSelector) {
     const scope = (mediaSelector && btn.closest(mediaSelector)) || document;
     const img = scope.querySelector('img');
-    if (img && img.getAttribute('src')) return img.getAttribute('src');
+    const src = img && img.getAttribute('src');
+    if (src) return src;
     return btn.getAttribute('data-img') || '';
   }
 
@@ -985,11 +1007,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       wishGrid.style.display = 'grid';
       if (emptyState) emptyState.style.display = 'none';
-      wishGrid.innerHTML = wl.map((item, idx) => `
+      wishGrid.innerHTML = wl.map((item, idx) => {
+        const hasImg = item.img && item.img !== 'undefined' && item.img !== 'null';
+        return `
         <div class="product-card" data-idx="${idx}">
           <div class="pc-media">
             <div class="img-placeholder ar-portrait">
-              ${item.img
+              ${hasImg
                 ? `<img src="${item.img}" alt="${item.name}">`
                 : `<div class="ph-inner"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span class="ph-label">${item.name}</span></div>`}
             </div>
@@ -1003,23 +1027,24 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
       hydrateStaticProductCardLinks(wishGrid);
       wishGrid.querySelectorAll('.product-card').forEach(el => {
         const idx = parseInt(el.getAttribute('data-idx'), 10);
         const item = wl[idx];
         el.querySelector('[data-act="remove"]').addEventListener('click', (e) => {
           e.stopPropagation();
-          Store.setWishlist(Store.getWishlist().filter((_, i) => i !== idx));
-          if (Auth.isLoggedIn()) apiRequest('/wishlist/' + idx, { method: 'DELETE' }).catch(() => {});
+          Store.setWishlist(Store.getWishlist().filter((i) => i.id !== item.id));
+          if (Auth.isLoggedIn()) apiRequest('/wishlist/' + encodeURIComponent(item.id), { method: 'DELETE' }).catch(() => {});
           render();
           showToast('Removed from wishlist');
         });
         el.querySelector('[data-act="move"]').addEventListener('click', (e) => {
           e.stopPropagation();
           Store.addToCart({ name: item.name, price: item.price, img: item.img || '', size: 'Medium', color: 'Antique Gold', text: '—', qty: 1 });
-          Store.setWishlist(Store.getWishlist().filter((_, i) => i !== idx));
-          if (Auth.isLoggedIn()) apiRequest('/wishlist/' + idx, { method: 'DELETE' }).catch(() => {});
+          Store.setWishlist(Store.getWishlist().filter((i) => i.id !== item.id));
+          if (Auth.isLoggedIn()) apiRequest('/wishlist/' + encodeURIComponent(item.id), { method: 'DELETE' }).catch(() => {});
           render();
           showToast('Moved to your bag');
         });

@@ -22,6 +22,20 @@
    page-level overflow-x suppression is needed here any more. */
 html, body{ max-width: 100%; }
 
+/* ---------- Auth pages (Login / Register) — root-cause fix ----------
+   .auth-media is set to display:none at max-width:1024px in style.css,
+   but .auth-layout's 2-column grid-template-columns is never reset to
+   a single column there. With one grid item removed, the remaining
+   item (.auth-form-side) still only occupies the first 1fr track,
+   leaving the form squeezed into ~50% of the viewport with a dead
+   empty column beside it. This selector is only ever used on
+   login.html / register.html, so scoping the fix here (rather than
+   editing style.css) cannot affect any other page or the desktop
+   (>1024px) layout. */
+@media (max-width: 1024px){
+  .auth-layout{ grid-template-columns: minmax(0,1fr); }
+}
+
 /* Any image/video/iframe/table is not allowed to force page width */
 img, video, iframe, table, svg{ max-width: 100%; }
 

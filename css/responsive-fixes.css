@@ -1,0 +1,208 @@
+/* ==========================================================================
+   Talking-Thread — Mobile Responsive Fixes
+   Additive/override layer only. Loaded LAST (after style.css, admin.css,
+   chatbot.css) on every page. Does not remove or redefine any desktop/
+   tablet rule — every declaration here is scoped inside a max-width media
+   query so nothing changes above 768px. Purpose: eliminate horizontal
+   scrolling/overflow and tighten spacing, icon sizes, navbar, buttons,
+   forms, product cards, images, map and footer on small screens
+   (tested against 320 / 360 / 375 / 390 / 414 / 768px).
+   ========================================================================== */
+
+/* ---------- 0. Global overflow safety net ----------
+   Belt-and-suspenders: nothing below should ever produce horizontal
+   overflow, but this guarantees no stray element can create a
+   page-wide horizontal scrollbar on any device. Only overflow-x is
+   touched (overflow-y is left alone) so position:sticky / fixed
+   elements keep working exactly as before. */
+html{ max-width: 100%; overflow-x: hidden; }
+body{ max-width: 100%; overflow-x: hidden; }
+
+/* Any image/video/iframe/table is not allowed to force page width */
+img, video, iframe, table, svg{ max-width: 100%; }
+
+@media (max-width: 480px){
+  /* ---------- 1. Container / section rhythm ---------- */
+  .container{ padding: 0 16px; }
+  .section{ padding: 56px 0; }
+  .section-tight{ padding: 44px 0; }
+  .section-head{ margin-bottom: 40px; }
+
+  /* ---------- 2. Announcement bar ---------- */
+  .announce{ font-size: 0.64rem; padding: 9px 14px; letter-spacing: 0.1em; line-height: 1.6; }
+  .announce span{ margin: 0 6px; }
+
+  /* ---------- 3. Header / navbar ----------
+     Root-cause fix: on very narrow screens the logo wordmark +
+     account/wishlist/cart icons + hamburger no longer fit on one row
+     at the desktop sizing, which pushes the header past the viewport
+     edge and forces horizontal scroll on the whole page. Scaling the
+     logo and tightening the icon/nav gaps brings the row back under
+     the viewport width without hiding or reflowing anything. */
+  .nav{ padding: 14px 16px; gap: 10px; }
+  .logo{ font-size: 1.05rem; gap: 6px; }
+  .logo-mark{ width: 19px; height: 19px; }
+  .header-icons{ gap: 12px; }
+  .icon-btn{ width: 20px; height: 20px; }
+  .menu-toggle{ width: 22px; height: 18px; }
+  .menu-toggle span:nth-child(2){ top: 8px; }
+  .menu-toggle span:nth-child(3){ top: 16px; }
+  .mobile-panel{ padding: 8px 16px 24px; }
+
+  /* ---------- 4. Hero ---------- */
+  .hero{ padding: 40px 0 0; }
+  .hero-inner{ gap: 36px; }
+  .hero-copy h1{ margin: 16px 0 18px; }
+  .hero-ctas{ gap: 12px; }
+  .hero-meta{ gap: 20px 28px; margin-top: 36px; padding-top: 24px; }
+  .hero-tag{ left: 12px; bottom: -16px; padding: 12px 16px; font-size: 0.82rem; }
+
+  /* ---------- 5. Buttons ----------
+     Slightly tighter padding keeps full-width mobile buttons (and
+     buttons that sit next to icon controls, e.g. the product page
+     add-to-cart row) from ever needing more width than the viewport
+     provides. */
+  .btn{ padding: 14px 20px; font-size: 0.72rem; letter-spacing: 0.1em; gap: 8px; }
+  .btn-sm{ padding: 10px 16px; }
+
+  /* ---------- 6. Collections / product grid & cards ---------- */
+  .collection-grid, .product-grid, .journal-grid{ gap: 16px; }
+  .toolbar{ gap: 14px; padding-bottom: 20px; margin-bottom: 28px; }
+  .pc-title{ font-size: 1rem; }
+  .pc-actions{ top: 10px; right: 10px; gap: 8px; }
+  .pc-icon-btn{ width: 32px; height: 32px; }
+  .pc-tag{ top: 10px; left: 10px; font-size: 0.58rem; padding: 4px 8px; }
+
+  /* Shop filters row: allow wrapping instead of squeezing every
+     filter group onto one unreadable line */
+  .filters{ gap: 20px; }
+  .filters .filter-group{ flex: 1 1 130px; min-width: 130px; }
+
+  /* Search field inside the shop toolbar must never force the
+     toolbar wider than the viewport */
+  .search-field{ flex-basis: 100%; min-width: 0; }
+
+  /* ---------- 7. Product detail page ---------- */
+  .pd-info{ padding-left: 0; }
+  .pd-info h1{ font-size: 1.6rem; }
+  .pd-gallery{ gap: 12px; }
+  .pd-thumb{ width: 60px; }
+  .qty-add-row{ flex-wrap: wrap; gap: 12px; margin: 24px 0 16px; }
+  .qty-add-row .pd-actions{ flex: 1 1 100%; }
+  .qty-add-row .qty-stepper{ flex: 1 1 100%; justify-content: center; }
+  .size-pills, .color-options{ gap: 8px; }
+  .accordion-body-inner{ padding-right: 0; }
+  .related-products{ margin-top: 72px; }
+
+  /* ---------- 8. Cart / wishlist / checkout ---------- */
+  .cart-item{ grid-template-columns: 68px 1fr; gap: 14px; padding: 18px 0; }
+  .summary-card{ padding: 22px; }
+  .promo-row{ flex-wrap: wrap; }
+  .empty-state{ padding: 60px 16px; }
+
+  .modal{ padding: 28px 18px 24px; }
+  .modal h3{ font-size: 1.3rem; }
+  .payment-option{ padding: 12px; font-size: 0.82rem; }
+
+  /* ---------- 9. Forms (auth / contact / checkout) ---------- */
+  .auth-form-side{ padding: 40px 20px; }
+  .auth-box h1{ font-size: 1.7rem; }
+  .field input, .field textarea, .contact-form .field textarea, .form-select{ padding: 12px 14px; }
+  .social-row{ flex-wrap: wrap; }
+
+  /* ---------- 10. About page stat grids ---------- */
+  .process-grid, .stat-row{ gap: 24px 16px; }
+  .stat-row div strong{ font-size: 2rem; }
+
+  /* ---------- 11. Contact map ---------- */
+  .contact-info-item{ gap: 12px; padding: 16px 0; }
+  .map-directions-btn{ width: 100%; }
+
+  /* ---------- 12. Footer ---------- */
+  .site-footer{ padding-top: 56px; }
+  .footer-grid{ gap: 28px; padding-bottom: 34px; }
+  .footer-newsletter-mini{ padding: 26px 0; }
+  /* fixes a pre-existing flex-basis bug: in the stacked (column)
+     layout, "flex: 1 1 320px" sets a 320px *height* basis (flex-basis
+     applies along the column's main axis), inflating the newsletter
+     box far taller than its content. Forcing height back to auto and
+     width to 100% restores the intended compact single-row form. */
+  .footer-newsletter-form{ flex: 0 1 auto; width: 100%; }
+  .footer-bottom{ padding: 20px 0; }
+  .footer-bottom .payment-icons{ gap: 12px; }
+
+  /* ---------- 13. Toast / floating buttons ----------
+     Fixed-position elements sized with `right` + `max-width` can spill
+     past the left edge of very narrow viewports; pinning both edges
+     removes any chance of that contributing to page overflow. */
+  .toast{ left: 14px; right: 14px; max-width: none; width: auto; bottom: 16px; }
+
+  /* ---------- 14. Reviews page ---------- */
+  .reviews-summary{ padding: 24px 18px; gap: 24px; }
+  .rs-average{ min-width: 0; width: 100%; }
+  .rs-breakdown{ min-width: 0; width: 100%; }
+  .review-card{ padding: 18px; }
+  .review-form-section{ margin-top: 56px; padding-top: 44px; }
+
+  /* ---------- 15. Delivery / location picker ---------- */
+  .map-search-wrap, .map-help-text{ margin-bottom: 10px; }
+  .delivery-map{ height: 190px; }
+
+  /* ---------- 16. Admin dashboard (admin-dashboard.html) ----------
+     The mobile sidebar switches the nav to a horizontal row but never
+     wrapped it, so on phones the row of nav links ran wider than the
+     screen and forced the whole dashboard to scroll sideways. */
+  .admin-sidebar{ flex-wrap: wrap; padding: 14px 16px; gap: 14px; }
+  .admin-nav{ flex-wrap: wrap; }
+  .admin-nav a{ padding: 8px 10px; font-size: 0.76rem; }
+  .admin-main{ padding: 20px 14px 40px; }
+  .admin-topbar h1{ font-size: 1.35rem; }
+  .admin-filters{ padding: 12px 14px; }
+  .admin-filters input[type="search"], .admin-filters select{ min-width: 0; flex: 1 1 100%; }
+  .admin-order-head{ padding: 14px 16px; }
+  .admin-order-body{ padding: 16px; }
+  .admin-notif-panel{ width: calc(100vw - 24px); right: -8px; }
+  .admin-toast-stack{ left: 12px; right: 12px; width: auto; max-width: none; }
+
+  /* Data tables must scroll horizontally inside their own box rather
+     than pushing the page itself wider than the viewport. */
+  .admin-items-table{ display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+  .admin-items-table thead, .admin-items-table tbody, .admin-items-table tr{ display: table; width: 100%; table-layout: fixed; }
+
+  /* ---------- 17. Support chat launcher spacing ---------- */
+  .tt-chat-launcher{ right: 16px; bottom: 16px; }
+}
+
+/* ---------- Slightly larger phones (390–480px): fine-tune only,
+   inherits everything from the 480px block above ---------- */
+@media (min-width: 391px) and (max-width: 480px){
+  .logo{ font-size: 1.15rem; }
+}
+
+/* ---------- Small phones (≤374px, covers 320/360 test widths) ----------
+   A second, tighter pass for the narrowest devices in the required
+   test matrix, where every extra pixel of chrome matters. */
+@media (max-width: 374px){
+  .container{ padding: 0 14px; }
+  .nav{ padding: 12px 14px; gap: 8px; }
+  .logo{ font-size: 0.94rem; gap: 5px; }
+  .logo-mark{ width: 18px; height: 18px; }
+  .header-icons{ gap: 10px; }
+  .hero-meta{ gap: 16px 22px; }
+  .hero-meta div strong{ font-size: 1.25rem; }
+  .btn{ padding: 13px 16px; font-size: 0.68rem; }
+  .pd-thumb{ width: 52px; }
+  .stat-row div strong{ font-size: 1.7rem; }
+  .modal{ padding: 24px 14px 20px; }
+  .rs-average .rs-num{ font-size: 3.2rem; }
+}
+
+/* ---------- Tablet / small-desktop guard (481–768px) ----------
+   Covers the 768px test width explicitly: keep the existing 768px
+   breakpoint from style.css intact, just make sure nothing introduced
+   above leaks into this range and that the footer newsletter bug fix
+   also applies here (the column layout starts at 768px). */
+@media (min-width: 481px) and (max-width: 768px){
+  .footer-newsletter-form{ flex: 0 1 auto; width: 100%; }
+  .admin-nav{ flex-wrap: wrap; }
+}

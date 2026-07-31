@@ -10,13 +10,17 @@
    ========================================================================== */
 
 /* ---------- 0. Global overflow safety net ----------
-   Belt-and-suspenders: nothing below should ever produce horizontal
-   overflow, but this guarantees no stray element can create a
-   page-wide horizontal scrollbar on any device. Only overflow-x is
-   touched (overflow-y is left alone) so position:sticky / fixed
-   elements keep working exactly as before. */
-html{ max-width: 100%; overflow-x: hidden; }
-body{ max-width: 100%; overflow-x: hidden; }
+   NOTE: this used to blanket-apply `overflow-x: hidden` to html/body as a
+   band-aid. That's been removed on purpose — it only hid the symptom (no
+   visible scrollbar) while leaving the actual overflow in place, which is
+   why position:fixed elements (WhatsApp button, chat launcher/window) could
+   still be reached by horizontal rubber-band scrolling on iOS even with the
+   hack in place. The real overflow source (the header/nav row not being
+   allowed to shrink below its content's intrinsic width) is fixed at the
+   source in style.css (`min-width: 0` on the nav flex chain) and the mobile
+   menu is now a proper off-canvas drawer instead of an inline block, so no
+   page-level overflow-x suppression is needed here any more. */
+html, body{ max-width: 100%; }
 
 /* Any image/video/iframe/table is not allowed to force page width */
 img, video, iframe, table, svg{ max-width: 100%; }
@@ -161,7 +165,7 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .admin-filters input[type="search"], .admin-filters select{ min-width: 0; flex: 1 1 100%; }
   .admin-order-head{ padding: 14px 16px; }
   .admin-order-body{ padding: 16px; }
-  .admin-notif-panel{ width: calc(100vw - 24px); right: -8px; }
+  .admin-notif-panel{ width: calc(100vw - 24px); right: 0; }
   .admin-toast-stack{ left: 12px; right: 12px; width: auto; max-width: none; }
 
   /* Data tables must scroll horizontally inside their own box rather

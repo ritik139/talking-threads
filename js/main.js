@@ -28,14 +28,63 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(link);
   })();
 
-  /* ---------- Mobile nav ---------- */
+  /* ---------- Mobile nav (left-side off-canvas drawer) ---------- */
   const menuToggle = document.querySelector('.menu-toggle');
   const mobilePanel = document.querySelector('.mobile-panel');
+  const siteHeader = document.querySelector('.site-header');
   if (menuToggle && mobilePanel) {
+    // Move the panel to be a direct child of <body>. It was nested inside
+    // .site-header, which has `backdrop-filter`; that property makes an
+    // element the containing block for its fixed-position descendants, so
+    // a fixed .mobile-panel left in place would be positioned/sized against
+    // the (short) header instead of the full viewport. Moving it out fixes
+    // that without touching any page's HTML structure.
+    document.body.appendChild(mobilePanel);
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'mobile-panel-backdrop';
+    document.body.appendChild(backdrop);
+
+    const setPanelTop = () => {
+      const headerBottom = siteHeader ? siteHeader.getBoundingClientRect().bottom : 0;
+      document.documentElement.style.setProperty('--mobile-panel-top', `${Math.max(headerBottom, 0)}px`);
+    };
+    setPanelTop();
+    window.addEventListener('resize', setPanelTop);
+
+    const closeMenu = () => {
+      menuToggle.classList.remove('open');
+      mobilePanel.classList.remove('open');
+      backdrop.classList.remove('open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('mobile-menu-open');
+      mobilePanel.setAttribute('inert', '');
+    };
+    const openMenu = () => {
+      setPanelTop();
+      menuToggle.classList.add('open');
+      mobilePanel.classList.add('open');
+      backdrop.classList.add('open');
+      menuToggle.setAttribute('aria-expanded', 'true');
+      document.body.classList.add('mobile-menu-open');
+      mobilePanel.removeAttribute('inert');
+    };
+
+    mobilePanel.setAttribute('inert', '');
+
     menuToggle.addEventListener('click', () => {
-      const isOpen = menuToggle.classList.toggle('open');
-      mobilePanel.classList.toggle('open');
-      menuToggle.setAttribute('aria-expanded', String(isOpen));
+      const isOpen = menuToggle.classList.contains('open');
+      isOpen ? closeMenu() : openMenu();
+    });
+    backdrop.addEventListener('click', closeMenu);
+    mobilePanel.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A') closeMenu();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menuToggle.classList.contains('open')) closeMenu();
+    });
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768 && menuToggle.classList.contains('open')) closeMenu();
     });
   }
 

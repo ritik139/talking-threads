@@ -1100,7 +1100,7 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   right: 26px;
   bottom: 100px; /* sits above .toast (bottom:30px) so the two never overlap */
   z-index: 150;
-  width: 58px; height: 58px;
+  width: 54px; height: 54px;
   border-radius: 50%;
   background: linear-gradient(150deg, var(--thread), var(--thread-dark));
   border: 1px solid var(--gold-soft);
@@ -1113,7 +1113,7 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   transform: translateY(-3px) scale(1.06);
   box-shadow: 0 14px 32px -8px rgba(33,28,21,0.5), 0 2px 8px rgba(33,28,21,0.25);
 }
-.wa-float svg{ width: 30px; height: 30px; fill: #fff; }
+.wa-float svg{ width: 27px; height: 27px; fill: #fff; }
 .wa-float::before{
   content: "";
   position: absolute; inset: 0;
@@ -1148,13 +1148,13 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   opacity: 1; visibility: visible;
 }
 @media (max-width: 768px){
-  .wa-float{ width: 52px; height: 52px; right: 18px; bottom: 88px; }
-  .wa-float svg{ width: 26px; height: 26px; }
+  .wa-float{ width: 48px; height: 48px; right: 18px; bottom: 88px; }
+  .wa-float svg{ width: 24px; height: 24px; }
   .wa-float-tooltip{ display: none; } /* no hover on touch devices */
 }
 @media (max-width: 480px){
-  .wa-float{ width: 48px; height: 48px; right: 14px; bottom: 80px; }
-  .wa-float svg{ width: 24px; height: 24px; }
+  .wa-float{ width: 44px; height: 44px; right: 14px; bottom: 80px; }
+  .wa-float svg{ width: 22px; height: 22px; }
 }
 @media (prefers-reduced-motion: reduce){
   .wa-float{ animation: none; }

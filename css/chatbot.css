@@ -275,3 +275,12 @@
   .tt-chat-launcher{ right: 18px; bottom: 18px; width: 44px; height: 44px; }
   .tt-chat-launcher svg{ width: 18px; height: 18px; }
 }
+
+/* The chat widget is appended directly to <body> (see js/chatbot.js), outside #page's
+   stacking context, so no z-index set inside a modal can ever render above it. Hide it
+   while the checkout modal is open so it can't visually or interactively cover the
+   delivery-location map/search box/locate button underneath. */
+body.checkout-open .tt-chat-launcher,
+body.checkout-open .tt-chat-window{
+  display: none;
+}

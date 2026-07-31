@@ -946,6 +946,10 @@ document.addEventListener('DOMContentLoaded', () => {
       hideCheckoutError();
       checkoutModal.classList.remove('is-hidden');
       checkoutModal.setAttribute('aria-hidden', 'false');
+      // Hide the floating chat widget while checkout is open — it's appended to <body>
+      // outside #page's stacking context, so it would otherwise render on top of and
+      // block clicks on the delivery-location map/search/locate controls.
+      document.body.classList.add('checkout-open');
       const firstField = document.getElementById('co-name');
       if (firstField) firstField.focus();
       document.addEventListener('keydown', onCheckoutKeydown);
@@ -954,6 +958,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!checkoutModal) return;
       checkoutModal.classList.add('is-hidden');
       checkoutModal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('checkout-open');
       document.removeEventListener('keydown', onCheckoutKeydown);
       if (lastFocusedEl && typeof lastFocusedEl.focus === 'function') lastFocusedEl.focus();
     }

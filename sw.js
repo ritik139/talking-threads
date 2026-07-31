@@ -17,7 +17,14 @@ self.addEventListener('install', () => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    // Safety net: this worker never creates a Cache Storage entry itself, but
+    // clear out any caches left behind by a previous worker version (or a
+    // future change) so stale assets can never be served from here.
+    caches.keys()
+      .then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {

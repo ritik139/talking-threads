@@ -109,10 +109,16 @@ JSON body as `token` if you'd rather use `Authorization: Bearer <token>` from a 
 | | `/api/wishlist/toggle` | POST | Private |
 | | `/api/wishlist/merge` | POST | Private |
 | | `/api/wishlist/:index` | DELETE | Private |
-| Orders | `/api/orders` | GET / POST | Private |
+| Orders | `/api/orders` | GET / POST (COD only — see Payments) | Private |
 | | `/api/orders/:id` | GET | Private |
+| | `/api/orders/:id/cancel` | PUT | Private (own) / Admin |
 | | `/api/orders/admin/all` | GET | Admin |
 | | `/api/orders/:id/status` | PUT | Admin |
+| | `/api/orders/:id/payment-status` | PUT | Admin |
+| Payments (Razorpay) | `/api/payments/razorpay/order` | POST — prices the cart, creates a pending `Order` + Razorpay order | Private |
+| | `/api/payments/razorpay/verify` | POST — verifies the payment signature, marks the order paid, clears the cart | Private |
+| | `/api/payments/razorpay/failed` | POST — records an abandoned/failed payment attempt | Private |
+| | `/api/payments/razorpay/webhook` | POST — Razorpay server-to-server confirmation (`X-Razorpay-Signature` header, no login) | Public |
 | Contact | `/api/contact` | POST | Public |
 | | `/api/contact` | GET | Admin |
 | | `/api/contact/:id` | PUT | Admin |
@@ -134,6 +140,42 @@ JSON body as `token` if you'd rather use `Authorization: Bearer <token>` from a 
 - Contact form submissions and newsletter sign-ups are saved (previously discarded)
 - Product search, category/price filtering, and pagination via query params
 - Centralized validation and error handling, security headers (helmet), and CORS/rate limiting
+
+## Payments (Razorpay)
+
+Cash on Delivery still goes straight through `POST /api/orders`, unchanged. "Pay Online" on
+`cart.html` now uses a real Razorpay Checkout flow instead of the old fake card/UPI/PayPal form
+fields, which were never sent to the server or actually verified:
+
+1. **`POST /api/payments/razorpay/order`** — re-prices the signed-in user's cart server-side,
+   creates an `Order` in Mongo with `paymentStatus: 'pending'`, creates a matching order via the
+   Razorpay API, and returns the Razorpay order id + a public `keyId` to the browser. The cart is
+   *not* cleared yet.
+2. The browser opens Razorpay's own Checkout widget (`checkout.razorpay.com/v1/checkout.js`,
+   loaded in `cart.html`) with that order id — card/UPI/netbanking details are entered directly
+   into Razorpay's hosted UI and never touch this server.
+3. **`POST /api/payments/razorpay/verify`** — on success, the widget's `handler` callback sends
+   Razorpay's `order_id` / `payment_id` / `signature` here. The server recomputes the HMAC-SHA256
+   signature using `RAZORPAY_KEY_SECRET` and only marks the order `paid` (and clears the cart) if
+   it matches — this is the step that actually proves the payment happened.
+4. **`POST /api/payments/razorpay/failed`** — called when the widget is closed without paying, or
+   its `payment.failed` event fires, so the order shows as `failed` in the admin dashboard instead
+   of sitting as `pending` indefinitely. The customer's cart is left untouched so they can retry.
+5. **`POST /api/payments/razorpay/webhook`** (optional but recommended) — a server-to-server
+   safety net in case the customer closes the tab right after paying, before step 3 can run.
+   Configure it at [dashboard.razorpay.com/app/webhooks](https://dashboard.razorpay.com/app/webhooks)
+   pointing at `https://<your-domain>/api/payments/razorpay/webhook`, subscribed to
+   `payment.captured`, and set `RAZORPAY_WEBHOOK_SECRET` in `.env`. Without it set, this route
+   just no-ops (returns 200) and you rely solely on step 3.
+
+**Setup:** add real `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` to `backend/.env` from
+[dashboard.razorpay.com/app/keys](https://dashboard.razorpay.com/app/keys) (start in **test mode**
+and use Razorpay's [test card/UPI numbers](https://razorpay.com/docs/payments/payments/test-card-upi-details/)
+before switching to live keys), then `npm install` in `backend/` to pull in the new `razorpay` package.
+
+`Order.paymentMethod` now includes `'razorpay'` (`'card'`/`'upi'`/`'paypal'` are kept only so any
+pre-existing rows with those values still validate) and `Order.paymentStatus` gained a `'failed'`
+value. Paid orders store the Razorpay order/payment id and signature under `order.razorpay`.
 
 ## Notes / next steps
 

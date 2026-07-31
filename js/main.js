@@ -152,19 +152,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (guestCart.length) await apiRequest('/cart/merge', { method: 'POST', body: JSON.stringify({ items: guestCart }) });
         if (guestWishlist.length) await apiRequest('/wishlist/merge', { method: 'POST', body: JSON.stringify({ items: guestWishlist }) });
       } catch (e) { /* best-effort merge */ }
-      await Auth.pullServerState();
+      await Auth.pullServerState(true);
     },
 
-    // Replaces localStorage cart/wishlist with the server's copy — used after login/register
-    // and again on every page load while signed in, so state stays in sync across devices.
-    async pullServerState() {
+    // Pulls the server's cart/wishlist and uses them to FILL IN local state — used after
+    // login/register (forceOverwrite=true, since a merge just happened and the server
+    // copy is authoritative) and again on every page load while signed in, for cross-device
+    // sync (forceOverwrite=false).
+    //
+    // IMPORTANT: on plain page loads (forceOverwrite=false) this must never overwrite a
+    // non-empty local cart/wishlist. Add to Cart writes to localStorage immediately and
+    // only *afterwards* fires a best-effort POST to persist it to the DB in the background.
+    // If the very next page load's GET here resolved before that POST finished saving,
+    // blindly overwriting localStorage with the (still-stale) server copy would erase the
+    // item the person just added — which was exactly the "item added, but Cart page shows
+    // empty" bug. Only pulling into an *empty* local cart avoids that race entirely, while
+    // still doing real cross-device sync for a fresh session.
+    async pullServerState(forceOverwrite = false) {
       try {
         const [cartData, wishlistData] = await Promise.all([
           apiRequest('/cart'),
           apiRequest('/wishlist')
         ]);
-        Store.setCart(cartData.cart || []);
-        Store.setWishlist(wishlistData.wishlist || []);
+        if (forceOverwrite || Store.getCart().length === 0) Store.setCart(cartData.cart || []);
+        if (forceOverwrite || Store.getWishlist().length === 0) Store.setWishlist(wishlistData.wishlist || []);
       } catch (e) { /* if this fails (e.g. session expired) just keep local state */ }
     }
   };
@@ -198,20 +209,29 @@ document.addEventListener('DOMContentLoaded', () => {
       cart.push(Object.assign({ id: genId('ci') }, item));
       Store.setCart(cart);
       if (Auth.isLoggedIn()) {
-        apiRequest('/cart', { method: 'POST', body: JSON.stringify(item) }).catch(() => {});
+        // keepalive: true lets this request finish in the background even if the user
+        // immediately navigates away (e.g. clicking the cart icon right after adding).
+        // Without it, the browser cancels in-flight fetches on page unload — so the
+        // item never actually reaches the server, and the very next page load's
+        // Auth.pullServerState() (which GETs the server cart and overwrites localStorage
+        // with it) wipes out the item that had just been added. This was the root cause
+        // of "item added, but Cart page shows empty".
+        apiRequest('/cart', { method: 'POST', body: JSON.stringify(item), keepalive: true }).catch(() => {});
       }
     },
     removeFromCart(id) {
       Store.setCart(Store.getCart().filter(i => i.id !== id));
       if (Auth.isLoggedIn()) {
-        apiRequest('/cart/' + encodeURIComponent(id), { method: 'DELETE' }).catch(() => {});
+        // Same navigation-cancellation risk as addToCart above.
+        apiRequest('/cart/' + encodeURIComponent(id), { method: 'DELETE', keepalive: true }).catch(() => {});
       }
     },
     updateCartQty(id, qty) {
       const cart = Store.getCart().map(i => i.id === id ? Object.assign({}, i, { qty: Math.max(1, qty) }) : i);
       Store.setCart(cart);
       if (Auth.isLoggedIn()) {
-        apiRequest('/cart/' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ qty: Math.max(1, qty) }) }).catch(() => {});
+        // Same navigation-cancellation risk as addToCart above.
+        apiRequest('/cart/' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ qty: Math.max(1, qty) }), keepalive: true }).catch(() => {});
       }
     },
 
@@ -229,7 +249,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       Store.setWishlist(wl);
       if (Auth.isLoggedIn()) {
-        apiRequest('/wishlist/toggle', { method: 'POST', body: JSON.stringify(itemForApi) }).catch(() => {});
+        // Same navigation-cancellation risk as the cart mutators above — keepalive lets
+        // this finish even if the person navigates to wishlist.html right after toggling.
+        apiRequest('/wishlist/toggle', { method: 'POST', body: JSON.stringify(itemForApi), keepalive: true }).catch(() => {});
       }
       return !exists;
     },
@@ -906,20 +928,121 @@ document.addEventListener('DOMContentLoaded', () => {
       checkoutModal.addEventListener('click', (e) => { if (e.target === checkoutModal) closeCheckoutModal(); });
     }
 
-    /* Show the matching payment-detail fields for whichever method is selected.
-       Card/UPI fields are for UX parity only — see the submit handler below for why
-       their values are never sent to the server. */
+    /* Show the Razorpay note only when that method is selected. */
     const paymentRadios = checkoutForm ? checkoutForm.querySelectorAll('input[name="paymentMethod"]') : [];
     function syncPaymentFields() {
       const selected = checkoutForm.querySelector('input[name="paymentMethod"]:checked');
       const method = selected ? selected.value : 'cod';
-      const pfCard = document.getElementById('pf-card');
-      const pfUpi = document.getElementById('pf-upi');
-      if (pfCard) pfCard.style.display = method === 'card' ? 'grid' : 'none';
-      if (pfUpi) pfUpi.style.display = method === 'upi' ? 'block' : 'none';
+      const pfRazorpay = document.getElementById('pf-razorpay-note');
+      if (pfRazorpay) pfRazorpay.style.display = method === 'razorpay' ? 'block' : 'none';
     }
     paymentRadios.forEach((r) => r.addEventListener('change', syncPaymentFields));
     if (checkoutForm) syncPaymentFields();
+
+    function escapeHtml(str) {
+      return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function renderOrderConfirmation(message, order) {
+      Store.setCart([]);
+      closeCheckoutModal();
+
+      const layout = document.getElementById('cartLayout');
+      const emptyState = document.getElementById('cartEmpty');
+      if (layout) layout.style.display = 'none';
+      if (emptyState) emptyState.style.display = 'none';
+      if (orderConfirmation) {
+        orderConfirmation.classList.remove('is-hidden');
+        orderConfirmation.style.display = 'block';
+        if (ocSummary) ocSummary.textContent = message || `Order ${order.orderNumber} placed successfully.`;
+        if (ocDetails) {
+          const pinnedAddress = order.shippingAddress && order.shippingAddress.formattedAddress;
+          ocDetails.innerHTML = `
+            <div class="summary-row"><span>Order Number</span><span>${order.orderNumber}</span></div>
+            <div class="summary-row"><span>Payment Method</span><span>${(order.paymentMethod || 'cod').toUpperCase()}</span></div>
+            <div class="summary-row total"><span>Total</span><span>&#8377;${Number(order.total || 0).toLocaleString('en-IN')}</span></div>
+            ${pinnedAddress ? `<div class="summary-row"><span>Delivering To</span><span>${escapeHtml(pinnedAddress)}</span></div>` : ''}
+          `;
+        }
+      }
+      showToast('Your order has been placed successfully!');
+      checkoutForm.reset();
+    }
+
+    // Opens Razorpay's own Checkout widget (loaded via checkout.razorpay.com/v1/checkout.js
+    // in cart.html) for the order the server just created, then verifies the result with
+    // the backend before treating anything as paid.
+    function openRazorpayCheckout(paymentInit, shippingAddress) {
+      if (typeof Razorpay === 'undefined') {
+        showCheckoutError('Payment could not start — please refresh the page and try again.');
+        placeOrderBtn.textContent = 'Place Order';
+        placeOrderBtn.disabled = false;
+        return;
+      }
+
+      const user = Auth.getUser();
+      const rzp = new Razorpay({
+        key: paymentInit.keyId,
+        amount: paymentInit.amount,
+        currency: paymentInit.currency,
+        name: 'Talking-Thread',
+        description: `Order ${paymentInit.orderNumber}`,
+        order_id: paymentInit.razorpayOrderId,
+        prefill: {
+          name: shippingAddress.fullName,
+          email: user && user.email ? user.email : undefined,
+          contact: shippingAddress.phone
+        },
+        theme: { color: '#8B2E3A' },
+        handler: async function onSuccess(response) {
+          placeOrderBtn.textContent = 'Verifying payment…';
+          try {
+            const verifyData = await apiRequest('/payments/razorpay/verify', {
+              method: 'POST',
+              body: JSON.stringify({
+                orderId: paymentInit.orderId,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature
+              })
+            });
+            renderOrderConfirmation(verifyData.message, verifyData.order);
+          } catch (err) {
+            showCheckoutError(err.message || 'We received your payment but could not verify it — please contact us with your order number before retrying.');
+          } finally {
+            placeOrderBtn.textContent = 'Place Order';
+            placeOrderBtn.disabled = false;
+          }
+        },
+        modal: {
+          // Fires when the customer closes the widget without paying (or it errors out) —
+          // mark the attempt as failed so it doesn't sit as "pending" forever, and let them try again.
+          ondismiss: function onDismiss() {
+            apiRequest('/payments/razorpay/failed', {
+              method: 'POST',
+              body: JSON.stringify({ orderId: paymentInit.orderId, reason: 'Checkout closed before payment completed' })
+            }).catch(() => {});
+            placeOrderBtn.textContent = 'Place Order';
+            placeOrderBtn.disabled = false;
+          }
+        }
+      });
+
+      rzp.on('payment.failed', function onFailed(response) {
+        const reason = response && response.error ? response.error.description : 'Payment failed';
+        apiRequest('/payments/razorpay/failed', {
+          method: 'POST',
+          body: JSON.stringify({ orderId: paymentInit.orderId, reason })
+        }).catch(() => {});
+        showCheckoutError(reason || 'Payment failed — please try again.');
+        placeOrderBtn.textContent = 'Place Order';
+        placeOrderBtn.disabled = false;
+      });
+
+      rzp.open();
+    }
 
     if (checkoutForm) {
       checkoutForm.addEventListener('submit', async (e) => {
@@ -932,6 +1055,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const selectedPayment = checkoutForm.querySelector('input[name="paymentMethod"]:checked');
+        const paymentMethod = selectedPayment ? selectedPayment.value : 'cod';
+        // co-lat / co-lng / co-formatted-address are hidden fields populated by the Leaflet/OSM
+        // delivery-location picker (js/delivery-map.js) when the shopper searches, uses their
+        // current location, or clicks/drags the pin. They stay empty — and are simply omitted
+        // here — if the picker isn't used, so this never blocks checkout on its own.
+        const latEl = document.getElementById('co-lat');
+        const lngEl = document.getElementById('co-lng');
+        const formattedAddressEl = document.getElementById('co-formatted-address');
+
         const shippingAddress = {
           fullName: document.getElementById('co-name').value.trim(),
           phone: document.getElementById('co-phone').value.trim(),
@@ -942,49 +1074,42 @@ document.addEventListener('DOMContentLoaded', () => {
           postalCode: document.getElementById('co-postal').value.trim(),
           country: document.getElementById('co-country').value.trim()
         };
+        if (latEl && lngEl && latEl.value && lngEl.value) {
+          shippingAddress.latitude = parseFloat(latEl.value);
+          shippingAddress.longitude = parseFloat(lngEl.value);
+        }
+        if (formattedAddressEl && formattedAddressEl.value) {
+          shippingAddress.formattedAddress = formattedAddressEl.value;
+        }
         const notes = document.getElementById('co-notes').value.trim();
-        // Deliberately not sent to the backend: this isn't a PCI-compliant payment
-        // processor, and the Order model doesn't store raw card/UPI details — the
-        // fields above exist only so the checkout UI matches the chosen method.
 
         const originalLabel = placeOrderBtn.textContent;
-        placeOrderBtn.textContent = 'Placing order…';
         placeOrderBtn.disabled = true;
 
         try {
+          if (paymentMethod === 'razorpay') {
+            placeOrderBtn.textContent = 'Starting payment…';
+            const paymentInit = await apiRequest('/payments/razorpay/order', {
+              method: 'POST',
+              body: JSON.stringify({ shippingAddress, notes })
+            });
+            // Leave the button disabled/labelled while the Razorpay widget is open;
+            // its own handler/ondismiss callbacks above re-enable it.
+            placeOrderBtn.textContent = 'Waiting for payment…';
+            openRazorpayCheckout(paymentInit, shippingAddress);
+            return;
+          }
+
+          placeOrderBtn.textContent = 'Placing order…';
           const data = await apiRequest('/orders', {
             method: 'POST',
-            body: JSON.stringify({
-              shippingAddress,
-              paymentMethod: selectedPayment ? selectedPayment.value : 'cod',
-              notes
-            })
+            body: JSON.stringify({ shippingAddress, paymentMethod, notes })
           });
-
-          Store.setCart([]);
-          closeCheckoutModal();
-
-          const layout = document.getElementById('cartLayout');
-          const emptyState = document.getElementById('cartEmpty');
-          if (layout) layout.style.display = 'none';
-          if (emptyState) emptyState.style.display = 'none';
-          if (orderConfirmation) {
-            orderConfirmation.classList.remove('is-hidden');
-            orderConfirmation.style.display = 'block';
-            if (ocSummary) ocSummary.textContent = data.message || `Order ${data.order.orderNumber} placed successfully.`;
-            if (ocDetails) {
-              ocDetails.innerHTML = `
-                <div class="summary-row"><span>Order Number</span><span>${data.order.orderNumber}</span></div>
-                <div class="summary-row"><span>Payment Method</span><span>${(data.order.paymentMethod || 'cod').toUpperCase()}</span></div>
-                <div class="summary-row total"><span>Total</span><span>&#8377;${Number(data.order.total || 0).toLocaleString('en-IN')}</span></div>
-              `;
-            }
-          }
-          showToast('Your order has been placed successfully!');
-          checkoutForm.reset();
+          renderOrderConfirmation(data.message, data.order);
+          placeOrderBtn.textContent = originalLabel;
+          placeOrderBtn.disabled = false;
         } catch (err) {
           showCheckoutError(err.message || 'Could not place your order — please try again.');
-        } finally {
           placeOrderBtn.textContent = originalLabel;
           placeOrderBtn.disabled = false;
         }
@@ -1036,7 +1161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         el.querySelector('[data-act="remove"]').addEventListener('click', (e) => {
           e.stopPropagation();
           Store.setWishlist(Store.getWishlist().filter((i) => i.id !== item.id));
-          if (Auth.isLoggedIn()) apiRequest('/wishlist/' + encodeURIComponent(item.id), { method: 'DELETE' }).catch(() => {});
+          if (Auth.isLoggedIn()) apiRequest('/wishlist/' + encodeURIComponent(item.id), { method: 'DELETE', keepalive: true }).catch(() => {});
           render();
           showToast('Removed from wishlist');
         });
@@ -1044,7 +1169,7 @@ document.addEventListener('DOMContentLoaded', () => {
           e.stopPropagation();
           Store.addToCart({ name: item.name, price: item.price, img: item.img || '', size: 'Medium', color: 'Antique Gold', text: '—', qty: 1 });
           Store.setWishlist(Store.getWishlist().filter((i) => i.id !== item.id));
-          if (Auth.isLoggedIn()) apiRequest('/wishlist/' + encodeURIComponent(item.id), { method: 'DELETE' }).catch(() => {});
+          if (Auth.isLoggedIn()) apiRequest('/wishlist/' + encodeURIComponent(item.id), { method: 'DELETE', keepalive: true }).catch(() => {});
           render();
           showToast('Moved to your bag');
         });

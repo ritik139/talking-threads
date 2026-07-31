@@ -3,6 +3,7 @@ const ApiError = require('../utils/ApiError');
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const Notification = require('../models/Notification');
 const { sendNewOrderEmail } = require('../utils/mailer');
 
 function generateOrderNumber() {
@@ -12,26 +13,14 @@ function generateOrderNumber() {
 
 const REQUIRED_ADDRESS_FIELDS = ['fullName', 'phone', 'line1', 'city', 'state', 'postalCode', 'country'];
 
-// @desc   Checkout — turns the current cart into an order (the "Checkout" button on cart.html)
-// @route  POST /api/orders
-// @access Private
-exports.createOrder = asyncHandler(async (req, res) => {
-  const { shippingAddress, paymentMethod, notes } = req.body;
-
-  // The checkout form on cart.html marks every one of these as required — enforce that
-  // server-side too, since this is the only thing standing between us and an order with
-  // nowhere to ship it.
-  const missing = REQUIRED_ADDRESS_FIELDS.filter((f) => !shippingAddress || !String(shippingAddress[f] || '').trim());
-  if (missing.length) {
-    throw new ApiError(400, `Please provide your shipping ${missing.join(', ')}.`);
-  }
-
-  const cart = await Cart.findOne({ user: req.user._id });
+// Shared by createOrder (COD) and paymentController.createRazorpayOrder (online payment) —
+// re-prices every cart line against the live Product record instead of trusting whatever
+// price is sitting in the cart, since the cart's stored price is client-supplied (see
+// cartController.addToCart) and must never be treated as authoritative at checkout.
+async function pricedItemsFromCart(userId) {
+  const cart = await Cart.findOne({ user: userId });
   if (!cart || !cart.items.length) throw new ApiError(400, 'Your bag is empty.');
 
-  // Re-price every line against the live Product record instead of trusting whatever
-  // price is sitting in the cart — the cart's stored price is client-supplied (see
-  // cartController.addToCart) and must never be treated as authoritative at checkout.
   const productIds = cart.items.filter((i) => i.product).map((i) => i.product);
   const products = productIds.length ? await Product.find({ _id: { $in: productIds } }) : [];
   const productById = new Map(products.map((p) => [p._id.toString(), p]));
@@ -68,6 +57,93 @@ exports.createOrder = asyncHandler(async (req, res) => {
   const shipping = subtotal > 5000 || subtotal === 0 ? 0 : 150;
   const total = subtotal + shipping;
 
+  return { cart, orderItems, subtotal, shipping, total };
+}
+
+function assertValidShippingAddress(shippingAddress) {
+  const missing = REQUIRED_ADDRESS_FIELDS.filter((f) => !shippingAddress || !String(shippingAddress[f] || '').trim());
+  if (missing.length) {
+    throw new ApiError(400, `Please provide your shipping ${missing.join(', ')}.`);
+  }
+}
+
+// Notifies the studio (email) and the admin dashboard (Socket.IO "new-order" event) that an
+// order is ready to be fulfilled. Shared by createOrder (COD — fires immediately) and
+// paymentController (Razorpay — fires only once payment is verified, so the admin dashboard
+// never shows an order that was never actually paid for).
+function notifyNewOrder(io, order, customer) {
+  sendNewOrderEmail({
+    order,
+    customerName: customer.name,
+    customerEmail: customer.email
+  }).catch((err) => {
+    console.error(`New order email failed for ${order.orderNumber}:`, err.message);
+  });
+
+  // ROOT CAUSE FIX: the admin dashboard's notification bell used to exist only as an
+  // in-memory array (notifLog in js/admin.js), built up purely from live 'new-order' socket
+  // events. That's why it worked when the dashboard was already open, but showed nothing
+  // for anyone who opened/reloaded the dashboard even a few seconds after the order came
+  // in — there was nothing anywhere to load. Persisting one row per order here means
+  // GET /api/notifications (see notificationController.js) can hand the dashboard its
+  // recent/unread notifications on load, regardless of when it's opened. Fire-and-forget,
+  // same as the email above — a failed write here must never block checkout.
+  try {
+    Notification.create({
+      order: order._id,
+      orderNumber: order.orderNumber,
+      customer: { name: customer.name, email: customer.email, phone: order.shippingAddress.phone },
+      total: order.total,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus
+    }).catch((err) => {
+      console.error(`Failed to persist notification for ${order.orderNumber}:`, err.message);
+    });
+  } catch (err) {
+    // Belt-and-braces: the .catch() above only guards a *rejected* promise. If
+    // Notification.create() throws synchronously instead (e.g. the model failed to load
+    // correctly), this still must never take checkout down with it.
+    console.error(`Failed to persist notification for ${order.orderNumber}:`, err.message);
+  }
+
+  if (io) {
+    io.to('admins').emit('new-order', {
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      customer: { name: customer.name, email: customer.email, phone: order.shippingAddress.phone },
+      shippingAddress: order.shippingAddress,
+      items: order.items,
+      subtotal: order.subtotal,
+      shipping: order.shipping,
+      total: order.total,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus,
+      createdAt: order.createdAt
+    });
+  }
+}
+
+// @desc   Checkout — turns the current cart into an order (the "Checkout" button on cart.html)
+// @route  POST /api/orders
+// @access Private
+exports.createOrder = asyncHandler(async (req, res) => {
+  const { shippingAddress, paymentMethod, notes } = req.body;
+
+  // The checkout form on cart.html marks every one of these as required — enforce that
+  // server-side too, since this is the only thing standing between us and an order with
+  // nowhere to ship it.
+  assertValidShippingAddress(shippingAddress);
+
+  // Online payment must go through the Razorpay flow (POST /api/payments/razorpay/order →
+  // verify), which actually confirms money changed hands before marking anything "paid".
+  // This endpoint no longer accepts 'razorpay' directly so a client can never talk itself
+  // into a free "paid" order the way the old card/upi/paypal placeholder used to allow.
+  if (paymentMethod === 'razorpay') {
+    throw new ApiError(400, 'Please use the Razorpay checkout to pay online.');
+  }
+
+  const { cart, orderItems, subtotal, shipping, total } = await pricedItemsFromCart(req.user._id);
+
   const order = await Order.create({
     orderNumber: generateOrderNumber(),
     user: req.user._id,
@@ -84,34 +160,9 @@ exports.createOrder = asyncHandler(async (req, res) => {
   cart.items = [];
   await cart.save();
 
-  // Notify the studio inbox that a new order came in. The order is already saved and the
-  // cart already cleared, so a failed/slow email must never fail the checkout — just log it.
-  sendNewOrderEmail({
-    order,
-    customerName: req.user.name,
-    customerEmail: req.user.email
-  }).catch((err) => {
-    console.error(`New order email failed for ${order.orderNumber}:`, err.message);
-  });
-
-  // Push the order straight into the admin dashboard in real time (see server.js, and
-  // admin.js's initRealtimeNotifications, which is already listening for this event).
-  const io = req.app.get('io');
-  if (io) {
-    io.to('admins').emit('new-order', {
-      orderId: order._id,
-      orderNumber: order.orderNumber,
-      customer: { name: req.user.name, email: req.user.email, phone: shippingAddress.phone },
-      shippingAddress: order.shippingAddress,
-      items: order.items,
-      subtotal: order.subtotal,
-      shipping: order.shipping,
-      total: order.total,
-      paymentMethod: order.paymentMethod,
-      paymentStatus: order.paymentStatus,
-      createdAt: order.createdAt
-    });
-  }
+  // Notify the studio inbox + admin dashboard that a new order came in. The order is already
+  // saved and the cart already cleared, so a failed/slow email must never fail the checkout.
+  notifyNewOrder(req.app.get('io'), order, { name: req.user.name, email: req.user.email });
 
   res.status(201).json({
     success: true,
@@ -185,3 +236,10 @@ exports.cancelOrder = asyncHandler(async (req, res) => {
   await order.save();
   res.json({ success: true, message: 'Your order has been cancelled.', order });
 });
+
+// Reused by paymentController.js for the Razorpay checkout flow.
+exports.generateOrderNumber = generateOrderNumber;
+exports.pricedItemsFromCart = pricedItemsFromCart;
+exports.assertValidShippingAddress = assertValidShippingAddress;
+exports.notifyNewOrder = notifyNewOrder;
+exports.REQUIRED_ADDRESS_FIELDS = REQUIRED_ADDRESS_FIELDS;

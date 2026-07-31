@@ -76,6 +76,16 @@
     } catch (e) { return ''; }
   }
 
+  // Renders a link to the customer's pinned delivery location, when one exists (i.e. they
+  // used the map picker on cart.html — see js/delivery-map.js). Uses OpenStreetMap, not
+  // Google Maps, to stay consistent with the rest of the map-related functionality.
+  function mapLink(addr) {
+    if (!addr || typeof addr.latitude !== 'number' || typeof addr.longitude !== 'number') return '';
+    const lat = addr.latitude, lng = addr.longitude;
+    const href = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`;
+    return `<p class="admin-map-link"><a href="${href}" target="_blank" rel="noopener noreferrer">View pinned location on map &rarr;</a></p>`;
+  }
+
   function addressLines(addr) {
     if (!addr) return 'No shipping address on file.';
     const parts = [addr.line1, addr.line2, [addr.city, addr.state].filter(Boolean).join(', '), addr.postalCode, addr.country]
@@ -131,6 +141,7 @@
           <div class="admin-block">
             <h4>Shipping Address</h4>
             <p>${addressLines(order.shippingAddress)}</p>
+            ${mapLink(order.shippingAddress)}
           </div>
         </div>
 
@@ -153,6 +164,7 @@
             <h4>Payment</h4>
             <p>Method: ${(order.paymentMethod || 'cod').toUpperCase()}</p>
             <p>Status: ${paymentStatus}</p>
+            ${order.razorpay && order.razorpay.paymentId ? `<p>Razorpay Payment ID: ${escapeAdminHtml(order.razorpay.paymentId)}</p>` : ''}
           </div>
         </div>
 
@@ -167,7 +179,7 @@
           <div>
             <label for="pay-${order._id}">Payment Status</label>
             <select id="pay-${order._id}" data-act="update-payment">
-              ${['pending', 'paid', 'refunded']
+              ${['pending', 'paid', 'failed', 'refunded']
                 .map(s => `<option value="${s}" ${s === paymentStatus ? 'selected' : ''}>${s}</option>`).join('')}
             </select>
           </div>
@@ -410,6 +422,23 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  function createNotifItemEl(payload) {
+    const item = document.createElement('div');
+    item.className = 'admin-notif-item';
+    item.innerHTML = `
+      <div class="n-title">${escapeAdminHtml(payload.orderNumber)} — ${escapeAdminHtml((payload.customer && payload.customer.name) || 'Customer')}</div>
+      <div class="n-meta">₹${Number(payload.total).toLocaleString('en-IN')} · ${escapeAdminHtml((payload.customer && payload.customer.phone) || 'no phone')}</div>
+      <div class="n-time">${formatDateTime(payload.createdAt)}</div>
+    `;
+    item.addEventListener('click', () => {
+      notifPanel.classList.remove('is-open');
+      notifBell.setAttribute('aria-expanded', 'false');
+      const card = ordersList.querySelector(`[data-order-id="${payload.orderId}"]`);
+      if (card) { card.classList.add('open'); card.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    });
+    return item;
+  }
+
   function addToNotifLog(payload) {
     notifLog.unshift(payload);
     unreadCount += 1;
@@ -418,21 +447,34 @@
     if (notifList) {
       const empty = notifList.querySelector('.admin-notif-empty');
       if (empty) empty.remove();
+      notifList.prepend(createNotifItemEl(payload));
+    }
+  }
 
-      const item = document.createElement('div');
-      item.className = 'admin-notif-item';
-      item.innerHTML = `
-        <div class="n-title">${escapeAdminHtml(payload.orderNumber)} — ${escapeAdminHtml(payload.customer.name || 'Customer')}</div>
-        <div class="n-meta">₹${Number(payload.total).toLocaleString('en-IN')} · ${escapeAdminHtml(payload.customer.phone || 'no phone')}</div>
-        <div class="n-time">${formatDateTime(payload.createdAt)}</div>
-      `;
-      item.addEventListener('click', () => {
-        notifPanel.classList.remove('is-open');
-        notifBell.setAttribute('aria-expanded', 'false');
-        const card = ordersList.querySelector(`[data-order-id="${payload.orderId}"]`);
-        if (card) { card.classList.add('open'); card.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-      });
-      notifList.prepend(item);
+  // Bulk-renders notification history fetched from the server (already newest-first) —
+  // see loadPersistedNotifications() below. Unlike addToNotifLog, this doesn't touch
+  // unreadCount itself: the server's own unreadCount (from GET /api/notifications) is the
+  // source of truth for the badge, since "read" state is now persisted, not per-tab.
+  function renderNotifHistory(payloads) {
+    if (!notifList || !payloads.length) return;
+    const empty = notifList.querySelector('.admin-notif-empty');
+    if (empty) empty.remove();
+    notifLog.push(...payloads);
+    payloads.forEach((payload) => notifList.appendChild(createNotifItemEl(payload)));
+  }
+
+  // Loads recent notifications from the server so the bell/panel reflect orders placed
+  // before this dashboard tab was opened — previously notifLog only ever held whatever
+  // arrived over the live socket connection while the tab was already open, so anything
+  // that happened first was invisible. See backend/controllers/notificationController.js.
+  async function loadPersistedNotifications() {
+    try {
+      const data = await apiRequest('/notifications');
+      renderNotifHistory(data.notifications || []);
+      unreadCount = data.unreadCount || 0;
+      updateBadge();
+    } catch (err) {
+      console.warn('Could not load notification history.', err);
     }
   }
 
@@ -461,6 +503,11 @@
     // worker is already active by the time a notification needs to be shown.
     ensureServiceWorker();
 
+    // Restore notification history/unread count from the server BEFORE wiring up the live
+    // socket connection below, so a notification that arrives seconds after this call
+    // still gets prepended above the historical list rather than raced/duplicated.
+    loadPersistedNotifications();
+
     if (typeof io !== 'function') {
       console.warn('Socket.IO client not loaded — real-time notifications are disabled, but the dashboard still works normally.');
       return;
@@ -487,7 +534,14 @@
         }
         const isOpen = notifPanel.classList.toggle('is-open');
         notifBell.setAttribute('aria-expanded', String(isOpen));
-        if (isOpen) { unreadCount = 0; updateBadge(); }
+        if (isOpen && unreadCount > 0) {
+          unreadCount = 0;
+          updateBadge();
+          // Persist the read state so it stays cleared the next time the dashboard is
+          // opened/reloaded, instead of every unread notification "coming back" (this was
+          // the same underlying gap as the missing notifications themselves).
+          apiRequest('/notifications/mark-read', { method: 'PUT', body: JSON.stringify({}) }).catch(() => {});
+        }
       });
       document.addEventListener('click', (e) => {
         if (!notifPanel.contains(e.target) && e.target !== notifBell) {

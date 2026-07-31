@@ -30,10 +30,25 @@ const orderSchema = new mongoose.Schema(
       state: String,
       postalCode: String,
       country: String,
-      phone: String
+      phone: String,
+      // Populated when the customer pins their delivery location on the Leaflet/OSM map in
+      // the checkout modal (see js/delivery-map.js). All optional — orders placed without
+      // using the map picker simply omit these, so this never blocks checkout.
+      latitude: { type: Number, default: null },
+      longitude: { type: Number, default: null },
+      formattedAddress: { type: String, default: '' }
     },
-    paymentMethod: { type: String, enum: ['cod', 'card', 'upi', 'paypal'], default: 'cod' },
-    paymentStatus: { type: String, enum: ['pending', 'paid', 'refunded'], default: 'pending' },
+    // 'card' / 'upi' / 'paypal' are kept only so any pre-existing orders with those values
+    // still validate — the checkout UI now only ever sends 'cod' or 'razorpay'.
+    paymentMethod: { type: String, enum: ['cod', 'card', 'upi', 'paypal', 'razorpay'], default: 'cod' },
+    paymentStatus: { type: String, enum: ['pending', 'paid', 'failed', 'refunded'], default: 'pending' },
+    // Populated once a Razorpay order is created for this order, and again once that
+    // payment is verified (see backend/controllers/paymentController.js).
+    razorpay: {
+      orderId: { type: String, default: null, index: true },
+      paymentId: { type: String, default: null },
+      signature: { type: String, default: null }
+    },
     status: {
       type: String,
       enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],

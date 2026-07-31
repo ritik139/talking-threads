@@ -111,6 +111,7 @@
 .admin-badge.pay-pending{ border-color: var(--gold-soft); color: var(--ink); }
 .admin-badge.pay-paid{ border-color: var(--sage); color: var(--sage); }
 .admin-badge.pay-refunded{ border-color: var(--thread); color: var(--thread); }
+.admin-badge.pay-failed{ border-color: #b3413a; color: #b3413a; }
 
 .admin-order-total{ font-size: 0.95rem; white-space: nowrap; }
 

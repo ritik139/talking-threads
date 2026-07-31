@@ -20,7 +20,7 @@ router.put(
 );
 router.put(
   '/:id/payment-status',
-  [body('paymentStatus').isIn(['pending', 'paid', 'refunded']).withMessage('Invalid payment status')],
+  [body('paymentStatus').isIn(['pending', 'paid', 'failed', 'refunded']).withMessage('Invalid payment status')],
   validate,
   ctrl.updatePaymentStatus
 );

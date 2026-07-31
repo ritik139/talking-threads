@@ -20,6 +20,8 @@ const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const newsletterRoutes = require('./routes/newsletterRoutes');
 const journalRoutes = require('./routes/journalRoutes');
@@ -91,7 +93,14 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: '1mb' }));
+// `verify` stashes the exact raw bytes of the body on req.rawBody — needed only by the
+// Razorpay webhook (backend/controllers/paymentController.js#razorpayWebhook), which must
+// HMAC the *raw* JSON to check X-Razorpay-Signature; re-serializing the parsed object can
+// produce different bytes (key order, spacing) and would make a legitimate webhook fail.
+app.use(express.json({
+  limit: '1mb',
+  verify: (req, res, buf) => { req.rawBody = buf; }
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -125,6 +134,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/journal', journalRoutes);

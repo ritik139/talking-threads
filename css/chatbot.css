@@ -122,6 +122,7 @@
   inset: -9px;
 }
 .tt-chat-close:hover{ opacity: 1; }
+.tt-chat-close:focus-visible{ opacity: 1; outline: 2px solid var(--gold); outline-offset: 2px; }
 .tt-chat-close svg{ width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.6; }
 
 .tt-chat-body{
@@ -225,7 +226,8 @@
   color: var(--ink);
   border-radius: 2px;
 }
-.tt-chat-form input:focus{ outline: none; border-color: var(--tt-accent); }
+.tt-chat-form input:focus{ border-color: var(--tt-accent); }
+.tt-chat-form input:focus:not(:focus-visible){ outline: none; }
 .tt-chat-form input::placeholder{ color: var(--ink-faint); }
 .tt-chat-form button{
   position: relative;

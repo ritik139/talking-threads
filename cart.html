@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shopping Bag — Talking-Thread</title>
 <meta name="description" content="Review the pieces in your Talking-Thread bag.">
-<link rel="canonical" href="https://www.talking-thread.com/cart.html">
+<link rel="canonical" href="https://talking-threads.onrender.com/cart.html">
 <meta name="robots" content="noindex, follow">
 <meta name="author" content="Talking-Thread">
 <meta name="theme-color" content="#8B2E3A">
@@ -15,8 +15,8 @@
 <meta property="og:site_name" content="Talking-Thread">
 <meta property="og:title" content="Shopping Bag — Talking-Thread">
 <meta property="og:description" content="Review the pieces in your Talking-Thread bag.">
-<meta property="og:url" content="https://www.talking-thread.com/cart.html">
-<meta property="og:image" content="https://www.talking-thread.com/images/og-cover.jpg">
+<meta property="og:url" content="https://talking-threads.onrender.com/cart.html">
+<meta property="og:image" content="https://talking-threads.onrender.com/images/og-cover.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Talking-Thread hand-embroidered pieces">
@@ -25,17 +25,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Shopping Bag — Talking-Thread">
 <meta name="twitter:description" content="Review the pieces in your Talking-Thread bag.">
-<meta name="twitter:image" content="https://www.talking-thread.com/images/og-cover.jpg">
+<meta name="twitter:image" content="https://talking-threads.onrender.com/images/og-cover.jpg">
 <meta name="twitter:image:alt" content="Talking-Thread hand-embroidered pieces">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.talking-thread.com/"}, {"@type": "ListItem", "position": 2, "name": "Shopping Bag", "item": "https://www.talking-thread.com/cart.html"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://talking-threads.onrender.com/"}, {"@type": "ListItem", "position": 2, "name": "Shopping Bag", "item": "https://talking-threads.onrender.com/cart.html"}]}</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&amp;family=Instrument+Sans:wght@400;500;600&amp;display=swap">
 <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/chatbot.css">
-  <!-- Leaflet (map UI) — used only on this page, for the delivery-location picker in the checkout modal -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>
@@ -135,32 +133,6 @@
         <div class="field"><label for="co-name">Full Name</label><input id="co-name" name="name" type="text" required placeholder="Your full name" autocomplete="name"></div>
         <div class="field"><label for="co-phone">Phone Number</label><input id="co-phone" name="phone" type="tel" required placeholder="10-digit mobile number" autocomplete="tel"></div>
       </div>
-      <h4 class="checkout-section-title">Delivery Location</h4>
-      <p class="field-optional map-help-text">Search, drop a pin, or use your current location — we'll fill in the address below. You can still edit it by hand.</p>
-
-      <div class="map-search-wrap">
-        <label for="co-map-search" class="visually-hidden">Search for an address</label>
-        <input type="text" id="co-map-search" class="map-search-input" placeholder="Search for an address or area&hellip;" autocomplete="off">
-        <ul class="map-suggestions is-hidden" id="mapSuggestions" role="listbox"></ul>
-      </div>
-
-      <button type="button" class="btn btn-ghost btn-sm map-locate-btn" id="mapLocateBtn">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-        Use My Current Location
-      </button>
-
-      <div class="delivery-map" id="deliveryMap" role="group" aria-label="Map — click or drag the pin to set your delivery location"></div>
-
-      <div class="map-result is-hidden" id="mapResult">
-        <p class="map-result-address" id="mapResultAddress"></p>
-        <p class="map-result-route" id="mapResultRoute"></p>
-      </div>
-      <p class="map-error is-hidden" id="mapError" role="alert"></p>
-
-      <input type="hidden" id="co-lat" name="latitude">
-      <input type="hidden" id="co-lng" name="longitude">
-      <input type="hidden" id="co-formatted-address" name="formatted-address">
-
       <div class="field"><label for="co-line1">Address Line 1</label><input id="co-line1" name="address-line1" type="text" required placeholder="House no., street, area" autocomplete="address-line1"></div>
       <div class="field"><label for="co-line2">Address Line 2 <span class="field-optional">(optional)</span></label><input id="co-line2" name="address-line2" type="text" placeholder="Landmark, apartment, etc." autocomplete="address-line2"></div>
       <div class="field-grid field-grid-3">
@@ -270,9 +242,6 @@
 </div>
 <!-- Razorpay Checkout widget — only needed on this page (where "Pay Online" is offered) -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<!-- Leaflet + delivery-location picker (map, search, current location, OSRM route) — only needed on this page -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="js/delivery-map.js" defer></script>
 <script src="js/main.js" defer></script>
 <script src="js/chatbot.js" defer></script>
 </body>

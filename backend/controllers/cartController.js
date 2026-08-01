@@ -24,12 +24,16 @@ exports.getCart = asyncHandler(async (req, res) => {
 // @route  POST /api/cart
 // @access Private
 exports.addToCart = asyncHandler(async (req, res) => {
-  const { product, name, price, size, color, text, qty, img } = req.body;
+  const { product, name, price, size, color, text, qty, img, id } = req.body;
   if (!name || !price) throw new ApiError(400, 'name and price are required.');
 
   const priceValue = Number(String(price).replace(/[^0-9.]/g, '')) || 0;
   const newItem = {
-    id: genLineId(),
+    // Reuse the id the client already generated for this line (js/main.js Store.addToCart)
+    // instead of minting an unrelated one here. Client and server must agree on the id,
+    // since every later qty PATCH / remove DELETE from the client is addressed by it —
+    // a mismatched id here made those requests silently 404 against the server.
+    id: id || genLineId(),
     product: product || undefined,
     name,
     price,

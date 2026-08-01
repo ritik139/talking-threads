@@ -143,10 +143,19 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     } catch (networkErr) {
       if (networkErr.name === 'AbortError') {
-        throw new Error('The server took too long to respond. Please check your connection and try again.');
+        // Ambiguous: the request may have already reached and been applied by the server
+        // before the client gave up waiting on the response. Never safe to auto-retry a
+        // non-idempotent call (like a qty delta) in this case -- it could double-apply.
+        const timeoutErr = new Error('The server took too long to respond. Please check your connection and try again.');
+        timeoutErr.retryable = false;
+        throw timeoutErr;
       }
-      // fetch() only throws for network-level failures — the API server is unreachable
-      throw new Error('Could not reach the server. Please make sure the backend is running and try again.');
+      // fetch() only throws for network-level failures — the API server is unreachable, so
+      // the request never left the client. Safe to retry: there's nothing on the server side
+      // that could get double-applied.
+      const unreachableErr = new Error('Could not reach the server. Please make sure the backend is running and try again.');
+      unreachableErr.retryable = true;
+      throw unreachableErr;
     } finally {
       clearTimeout(timeoutId);
     }
@@ -237,9 +246,85 @@ document.addEventListener('DOMContentLoaded', () => {
     return prefix + '_' + Date.now() + Math.random().toString(16).slice(2);
   }
 
+  // ROOT CAUSE FIX (qty shown correctly on cart.html but wrong on order/My Orders):
+  // addToCart/removeFromCart/updateCartQty below all write to localStorage synchronously
+  // (so the cart UI is instantly correct) and then fire their server sync as a
+  // fire-and-forget request -- never awaited by the caller. That's fine for rendering, but
+  // checkout (POST /api/orders) deliberately re-prices from the SERVER'S cart, not from
+  // localStorage (a client-supplied qty/price must never be trusted at checkout -- see
+  // orderController.pricedItemsFromCart). If "Place Order" is clicked before an in-flight
+  // qty PATCH has actually landed in Mongo, the order gets priced against the stale
+  // server-side qty, and that wrong total is exactly what then gets frozen into the order
+  // and shown on My Orders -- even though the cart page displayed the right number the whole
+  // time.
+  //
+  // pendingCartOps tracks every outstanding cart-mutation request as a retryable operation
+  // (not just a bare promise). This matters because apiRequest() is hard-bounded to
+  // API_TIMEOUT_MS (15s) via AbortController, so a hung/slow/failed request always settles
+  // -- but if it settles by REJECTING, a naive "just await a promise" tracker would drop it
+  // from the tracked set anyway, and a second "Place Order" click would then sail through
+  // flushPendingCartSync() with nothing left to wait for, silently checking out against the
+  // still-stale server cart. Instead, an op is only removed from pendingCartOps once its
+  // request actually SUCCEEDS; a failed op stays tracked so the next flush (whether the
+  // automatic retry below, or the next time the shopper clicks "Place Order") re-runs it
+  // rather than treating "it failed once" as "it's done".
+  const pendingCartOps = new Set();
+
+  // (Re)fires the op's underlying request and wires up bookkeeping. Called once when the
+  // mutation first happens, and again by syncCartOp() whenever a fresh attempt is needed.
+  function runCartOp(op) {
+    op.settled = false;
+    op.promise = op.run().then(
+      () => { op.settled = true; pendingCartOps.delete(op); },
+      (err) => { op.settled = true; throw err; }
+    );
+    op.promise.catch(() => {}); // swallow here so the fire-and-forget call site never produces an unhandled rejection
+    return op.promise;
+  }
+  function createCartOp(run) {
+    const op = { run };
+    pendingCartOps.add(op);
+    runCartOp(op);
+    return op;
+  }
+  // Awaits one op's current in-flight request. If it fails, auto-retries (fresh fetch, fresh
+  // 15s timeout) up to maxRetries more times -- but ONLY when the failure is one we know for
+  // certain never reached the server (see apiRequest's retryable flag above); an ambiguous
+  // timeout is never auto-retried, since the qty delta it carries is not safe to resend
+  // blindly. Bounded either way: at most (maxRetries + 1) * API_TIMEOUT_MS for this op.
+  //
+  // If op.promise has already settled (this op failed on an earlier flush, or on an earlier
+  // "Place Order" click), that stale promise is replaced with a brand-new request first --
+  // otherwise a change that failed once would never actually get synced, and a later flush
+  // would find nothing left to await and wrongly let checkout through on stale data.
+  async function syncCartOp(op, maxRetries) {
+    if (op.settled) runCartOp(op);
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await op.promise;
+        return;
+      } catch (err) {
+        const canAutoRetry = attempt < maxRetries && err && err.retryable;
+        if (!canAutoRetry) throw err;
+        runCartOp(op);
+      }
+    }
+  }
+
   const Store = {
     getCart() { return JSON.parse(localStorage.getItem('tt_cart') || '[]'); },
     setCart(c) { localStorage.setItem('tt_cart', JSON.stringify(c)); Store.refreshCounts(); },
+    // Waits for every outstanding cart-mutation request (add/remove/qty change) to actually
+    // finish talking to the server, retrying transient failures once. Checkout calls this
+    // before POST /api/orders so pricing is never computed from a server-side cart that's
+    // still catching up with the UI. All ops run concurrently (not one-at-a-time), so the
+    // overall wait is bounded by a single op's worst case, not the sum of every op's.
+    // Throws (checkout is then blocked with a clear "please retry" error) only if a sync
+    // still hasn't succeeded after retrying -- it never silently proceeds on stale data, and
+    // it never hangs past that bounded retry window.
+    flushPendingCartSync(maxRetries = 1) {
+      return Promise.all(Array.from(pendingCartOps).map((op) => syncCartOp(op, maxRetries)));
+    },
     getWishlist() {
       const wl = JSON.parse(localStorage.getItem('tt_wishlist') || '[]');
       // Backfill a stable id on any item saved before ids existed, so remove/move-to-bag
@@ -265,14 +350,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Auth.pullServerState() (which GETs the server cart and overwrites localStorage
         // with it) wipes out the item that had just been added. This was the root cause
         // of "item added, but Cart page shows empty".
-        apiRequest('/cart', { method: 'POST', body: JSON.stringify(item), keepalive: true }).catch(() => {});
+        createCartOp(() => apiRequest('/cart', { method: 'POST', body: JSON.stringify(item), keepalive: true }));
       }
     },
     removeFromCart(id) {
       Store.setCart(Store.getCart().filter(i => i.id !== id));
       if (Auth.isLoggedIn()) {
         // Same navigation-cancellation risk as addToCart above.
-        apiRequest('/cart/' + encodeURIComponent(id), { method: 'DELETE', keepalive: true }).catch(() => {});
+        createCartOp(() => apiRequest('/cart/' + encodeURIComponent(id), { method: 'DELETE', keepalive: true }));
       }
     },
     updateCartQty(id, qty) {
@@ -290,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // checkout. See cartController.updateCartItem for the server-side fix.)
         const delta = newQty - (before ? (before.qty || 1) : 0);
         if (delta !== 0) {
-          apiRequest('/cart/' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ delta }), keepalive: true }).catch(() => {});
+          createCartOp(() => apiRequest('/cart/' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ delta }), keepalive: true }));
         }
       }
     },
@@ -1170,6 +1255,19 @@ document.addEventListener('DOMContentLoaded', () => {
         placeOrderBtn.disabled = true;
 
         try {
+          // ROOT CAUSE FIX: wait for any in-flight qty/add/remove cart sync to actually reach
+          // the server before asking it to price the order. Both the COD path (POST /orders)
+          // and the Razorpay path (POST /payments/razorpay/order) price strictly from the
+          // server-side cart (pricedItemsFromCart), never from what's in localStorage/on
+          // screen — so skipping this wait is what let a just-changed quantity (visible and
+          // correct in the cart UI) get silently dropped from the order total and My Orders.
+          placeOrderBtn.textContent = 'Syncing your cart…';
+          try {
+            await Store.flushPendingCartSync();
+          } catch (syncErr) {
+            throw new Error('We could not confirm your latest cart changes with the server. Please check your connection and try again.');
+          }
+
           if (paymentMethod === 'razorpay') {
             placeOrderBtn.textContent = 'Starting payment…';
             const paymentInit = await apiRequest('/payments/razorpay/order', {

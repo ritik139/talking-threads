@@ -5,9 +5,7 @@ const Notification = require('../models/Notification');
 //         notifications survive opening/reloading the dashboard after the fact, instead of
 //         only ever existing in a live socket event (see orderController.js#notifyNewOrder).
 // @route  GET /api/notifications
-// @access Admin dashboard (intentionally open — see the NOTE in orderRoutes.js: the admin
-//         dashboard no longer requires sign-in, so its other endpoints aren't behind
-//         `protect`/`adminOnly` either)
+// @access Private/Admin
 exports.getRecentNotifications = asyncHandler(async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
   const [notifications, unreadCount] = await Promise.all([

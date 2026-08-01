@@ -1,11 +1,11 @@
 const express = require('express');
+const { protect, adminOnly } = require('../middleware/auth');
 const ctrl = require('../controllers/notificationController');
 
 const router = express.Router();
 
-// Intentionally NOT behind `protect`/`adminOnly` — matches orderRoutes.js's admin endpoints,
-// since the admin dashboard itself doesn't require sign-in (see server.js).
-router.get('/', ctrl.getRecentNotifications);
-router.put('/mark-read', ctrl.markNotificationsRead);
+// Admin dashboard notification bell — requires a signed-in admin.
+router.get('/', protect, adminOnly, ctrl.getRecentNotifications);
+router.put('/mark-read', protect, adminOnly, ctrl.markNotificationsRead);
 
 module.exports = router;

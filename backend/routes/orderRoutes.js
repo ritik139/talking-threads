@@ -6,20 +6,21 @@ const ctrl = require('../controllers/orderController');
 
 const router = express.Router();
 
-// NOTE: Admin Dashboard (Orders) routes below are intentionally left WITHOUT
-// `protect`/`adminOnly` — the admin dashboard no longer requires sign-in.
-// `protect` is now applied per-route (instead of router.use(protect)) so that
-// normal user routes (create/list/view/cancel my own orders) still require
-// login exactly as before, while the admin-only routes are open.
-router.get('/admin/all', ctrl.getAllOrders);
+// Admin Dashboard (Orders) routes — require a signed-in admin, same as the other
+// admin-only endpoints (productRoutes.js, journalRoutes.js, etc.).
+router.get('/admin/all', protect, adminOnly, ctrl.getAllOrders);
 router.put(
   '/:id/status',
+  protect,
+  adminOnly,
   [body('status').isIn(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']).withMessage('Invalid order status')],
   validate,
   ctrl.updateOrderStatus
 );
 router.put(
   '/:id/payment-status',
+  protect,
+  adminOnly,
   [body('paymentStatus').isIn(['pending', 'paid', 'failed', 'refunded']).withMessage('Invalid payment status')],
   validate,
   ctrl.updatePaymentStatus

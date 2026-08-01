@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Sign In — Talking-Thread</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&amp;family=Instrument+Sans:wght@400;500;600&amp;display=swap">
+<!-- Reuses the public site's design tokens/components (.field, .btn, etc.) from
+     css/style.css and the admin dashboard's own tokens from css/admin.css —
+     neither stylesheet is modified, only read from. -->
+<link rel="stylesheet" href="css/style.css?v=20260731">
+<link rel="stylesheet" href="css/admin.css?v=20260731">
+<link rel="stylesheet" href="css/responsive-fixes.css?v=20260731">
+<style>
+  .admin-login-gate{ min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px; }
+  .admin-login-box{ width: 100%; max-width: 380px; }
+  .admin-login-box .admin-logo{ text-align: center; margin-bottom: 26px; color: var(--ink); }
+  .admin-login-box .admin-logo small{ color: var(--ink-soft); }
+  .admin-login-box h1{ font-family: var(--font-display); font-size: 1.5rem; margin: 0 0 6px; text-align: center; }
+  .admin-login-box p.sub{ color: var(--ink-soft); font-size: 0.88rem; text-align: center; margin: 0 0 26px; }
+  .admin-login-error{ display: none; background: #fdeceb; border: 1px solid #e6b3ae; color: #a13327; font-size: 0.82rem; padding: 10px 14px; border-radius: 2px; margin-bottom: 18px; }
+  .admin-login-error.show{ display: block; }
+</style>
+</head>
+<body class="admin-body">
+
+<div class="admin-login-gate">
+  <div class="admin-login-box">
+    <div class="admin-logo">Talking<em>-Thread</em><small>Admin Dashboard</small></div>
+    <h1>Admin Sign In</h1>
+    <p class="sub">Authorized studio staff only.</p>
+
+    <div class="admin-login-error" id="adminLoginError"></div>
+
+    <form id="adminLoginForm" autocomplete="off">
+      <div class="field"><label for="al-email">Email Address</label><input id="al-email" name="email" type="email" required placeholder="you@talking-thread.com" autocomplete="username"></div>
+      <div class="field"><label for="al-pass">Password</label><input id="al-pass" name="password" type="password" required placeholder="Enter your password" autocomplete="current-password"></div>
+      <button type="submit" class="btn btn-primary btn-block" id="adminLoginSubmit">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const API_BASE = '/api';
+
+  async function apiRequest(path, options = {}) {
+    const res = await fetch(API_BASE + path, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      ...options
+    });
+    let data = null;
+    try { data = await res.json(); } catch (e) { /* no body */ }
+    if (!res.ok) throw new Error((data && data.message) || `Request failed (${res.status})`);
+    return data;
+  }
+
+  const form = document.getElementById('adminLoginForm');
+  const submitBtn = document.getElementById('adminLoginSubmit');
+  const errorBox = document.getElementById('adminLoginError');
+
+  function showError(message) {
+    errorBox.textContent = message;
+    errorBox.classList.add('show');
+  }
+
+  function hideError() {
+    errorBox.classList.remove('show');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+
+    const email = document.getElementById('al-email').value.trim();
+    const password = document.getElementById('al-pass').value;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Signing in…';
+
+    try {
+      // Reuses the existing customer/admin login endpoint — one JWT/User system for
+      // the whole site. We only check the role client-side afterwards.
+      const data = await apiRequest('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password, rememberMe: true })
+      });
+
+      if (!data.user || data.user.role !== 'admin') {
+        // Not an admin account — don't leave an authenticated non-admin session
+        // sitting around on this page.
+        await apiRequest('/auth/logout', { method: 'POST' }).catch(() => {});
+        showError('This account does not have admin access.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In';
+        return;
+      }
+
+      window.location.href = 'admin-dashboard.html';
+    } catch (err) {
+      showError(err.message || 'Invalid email or password.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Sign In';
+    }
+  });
+
+  // If already signed in as an admin, skip straight to the dashboard.
+  apiRequest('/auth/me').then((data) => {
+    if (data && data.user && data.user.role === 'admin') {
+      window.location.href = 'admin-dashboard.html';
+    }
+  }).catch(() => { /* not signed in — stay on this page */ });
+})();
+</script>
+</body>
+</html>

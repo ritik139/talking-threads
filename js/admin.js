@@ -27,7 +27,11 @@
     }
     let data = null;
     try { data = await res.json(); } catch (e) { /* no body */ }
-    if (!res.ok) throw new Error((data && data.message) || `Request failed (${res.status})`);
+    if (!res.ok) {
+      const err = new Error((data && data.message) || `Request failed (${res.status})`);
+      err.status = res.status;
+      throw err;
+    }
     return data;
   }
 
@@ -37,16 +41,35 @@
   const logoutBtn = document.getElementById('adminLogoutBtn');
 
   /* ============================================================
-     Dashboard init — opens directly, no admin sign-in/role check.
+     Dashboard init — confirms there's a signed-in admin session
+     (via the existing /api/auth/me route) before showing anything.
+     Server-side, every admin API call is also independently guarded
+     by `protect`/`adminOnly` — this client-side check just decides
+     whether to show the dashboard shell or send the visitor to
+     admin-login.html.
      ============================================================ */
   async function init() {
+    let session;
+    try {
+      session = await apiRequest('/auth/me');
+    } catch (err) {
+      window.location.href = 'admin-login.html';
+      return;
+    }
+
+    if (!session || !session.user || session.user.role !== 'admin') {
+      window.location.href = 'admin-login.html';
+      return;
+    }
+
     if (gate) gate.style.display = 'none';
     shell.style.display = 'grid';
-    if (whoName) whoName.textContent = 'Admin';
+    if (whoName) whoName.textContent = session.user.name || 'Admin';
 
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        window.location.href = 'index.html';
+      logoutBtn.addEventListener('click', async () => {
+        try { await apiRequest('/auth/logout', { method: 'POST' }); } catch (e) { /* ignore */ }
+        window.location.href = 'admin-login.html';
       });
     }
 

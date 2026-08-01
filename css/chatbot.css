@@ -8,6 +8,10 @@
   --tt-accent-dark: #100d09;
   --tt-launcher-bg: var(--thread);
   --tt-launcher-bg-hover: var(--thread-dark);
+  --tt-ease: cubic-bezier(.16, 1, .3, 1);
+  --tt-shadow-float:
+    0 1px 2px color-mix(in srgb, var(--ink) 10%, transparent),
+    0 16px 40px color-mix(in srgb, var(--ink) 18%, transparent);
 }
 
 .tt-chat-launcher{
@@ -23,16 +27,76 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--tt-shadow-float);
   cursor: pointer;
-  transition: transform .3s var(--ease), background .3s var(--ease);
+  transition: transform .3s var(--tt-ease), background .3s var(--tt-ease), box-shadow .3s var(--tt-ease);
 }
-.tt-chat-launcher:hover{ background: var(--tt-launcher-bg-hover); transform: translateY(-2px); }
+.tt-chat-launcher:hover{
+  background: var(--tt-launcher-bg-hover);
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: var(--tt-shadow-float), 0 0 0 8px color-mix(in srgb, var(--tt-launcher-bg) 22%, transparent);
+}
+.tt-chat-launcher:active{
+  transform: translateY(0) scale(0.94);
+  transition-duration: .12s;
+}
 .tt-chat-launcher:focus-visible{ outline: 2px solid var(--gold); outline-offset: 3px; }
 .tt-chat-launcher svg{ width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.6; }
 .tt-chat-launcher .tt-icon-close{ display: none; }
 .tt-chat-launcher.open .tt-icon-chat{ display: none; }
 .tt-chat-launcher.open .tt-icon-close{ display: block; }
+
+/* ambient breathing ring — invites attention without being loud, hidden while open */
+.tt-chat-launcher::after{
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--tt-launcher-bg) 35%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  animation: tt-launcher-breathe 3.4s ease-in-out infinite;
+}
+.tt-chat-launcher.open::after{ display: none; }
+@keyframes tt-launcher-breathe{
+  0%, 100%{ opacity: 0; transform: scale(.92); }
+  50%{ opacity: 1; transform: scale(1.08); }
+}
+
+/* inner wrapper carries the idle float so it never fights the hover/active
+   transform declared on the button itself */
+.tt-chat-launcher .tt-launcher-inner{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: tt-launcher-float 4.5s ease-in-out infinite;
+  will-change: transform;
+}
+.tt-chat-launcher.open .tt-launcher-inner{
+  animation: none;
+  transform: translateY(0);
+}
+@keyframes tt-launcher-float{
+  0%, 100%{ transform: translateY(0); }
+  50%{ transform: translateY(-3px); }
+}
+
+/* eyes that ease toward the cursor on hover (see js/chatbot.js) — tracking is
+   skipped automatically on touch/coarse-pointer devices */
+.tt-chat-launcher .tt-eye{ fill: currentColor; }
+.tt-chat-launcher .tt-eyes{ will-change: transform; }
+
+@media (prefers-reduced-motion: reduce){
+  .tt-chat-launcher,
+  .tt-chat-launcher::after,
+  .tt-chat-launcher .tt-launcher-inner,
+  .tt-chat-badge{
+    animation: none !important;
+  }
+}
 
 .tt-chat-badge{
   position: absolute;
@@ -41,8 +105,13 @@
   border-radius: 50%;
   background: var(--gold);
   border: 2px solid var(--ivory);
+  animation: tt-badge-pulse 2.2s ease-in-out infinite;
 }
 .tt-chat-launcher.open .tt-chat-badge{ display: none; }
+@keyframes tt-badge-pulse{
+  0%, 100%{ transform: scale(1); }
+  50%{ transform: scale(1.15); }
+}
 
 .tt-chat-window{
   position: fixed;
@@ -55,14 +124,16 @@
   max-height: calc(100vh - 140px);
   background: var(--paper);
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-card);
+  border-radius: 16px;
+  box-shadow: var(--tt-shadow-float);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   opacity: 0;
-  transform: translateY(16px) scale(.98);
+  transform-origin: bottom right;
+  transform: translateY(12px) scale(.96);
   pointer-events: none;
-  transition: opacity .25s var(--ease), transform .25s var(--ease);
+  transition: opacity .32s var(--tt-ease), transform .32s var(--tt-ease);
 }
 .tt-chat-window.open{
   opacity: 1;

@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const cookie = require('cookie');
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const { Server } = require('socket.io');
@@ -13,6 +14,7 @@ const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 const { verifyMailer } = require('./utils/mailer');
+const { adminPageGuard } = require('./middleware/auth');
 const User = require('./models/User');
 
 const authRoutes = require('./routes/authRoutes');
@@ -74,9 +76,27 @@ const io = new Server(server, {
   }
 });
 
-// NOTE: The admin-role auth check that used to gate this socket connection has been
-// removed — the admin dashboard (and its real-time "New Order" notifications) no longer
-// requires sign-in. Every connecting socket is joined to the 'admins' room directly.
+// Only a signed-in admin's socket may join the 'admins' room (which receives real-time
+// "New Order" notifications) — verified from the same auth cookie/JWT used everywhere
+// else, since the socket handshake doesn't go through cookieParser/protect itself.
+io.use(async (socket, next) => {
+  try {
+    const cookieName = process.env.COOKIE_NAME || 'tt_token';
+    const rawCookies = socket.handshake.headers.cookie || '';
+    const parsedCookies = cookie.parse(rawCookies);
+    const token = parsedCookies[cookieName];
+    if (!token) return next(new Error('Unauthorized'));
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (!user || !user.isActive || user.role !== 'admin') return next(new Error('Unauthorized'));
+
+    next();
+  } catch (err) {
+    next(new Error('Unauthorized'));
+  }
+});
+
 io.on('connection', (socket) => {
   socket.join('admins');
 });
@@ -174,6 +194,14 @@ app.use((req, res, next) => {
     return res.status(404).end();
   }
   next();
+});
+
+// Guard the admin dashboard page itself — a browser navigating straight to
+// /admin-dashboard.html without a valid admin session is redirected to sign in.
+app.get('/admin-dashboard.html', adminPageGuard, (req, res, next) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'admin-dashboard.html'), (err) => {
+    if (err) next(err);
+  });
 });
 
 app.use(express.static(FRONTEND_DIR, { extensions: ['html'], dotfiles: 'ignore' }));

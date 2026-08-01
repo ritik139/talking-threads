@@ -51,4 +51,30 @@ const adminOnly = (req, res, next) => {
   next();
 };
 
-module.exports = { protect, optionalAuth, adminOnly };
+// Guards the static admin-dashboard.html page itself (as opposed to its API calls).
+// Unlike `protect`/`adminOnly`, this never renders a JSON error — a browser navigating
+// straight to the page should just be sent to the admin sign-in screen instead.
+const adminPageGuard = async (req, res, next) => {
+  const token = extractToken(req);
+  if (!token) return res.redirect('/admin-login.html');
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (err) {
+    return res.redirect('/admin-login.html');
+  }
+
+  try {
+    const user = await User.findById(decoded.id);
+    if (!user || !user.isActive || user.role !== 'admin') {
+      return res.redirect('/admin-login.html');
+    }
+    req.user = user;
+    next();
+  } catch (err) {
+    return res.redirect('/admin-login.html');
+  }
+};
+
+module.exports = { protect, optionalAuth, adminOnly, adminPageGuard };

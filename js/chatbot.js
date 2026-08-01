@@ -220,7 +220,7 @@
   }
 
   /* ---------------- DOM build ---------------- */
-  var ICON_CHAT = '<svg class="tt-icon-chat" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.3"/><path stroke-linecap="round" d="M5.1 12c2.9-3.9 10.9-3.9 13.8 0" stroke-dasharray="1.8 2.3"/></svg>';
+  var ICON_CHAT = '<svg class="tt-icon-chat" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.3"/><path stroke-linecap="round" d="M5.1 12c2.9-3.9 10.9-3.9 13.8 0" stroke-dasharray="1.8 2.3"/><g class="tt-eyes"><circle class="tt-eye" cx="9" cy="9.4" r="1.15"/><circle class="tt-eye" cx="15" cy="9.4" r="1.15"/></g></svg>';
   var ICON_CLOSE = '<svg class="tt-icon-close" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>';
   var ICON_SEND = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path stroke-linecap="round" stroke-linejoin="round" d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg>';
   var ICON_AVATAR = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8"/><path d="M6.5 12c2.6-3.4 8.4-3.4 11 0" stroke-dasharray="1.6 2"/></svg>';
@@ -235,7 +235,8 @@
   function init() {
     var launcher = el(
       '<button class="tt-chat-launcher" id="ttChatLauncher" aria-haspopup="dialog" aria-expanded="false" aria-controls="ttChatWindow" aria-label="Open support chat">' +
-        ICON_CHAT + ICON_CLOSE + '<span class="tt-chat-badge"></span>' +
+        '<span class="tt-launcher-inner">' + ICON_CHAT + ICON_CLOSE + '</span>' +
+        '<span class="tt-chat-badge"></span>' +
       '</button>'
     );
 
@@ -261,6 +262,59 @@
 
     document.body.appendChild(win);
     document.body.appendChild(launcher);
+
+    /* ---------------- Launcher eye-tracking (UI-only, no functional change) ---------------- */
+    (function initLauncherEyes() {
+      var eyesGroup = launcher.querySelector(".tt-eyes");
+      if (!eyesGroup) return;
+
+      var isTouchDevice = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+      if (isTouchDevice) return;
+
+      var EYE_MAX_SHIFT = 1.3; // in the icon's own viewBox units, kept subtle on purpose
+      var targetX = 0, targetY = 0, curX = 0, curY = 0, rafId = null;
+
+      function tick() {
+        curX += (targetX - curX) * 0.25;
+        curY += (targetY - curY) * 0.25;
+        eyesGroup.style.transform = "translate(" + curX.toFixed(2) + "px, " + curY.toFixed(2) + "px)";
+        if (Math.abs(targetX - curX) > 0.01 || Math.abs(targetY - curY) > 0.01) {
+          rafId = requestAnimationFrame(tick);
+        } else {
+          rafId = null;
+        }
+      }
+
+      function requestTick() {
+        if (!rafId) rafId = requestAnimationFrame(tick);
+      }
+
+      function onMouseMove(e) {
+        var rect = launcher.getBoundingClientRect();
+        var cx = rect.left + rect.width / 2;
+        var cy = rect.top + rect.height / 2;
+        var dx = e.clientX - cx;
+        var dy = e.clientY - cy;
+        var dist = Math.hypot(dx, dy) || 1;
+        targetX = (dx / dist) * EYE_MAX_SHIFT;
+        targetY = (dy / dist) * EYE_MAX_SHIFT;
+        requestTick();
+      }
+
+      function resetEyes() {
+        targetX = 0;
+        targetY = 0;
+        requestTick();
+      }
+
+      launcher.addEventListener("mouseenter", function () {
+        document.addEventListener("mousemove", onMouseMove);
+      });
+      launcher.addEventListener("mouseleave", function () {
+        document.removeEventListener("mousemove", onMouseMove);
+        resetEyes();
+      });
+    })();
 
     var body = win.querySelector("#ttChatBody");
     var form = win.querySelector("#ttChatForm");
@@ -394,4 +448,3 @@
     init();
   }
 })();
-// treu

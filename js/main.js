@@ -435,12 +435,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /* ---------- Guard against a single tap registering twice ----------
+     Some mobile browsers/webviews can dispatch two click events for the same
+     physical tap (e.g. a synthetic click alongside a native one) within
+     milliseconds of each other. A tight window here absorbs that duplicate
+     without throttling genuine fast repeat taps — someone deliberately
+     tapping "+" several times to bump quantity up still registers every
+     tap, since real taps are never this close together. Desktop click
+     behaviour is unaffected. */
+  function guardAgainstDoubleFire(fn, windowMs = 80) {
+    return function (e) {
+      const el = e.currentTarget;
+      const now = Date.now();
+      if (el.dataset.ttLastFire && now - Number(el.dataset.ttLastFire) < windowMs) return;
+      el.dataset.ttLastFire = String(now);
+      fn(e);
+    };
+  }
+
   /* ---------- Quick add-to-cart buttons on cards (shop grid) ---------- */
   function bindQuickAddButtons(root) {
     (root || document).querySelectorAll('[data-quick-add]').forEach(btn => {
       if (btn.dataset.ttBound) return;
       btn.dataset.ttBound = '1';
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', guardAgainstDoubleFire((e) => {
         e.preventDefault();
         Store.addToCart({
           name: btn.getAttribute('data-name') || 'Talking-Thread Piece',
@@ -449,7 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
           size: 'Medium', color: 'Antique Gold', text: '—', qty: 1
         });
         showToast('Added to your bag');
-      });
+      }));
     });
   }
 
@@ -783,7 +801,7 @@ document.addEventListener('DOMContentLoaded', () => {
       /* add to cart */
       const addBtn = document.getElementById('addToCartBtn');
       if (addBtn) {
-        addBtn.addEventListener('click', () => {
+        addBtn.addEventListener('click', guardAgainstDoubleFire(() => {
           const name = addBtn.getAttribute('data-name') || 'Talking-Thread Piece';
           const price = addBtn.getAttribute('data-price') || '';
           const mainImg = document.querySelector('.pd-main img');
@@ -796,7 +814,7 @@ document.addEventListener('DOMContentLoaded', () => {
             qty: parseInt(qtyInput ? qtyInput.value : '1', 10)
           });
           showToast('Added to your bag');
-        });
+        }));
       }
 
       /* wishlist toggle on product page */
@@ -892,9 +910,9 @@ document.addEventListener('DOMContentLoaded', () => {
       cartList.querySelectorAll('.cart-item').forEach(el => {
         const id = el.getAttribute('data-id');
         const item = cart.find(i => i.id === id);
-        el.querySelector('[data-act="inc"]').addEventListener('click', () => Store.updateCartQty(id, (item.qty || 1) + 1));
-        el.querySelector('[data-act="dec"]').addEventListener('click', () => Store.updateCartQty(id, (item.qty || 1) - 1));
-        el.querySelector('[data-act="remove"]').addEventListener('click', () => { Store.removeFromCart(id); showToast('Removed from bag'); });
+        el.querySelector('[data-act="inc"]').addEventListener('click', guardAgainstDoubleFire(() => Store.updateCartQty(id, (item.qty || 1) + 1)));
+        el.querySelector('[data-act="dec"]').addEventListener('click', guardAgainstDoubleFire(() => Store.updateCartQty(id, (item.qty || 1) - 1)));
+        el.querySelector('[data-act="remove"]').addEventListener('click', guardAgainstDoubleFire(() => { Store.removeFromCart(id); showToast('Removed from bag'); }));
         window.addEventListener('storage', () => {});
       });
 

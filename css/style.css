@@ -194,6 +194,7 @@ h1,h2,h3,h4{
   white-space: nowrap;
 }
 .btn-primary{ background: var(--ink); color: var(--paper); }
+.btn{ touch-action: manipulation; }
 .btn-primary:hover{ background: var(--thread); border-color: var(--thread); transform: translateY(-1px); }
 .btn-secondary{ background: transparent; color: var(--ink); }
 .btn-secondary:hover{ background: var(--ink); color: var(--paper); }
@@ -625,6 +626,7 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   background: var(--paper); border: 1px solid var(--line);
   display: flex; align-items: center; justify-content: center;
   box-shadow: var(--shadow-card);
+  touch-action: manipulation;
 }
 .pc-icon-btn::before{
   content: "";
@@ -724,7 +726,7 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 .qty-stepper{
   display: flex; align-items: center; border: 1px solid var(--line);
 }
-.qty-stepper button{ width: 44px; height: 100%; font-size: 1.1rem; }
+.qty-stepper button{ width: 44px; height: 100%; font-size: 1.1rem; touch-action: manipulation; }
 .qty-stepper button:hover{ color: var(--thread); }
 .qty-stepper input{
   width: 44px; text-align: center; border: none; background: transparent;
@@ -737,6 +739,7 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 .wish-toggle{
   width: 54px; border: 1px solid var(--ink); display: flex; align-items: center; justify-content: center;
   transition: background .25s, border-color .25s;
+  touch-action: manipulation;
 }
 .wish-toggle svg{ width: 18px; height: 18px; stroke: var(--ink); fill: none; stroke-width: 1.5; }
 .wish-toggle.active{ background: var(--thread); border-color: var(--thread); }

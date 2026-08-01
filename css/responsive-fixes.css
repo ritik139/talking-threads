@@ -88,7 +88,15 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .toolbar{ gap: 14px; padding-bottom: 20px; margin-bottom: 28px; }
   .pc-title{ font-size: 1rem; }
   .pc-actions{ top: 10px; right: 10px; gap: 8px; }
+  /* Quick-add / wishlist icon buttons on product cards: keep the visible circle
+     compact (32px) but widen the invisible ::before hit area so the actual
+     tappable region meets the ~44px minimum touch target size. At 32px alone,
+     a finger tap (far less precise than a mouse pointer) frequently lands just
+     outside the button and misses it entirely — this doesn't show up with
+     mouse/click testing, only on real touch input, which is why it can look
+     like "Add to Cart doesn't work" specifically on mobile. */
   .pc-icon-btn{ width: 32px; height: 32px; }
+  .pc-icon-btn::before{ inset: -6px; }
   .pc-tag{ top: 10px; left: 10px; font-size: 0.58rem; padding: 4px 8px; }
 
   /* Shop filters row: allow wrapping instead of squeezing every

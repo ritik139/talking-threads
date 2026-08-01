@@ -104,7 +104,7 @@ exports.getProduct = asyncHandler(async (req, res) => {
 exports.getRelatedProducts = asyncHandler(async (req, res) => {
   const { idOrSlug } = req.params;
   const query = idOrSlug.match(/^[0-9a-fA-F]{24}$/) ? { _id: idOrSlug } : { slug: idOrSlug };
-  const product = await Product.findOne(query);
+  const product = await Product.findOne({ ...query, isActive: true });
   if (!product) throw new ApiError(404, 'Product not found.');
 
   const related = await Product.find({

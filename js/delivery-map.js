@@ -239,6 +239,12 @@
     suggestionsEl.innerHTML = '';
   }
 
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
   function renderSuggestions(results) {
     if (!suggestionsEl) return;
     if (!results.length) {
@@ -246,7 +252,7 @@
       return;
     }
     suggestionsEl.innerHTML = results
-      .map((r, i) => `<li role="option" tabindex="-1" data-idx="${i}">${r.display_name}</li>`)
+      .map((r, i) => `<li role="option" tabindex="-1" data-idx="${i}">${escapeHtml(r.display_name)}</li>`)
       .join('');
     suggestionsEl.classList.remove('is-hidden');
 

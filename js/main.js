@@ -238,10 +238,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const Store = {
-    getCart() { return JSON.parse(localStorage.getItem('tt_cart') || '[]'); },
+    getCart() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem('tt_cart') || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        // Corrupted/legacy localStorage value — reset to empty rather than crash every page.
+        return [];
+      }
+    },
     setCart(c) { localStorage.setItem('tt_cart', JSON.stringify(c)); Store.refreshCounts(); },
     getWishlist() {
-      const wl = JSON.parse(localStorage.getItem('tt_wishlist') || '[]');
+      let wl;
+      try {
+        const parsed = JSON.parse(localStorage.getItem('tt_wishlist') || '[]');
+        wl = Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        wl = [];
+      }
       // Backfill a stable id on any item saved before ids existed, so remove/move-to-bag
       // (which now key off id, not array position) keep working for pre-existing wishlists.
       let changed = false;
@@ -386,6 +400,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function slugifyName(name) {
     return (name || '').toString().toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }
+
+  // Shared HTML-escaping helper — used anywhere user-supplied or otherwise untrusted
+  // strings (cart line names/customization text, wishlist items, order history, etc.)
+  // are interpolated into innerHTML. Prevents stored/self XSS from data that ultimately
+  // originates from request bodies the backend accepts largely as-is (e.g. POST /api/cart).
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  // Only allow http(s) (or protocol-relative/relative) URLs into src/href attributes.
+  // Blocks `javascript:`/`data:`/etc. schemes that would otherwise execute when a
+  // crafted image or link URL (e.g. a cart item's img, or a review photo URL) is clicked
+  // or rendered.
+  function safeUrl(url) {
+    const value = String(url == null ? '' : url).trim();
+    if (!value) return '';
+    if (/^(https?:)?\/\//i.test(value)) return escapeHtml(value);
+    if (/^[a-z0-9_\-./]/i.test(value) && !/^[a-z][a-z0-9+.\-]*:/i.test(value)) return escapeHtml(value);
+    return '';
   }
 
   // Prefer the real database slug/id from the API; fall back to deriving one from the
@@ -934,27 +970,27 @@ document.addEventListener('DOMContentLoaded', () => {
       if (emptyState) emptyState.style.display = 'none';
 
       cartList.innerHTML = cart.map(item => `
-        <div class="cart-item" data-id="${item.id}">
+        <div class="cart-item" data-id="${escapeHtml(item.id)}">
           <div class="img-placeholder ar-square">
             ${item.img
-              ? `<img src="${item.img}" alt="${item.name}">`
-              : `<div class="ph-inner"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span class="ph-label">${item.name}</span></div>`}
+              ? `<img src="${safeUrl(item.img)}" alt="${escapeHtml(item.name)}">`
+              : `<div class="ph-inner"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span class="ph-label">${escapeHtml(item.name)}</span></div>`}
           </div>
           <div>
-            <div class="ci-title">${item.name}</div>
+            <div class="ci-title">${escapeHtml(item.name)}</div>
             <div class="ci-meta">
-              <div><b>Size:</b> ${item.size}</div>
-              <div><b>Thread:</b> ${item.color}</div>
-              <div><b>Embroidered text:</b> ${item.text}</div>
+              <div><b>Size:</b> ${escapeHtml(item.size)}</div>
+              <div><b>Thread:</b> ${escapeHtml(item.color)}</div>
+              <div><b>Embroidered text:</b> ${escapeHtml(item.text)}</div>
             </div>
             <div class="qty-stepper qty-stepper--sm">
               <button class="qty-minus" data-act="dec">−</button>
-              <input type="text" value="${item.qty || 1}" readonly>
+              <input type="text" value="${escapeHtml(item.qty || 1)}" readonly>
               <button class="qty-plus" data-act="inc">+</button>
             </div>
           </div>
           <div class="ci-right">
-            <div class="ci-price">${item.price}</div>
+            <div class="ci-price">${escapeHtml(item.price)}</div>
             <button class="ci-remove" data-act="remove">Remove</button>
           </div>
         </div>
@@ -966,7 +1002,6 @@ document.addEventListener('DOMContentLoaded', () => {
         el.querySelector('[data-act="inc"]').addEventListener('click', guardAgainstDoubleFire(() => Store.updateCartQty(id, (item.qty || 1) + 1)));
         el.querySelector('[data-act="dec"]').addEventListener('click', guardAgainstDoubleFire(() => Store.updateCartQty(id, (item.qty || 1) - 1)));
         el.querySelector('[data-act="remove"]').addEventListener('click', guardAgainstDoubleFire(() => { Store.removeFromCart(id); showToast('Removed from bag'); }));
-        window.addEventListener('storage', () => {});
       });
 
       /* subtotal (best-effort numeric parse) */
@@ -1264,13 +1299,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="pc-media">
             <div class="img-placeholder ar-portrait">
               ${hasImg
-                ? `<img src="${item.img}" alt="${item.name}">`
-                : `<div class="ph-inner"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span class="ph-label">${item.name}</span></div>`}
+                ? `<img src="${safeUrl(item.img)}" alt="${escapeHtml(item.name)}">`
+                : `<div class="ph-inner"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span class="ph-label">${escapeHtml(item.name)}</span></div>`}
             </div>
           </div>
           <div class="pc-info">
-            <div class="pc-title">${item.name}</div>
-            <div class="pc-price">${item.price}</div>
+            <div class="pc-title">${escapeHtml(item.name)}</div>
+            <div class="pc-price">${escapeHtml(item.price)}</div>
             <div class="wish-actions">
               <button class="btn btn-primary btn-sm" data-act="move">Move to Bag</button>
               <button class="btn btn-ghost btn-sm" data-act="remove">Remove</button>
@@ -1323,10 +1358,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const itemsHtml = (order.items || []).map(i => `
         <div class="order-item-row">
           <div>
-            <div class="oi-name">${i.name} <span class="oi-meta">&times; ${i.qty || 1}</span></div>
-            <div class="oi-meta">Size: ${i.size || '—'} &middot; Thread: ${i.color || '—'}</div>
+            <div class="oi-name">${escapeHtml(i.name)} <span class="oi-meta">&times; ${escapeHtml(i.qty || 1)}</span></div>
+            <div class="oi-meta">Size: ${escapeHtml(i.size || '—')} &middot; Thread: ${escapeHtml(i.color || '—')}</div>
           </div>
-          <div>${i.price || ''}</div>
+          <div>${escapeHtml(i.price || '')}</div>
         </div>
       `).join('');
 
@@ -1643,7 +1678,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           ${productName ? `<div class="review-product-tag">Reviewed: ${escapeHtml(productName)}</div>` : ''}
           <p class="review-comment"></p>
-          ${photos.length ? `<div class="review-photos">${photos.slice(0, 3).map(p => `<a href="${escapeHtml(p)}" target="_blank" rel="noopener noreferrer"><img src="${escapeHtml(p)}" alt="Photo from ${safeName}'s review" loading="lazy"></a>`).join('')}</div>` : ''}
+          ${photos.length ? `<div class="review-photos">${photos.slice(0, 3).map(p => `<a href="${safeUrl(p)}" target="_blank" rel="noopener noreferrer"><img src="${safeUrl(p)}" alt="Photo from ${safeName}'s review" loading="lazy"></a>`).join('')}</div>` : ''}
         </article>`;
     }
 

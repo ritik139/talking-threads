@@ -20,84 +20,84 @@ const Wishlist = require('../models/Wishlist');
 
 const products = [
   {
-    name: 'Marigold Trellis Hoop',
-    images: ['images/11.jpg'],
+    name: 'Marigold Trellis Heirloom Hoop',
+    images: ['images/4.jpg'],
     price: 2450,
     category: 'Wall Art',
     collections: ['Wall Art Hoops', 'Floral Reverie'],
     isFeatured: true,
     isNewArrival: true,
     availability: 'Made to Order',
-    shortDescription: 'Hand-embroidered marigold trellis motif on a 12in wooden hoop.',
+    shortDescription: 'An heirloom marigold trellis, hand-embroidered in antique gold and olive silk on a brass hoop.',
     description:
-      'A hand-stitched marigold trellis design worked in warm gold and amber threads, finished on a natural wood embroidery hoop. Each piece is made to order in our Jaipur studio and can be personalised with a short embroidered name or date.',
+      'An heirloom trellis of marigold and vine, hand-stitched in antique gold and warm amber silk threads with soft olive vine work, set inside a polished brass hoop. Each piece is made to order in our Jaipur atelier and can be personalised with a short embroidered name or date.',
     sizes: ['Small — 8in', 'Medium — 12in', 'Large — 16in'],
-    colors: ['maroon', 'gold', 'sage'],
+    colors: ['gold', 'sage', 'ivory'],
     tags: ['hoop', 'floral', 'new']
   },
   {
-    name: 'Ivory Rose Monogram Linen',
-    images: ['images/8.jpg'],
+    name: 'Ivory Rose Monogram Heirloom Linen',
+    images: ['images/2.jpg'],
     price: 3200,
     category: 'Table Linen',
     collections: ['Monogram Edit', 'Bridal Trousseau'],
     isFeatured: true,
     availability: 'Made to Order',
-    shortDescription: 'Monogrammed rose motif hand-embroidered on pure linen.',
+    shortDescription: 'A dusty-rose monogram bloom, hand-embroidered on pure ivory linen with gold lettering.',
     description:
-      'Fine pure linen finished with a hand-embroidered ivory rose and a custom monogram. A timeless keepsake piece for weddings, anniversaries or a considered gift.',
+      'Fine pure ivory linen finished with a hand-embroidered dusty-rose bloom and a custom monogram traced in antique gold thread. A timeless keepsake piece for weddings, anniversaries or a considered gift.',
     sizes: ['Medium — 12in', 'Large — 16in'],
-    colors: ['ivory', 'gold', 'blush'],
+    colors: ['ivory', 'blush', 'gold'],
     tags: ['linen', 'monogram', 'wedding']
   },
   {
-    name: 'Peacock Feather Cushion',
-    images: ['images/12.jpg'],
+    name: 'Jewel Peacock Feather Cushion',
+    images: ['images/14.jpg'],
     price: 1850,
     compareAtPrice: 2300,
     category: 'Home',
     collections: ['Floral Reverie'],
     isBestSeller: true,
     availability: 'In Stock',
-    shortDescription: 'Jewel-toned peacock feather embroidery on a linen cushion cover.',
+    shortDescription: 'Jewel-toned peacock feather embroidery in emerald teal and midnight sapphire thread.',
     description:
-      'A statement cushion cover featuring a hand-embroidered peacock feather in emerald, teal and gold thread, backed with soft natural linen.',
+      'A statement cushion cover featuring a hand-embroidered peacock feather worked in emerald teal, midnight sapphire and antique gold thread, backed with soft natural linen.',
     sizes: ['Medium — 12in', 'Large — 16in'],
-    colors: ['midnight', 'gold', 'sage'],
+    colors: ['midnight', 'sage', 'gold'],
     tags: ['cushion', 'peacock', 'best seller']
   },
   {
-    name: 'Blush Bloom Table Runner',
-    images: ['images/9.jpg'],
+    name: 'Blush Bloom Trailing Table Runner',
+    images: ['images/3.jpg'],
     price: 4100,
     category: 'Table Linen',
     collections: ['Table & Linen', 'Festive Table'],
     availability: 'Made to Order',
-    shortDescription: 'Trailing floral embroidery on a hand-finished table runner.',
+    shortDescription: 'A trailing bloom in blush rose and sage, hand-embroidered along a fine linen runner.',
     description:
-      'A long table runner in soft blush linen, hand-embroidered with a trailing bloom motif along both ends. Made for everyday dining or special occasions.',
+      'A long table runner in soft linen, hand-embroidered with a trailing bloom motif in blush rose and sage-green thread, finished with fine antique gold detailing along both ends. Made for everyday dining or special occasions.',
     sizes: ['Medium — 12in', 'Large — 16in'],
-    colors: ['blush', 'gold', 'ivory'],
+    colors: ['blush', 'sage', 'gold'],
     tags: ['runner', 'floral', 'dining']
   },
   {
-    name: 'Midnight Vine Wall Hoop',
+    name: 'Midnight Vine Statement Hoop',
     images: ['images/13.jpg'],
     price: 2750,
     category: 'Wall Art',
     collections: ['Wall Art Hoops'],
     isFeatured: true,
     availability: 'Made to Order',
-    shortDescription: 'Deep indigo vine motif embroidered on a statement wall hoop.',
+    shortDescription: 'A dramatic vine in midnight indigo and antique gold thread, framed on a statement hoop.',
     description:
-      'A dramatic vine and leaf design hand-stitched in deep indigo and gold thread on a large wooden hoop, designed to be framed as wall art.',
+      'A dramatic vine and leaf design hand-stitched in deep midnight-indigo and antique gold thread on a large wooden hoop, designed to be framed as wall art.',
     sizes: ['Small — 8in', 'Medium — 12in', 'Large — 16in'],
     colors: ['midnight', 'gold'],
     tags: ['hoop', 'wall art', 'botanical']
   },
   {
-    name: 'Sage Leaf Baby Blanket',
-    images: ['images/1.jpg'],
+    name: 'Sage Leaf Heirloom Baby Blanket',
+    images: ['images/6.jpg'],
     price: 2950,
     category: 'Kidswear',
     collections: ['Little Ones'],
@@ -111,7 +111,7 @@ const products = [
     tags: ['baby', 'blanket', 'gift', 'new']
   },
   {
-    name: 'Golden Paisley Clutch',
+    name: 'Antique Gold Paisley Clutch',
     images: ['images/18.jpg'],
     price: 3600,
     category: 'Accessories',
@@ -125,8 +125,8 @@ const products = [
     tags: ['clutch', 'paisley', 'accessory']
   },
   {
-    name: 'Blossom Trail Runner Scarf',
-    images: ['images/21.jpg'],
+    name: 'Blossom Trail Silk Scarf',
+    images: ['images/22.jpg'],
     price: 2200,
     compareAtPrice: 2650,
     category: 'Accessories',
@@ -141,8 +141,8 @@ const products = [
     tags: ['scarf', 'floral', 'accessory', 'best seller']
   },
   {
-    name: 'Terracotta Bird Hoop',
-    images: ['images/22.jpg'],
+    name: 'Terracotta Songbird Hoop',
+    images: ['images/9.jpg'],
     price: 2300,
     category: 'Wall Art',
     collections: ['Wall Art Hoops'],

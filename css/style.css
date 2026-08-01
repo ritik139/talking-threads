@@ -539,6 +539,36 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 .img-placeholder.ar-wide{ --ar: 16/9; }
 .img-placeholder.ar-banner{ --ar: 21/8; }
 
+/* ---------- About page hero image — responsive, non-cropping fix ----------
+   Scoped to .about-hero-banner only (a class unique to the first large image
+   on about.html), so this cannot affect .ar-banner anywhere else it might be
+   used, or any other section/page.
+
+   The source photo (images/22.jpg) is a PORTRAIT image (768x1024, ~3:4), not
+   a wide banner shot. The previous fixed --ar: 21/8 (from .ar-banner) forced
+   that portrait photo into an extreme wide letterbox on every screen size —
+   cropping away most of the picture and losing the embroidery/hoop detail
+   that's the whole point of the image, worst of all on narrow phones where
+   the resulting strip was only a sliver of the original frame.
+   Fix: scale the crop ratio down as the viewport narrows (closer to the
+   photo's own portrait ratio on phones, where there's no room for a wide
+   letterbox anyway) and cap the height at each size so the hero never grows
+   larger than intended on big screens either. object-fit: cover (inherited
+   from .img-placeholder img) still does the actual fill — it only crops,
+   never stretches, so the photo can't distort at any breakpoint — and the
+   aspect-ratio is set unconditionally, so the browser reserves the exact
+   box size before the image loads (no layout shift on any device). */
+.about-hero-banner{ --ar: 16/9; max-height: 640px; }
+@media (max-width: 1024px){
+  .about-hero-banner{ --ar: 4/3; max-height: 480px; }
+}
+@media (max-width: 768px){
+  .about-hero-banner{ --ar: 1/1; max-height: 460px; }
+}
+@media (max-width: 480px){
+  .about-hero-banner{ --ar: 4/5; max-height: 420px; }
+}
+
 /* ---------- Collections grid ---------- */
 .collection-grid{
   display: grid;

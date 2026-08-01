@@ -25,15 +25,15 @@
 <meta name="twitter:image" content="https://talking-threads.onrender.com/images/og-cover.jpg">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://talking-threads.onrender.com/"}, {"@type": "ListItem", "position": 2, "name": "Shop", "item": "https://talking-threads.onrender.com/shop.html"}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "ItemList", "itemListElement": [
-  {"@type": "ListItem", "position": 1, "url": "https://talking-threads.onrender.com/product.html?slug=marigold-trellis-hoop", "name": "Marigold Trellis Hoop"},
-  {"@type": "ListItem", "position": 2, "url": "https://talking-threads.onrender.com/product.html?slug=ivory-rose-monogram-linen", "name": "Ivory Rose Monogram Linen"},
-  {"@type": "ListItem", "position": 3, "url": "https://talking-threads.onrender.com/product.html?slug=peacock-feather-cushion", "name": "Peacock Feather Cushion"},
-  {"@type": "ListItem", "position": 4, "url": "https://talking-threads.onrender.com/product.html?slug=blush-bloom-table-runner", "name": "Blush Bloom Table Runner"},
-  {"@type": "ListItem", "position": 5, "url": "https://talking-threads.onrender.com/product.html?slug=midnight-vine-wall-hoop", "name": "Midnight Vine Wall Hoop"},
-  {"@type": "ListItem", "position": 6, "url": "https://talking-threads.onrender.com/product.html?slug=sage-leaf-baby-blanket", "name": "Sage Leaf Baby Blanket"},
-  {"@type": "ListItem", "position": 7, "url": "https://talking-threads.onrender.com/product.html?slug=golden-paisley-clutch", "name": "Golden Paisley Clutch"},
-  {"@type": "ListItem", "position": 8, "url": "https://talking-threads.onrender.com/product.html?slug=blossom-trail-runner-scarf", "name": "Blossom Trail Runner Scarf"},
-  {"@type": "ListItem", "position": 9, "url": "https://talking-threads.onrender.com/product.html?slug=terracotta-bird-hoop", "name": "Terracotta Bird Hoop"}
+  {"@type": "ListItem", "position": 1, "url": "https://talking-threads.onrender.com/product.html?slug=marigold-trellis-hoop", "name": "Marigold Trellis Heirloom Hoop"},
+  {"@type": "ListItem", "position": 2, "url": "https://talking-threads.onrender.com/product.html?slug=ivory-rose-monogram-linen", "name": "Ivory Rose Monogram Heirloom Linen"},
+  {"@type": "ListItem", "position": 3, "url": "https://talking-threads.onrender.com/product.html?slug=peacock-feather-cushion", "name": "Jewel Peacock Feather Cushion"},
+  {"@type": "ListItem", "position": 4, "url": "https://talking-threads.onrender.com/product.html?slug=blush-bloom-table-runner", "name": "Blush Bloom Trailing Table Runner"},
+  {"@type": "ListItem", "position": 5, "url": "https://talking-threads.onrender.com/product.html?slug=midnight-vine-wall-hoop", "name": "Midnight Vine Statement Hoop"},
+  {"@type": "ListItem", "position": 6, "url": "https://talking-threads.onrender.com/product.html?slug=sage-leaf-baby-blanket", "name": "Sage Leaf Heirloom Baby Blanket"},
+  {"@type": "ListItem", "position": 7, "url": "https://talking-threads.onrender.com/product.html?slug=golden-paisley-clutch", "name": "Antique Gold Paisley Clutch"},
+  {"@type": "ListItem", "position": 8, "url": "https://talking-threads.onrender.com/product.html?slug=blossom-trail-runner-scarf", "name": "Blossom Trail Silk Scarf"},
+  {"@type": "ListItem", "position": 9, "url": "https://talking-threads.onrender.com/product.html?slug=terracotta-bird-hoop", "name": "Terracotta Songbird Hoop"}
 ]}</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -143,145 +143,153 @@
           </select>
         </div>
         <div class="product-grid" id="productGrid">
-          <div class="product-card reveal">
+          <!--
+            Loading state, not real products. This grid used to hardcode 9
+            actual catalog items (real names/prices/photos/links) as the
+            "pre-JS fallback" — so on first paint, before fetchAndRender() in
+            main.js applied the CURRENT filters/sort from the API, the browser
+            showed those 9 specific products as real, clickable content. If
+            they didn't match what the filters/sort actually resolve to, that
+            was a flash of the wrong products, not a caching artifact. These
+            skeleton cards are intentionally product-agnostic (no name, price,
+            image, or link) so nothing wrong is ever rendered as real; the
+            first real content painted is whatever fetchAndRender() fetches
+            for the current query.
+          -->
+<div class="product-card reveal is-loading" aria-hidden="true">
   <div class="pc-media">
     <div class="img-placeholder ar-portrait">
-  <img src="images/4.jpg" width="903" height="1200" alt="Marigold Trellis Hoop" loading="lazy">
-</div><span class="pc-tag">New</span>
-    <div class="pc-actions">
-      <button class="pc-icon-btn" data-wish-toggle data-name="Marigold Trellis Hoop" data-price="₹2,450" data-img="images/4.jpg" aria-label="Add Marigold Trellis Hoop to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
-      <button class="pc-icon-btn" data-quick-add data-name="Marigold Trellis Hoop" data-price="₹2,450" data-img="images/4.jpg" aria-label="Quick add Marigold Trellis Hoop to bag"><svg viewBox="0 0 24 24"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg></button>
+      <div class="ph-inner">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="ph-label">Loading&hellip;</span>
+      </div>
     </div>
   </div>
-  <a href="product.html" class="pc-info">
-    <div class="pc-cat">Wall Art</div>
-    <div class="pc-title">Marigold Trellis Hoop</div>
-    <div class="pc-price"><span>₹2,450</span></div>
-    <div class="pc-colors"><span style="--swatch:#7A2231"></span><span style="--swatch:#C9A24B"></span><span style="--swatch:#6E7A5C"></span></div>
-  </a>
-</div><div class="product-card reveal">
+  <div class="pc-info">
+    <div class="pc-cat">&nbsp;</div>
+    <div class="pc-title">&nbsp;</div>
+    <div class="pc-price"><span>&nbsp;</span></div>
+  </div>
+</div>
+<div class="product-card reveal is-loading" aria-hidden="true">
   <div class="pc-media">
     <div class="img-placeholder ar-portrait">
-  <img src="images/2.jpg" width="1200" height="655" alt="Ivory Rose Monogram Linen" loading="lazy">
-</div><div class="pc-actions">
-      <button class="pc-icon-btn" data-wish-toggle data-name="Ivory Rose Monogram Linen" data-price="₹3,200" data-img="images/2.jpg" aria-label="Add Ivory Rose Monogram Linen to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
-      <button class="pc-icon-btn" data-quick-add data-name="Ivory Rose Monogram Linen" data-price="₹3,200" data-img="images/2.jpg" aria-label="Quick add Ivory Rose Monogram Linen to bag"><svg viewBox="0 0 24 24"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg></button>
+      <div class="ph-inner">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="ph-label">Loading&hellip;</span>
+      </div>
     </div>
   </div>
-  <a href="product.html" class="pc-info">
-    <div class="pc-cat">Table Linen</div>
-    <div class="pc-title">Ivory Rose Monogram Linen</div>
-    <div class="pc-price"><span>₹3,200</span></div>
-    <div class="pc-colors"><span style="--swatch:#F2EBDC"></span><span style="--swatch:#C9A24B"></span><span style="--swatch:#D9A9A2"></span></div>
-  </a>
-</div><div class="product-card reveal">
+  <div class="pc-info">
+    <div class="pc-cat">&nbsp;</div>
+    <div class="pc-title">&nbsp;</div>
+    <div class="pc-price"><span>&nbsp;</span></div>
+  </div>
+</div>
+<div class="product-card reveal is-loading" aria-hidden="true">
   <div class="pc-media">
     <div class="img-placeholder ar-portrait">
-  <img src="images/14.jpg" width="1200" height="655" alt="Peacock Feather Cushion" loading="lazy">
-</div><span class="pc-tag">Bestseller</span>
-    <div class="pc-actions">
-      <button class="pc-icon-btn" data-wish-toggle data-name="Peacock Feather Cushion" data-price="₹1,850" data-img="images/14.jpg" aria-label="Add Peacock Feather Cushion to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
-      <button class="pc-icon-btn" data-quick-add data-name="Peacock Feather Cushion" data-price="₹1,850" data-img="images/14.jpg" aria-label="Quick add Peacock Feather Cushion to bag"><svg viewBox="0 0 24 24"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg></button>
+      <div class="ph-inner">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="ph-label">Loading&hellip;</span>
+      </div>
     </div>
   </div>
-  <a href="product.html" class="pc-info">
-    <div class="pc-cat">Home</div>
-    <div class="pc-title">Peacock Feather Cushion</div>
-    <div class="pc-price"><span>₹1,850</span><span class="was">₹2,300</span></div>
-    <div class="pc-colors"><span style="--swatch:#262E45"></span><span style="--swatch:#C9A24B"></span><span style="--swatch:#6E7A5C"></span></div>
-  </a>
-</div><div class="product-card reveal">
+  <div class="pc-info">
+    <div class="pc-cat">&nbsp;</div>
+    <div class="pc-title">&nbsp;</div>
+    <div class="pc-price"><span>&nbsp;</span></div>
+  </div>
+</div>
+<div class="product-card reveal is-loading" aria-hidden="true">
   <div class="pc-media">
     <div class="img-placeholder ar-portrait">
-  <img src="images/3.jpg" width="900" height="1200" alt="Blush Bloom Table Runner" loading="lazy">
-</div><div class="pc-actions">
-      <button class="pc-icon-btn" data-wish-toggle data-name="Blush Bloom Table Runner" data-price="₹4,100" data-img="images/3.jpg" aria-label="Add Blush Bloom Table Runner to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
-      <button class="pc-icon-btn" data-quick-add data-name="Blush Bloom Table Runner" data-price="₹4,100" data-img="images/3.jpg" aria-label="Quick add Blush Bloom Table Runner to bag"><svg viewBox="0 0 24 24"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg></button>
+      <div class="ph-inner">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="ph-label">Loading&hellip;</span>
+      </div>
     </div>
   </div>
-  <a href="product.html" class="pc-info">
-    <div class="pc-cat">Table Linen</div>
-    <div class="pc-title">Blush Bloom Table Runner</div>
-    <div class="pc-price"><span>₹4,100</span></div>
-    <div class="pc-colors"><span style="--swatch:#D9A9A2"></span><span style="--swatch:#C9A24B"></span><span style="--swatch:#F2EBDC"></span></div>
-  </a>
-</div><div class="product-card reveal">
+  <div class="pc-info">
+    <div class="pc-cat">&nbsp;</div>
+    <div class="pc-title">&nbsp;</div>
+    <div class="pc-price"><span>&nbsp;</span></div>
+  </div>
+</div>
+<div class="product-card reveal is-loading" aria-hidden="true">
   <div class="pc-media">
     <div class="img-placeholder ar-portrait">
-  <img src="images/13.jpg" width="1200" height="655" alt="Midnight Vine Wall Hoop" loading="lazy">
-</div><div class="pc-actions">
-      <button class="pc-icon-btn" data-wish-toggle data-name="Midnight Vine Wall Hoop" data-price="₹2,750" data-img="images/13.jpg" aria-label="Add Midnight Vine Wall Hoop to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
-      <button class="pc-icon-btn" data-quick-add data-name="Midnight Vine Wall Hoop" data-price="₹2,750" data-img="images/13.jpg" aria-label="Quick add Midnight Vine Wall Hoop to bag"><svg viewBox="0 0 24 24"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg></button>
+      <div class="ph-inner">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="ph-label">Loading&hellip;</span>
+      </div>
     </div>
   </div>
-  <a href="product.html" class="pc-info">
-    <div class="pc-cat">Wall Art</div>
-    <div class="pc-title">Midnight Vine Wall Hoop</div>
-    <div class="pc-price"><span>₹2,750</span></div>
-    <div class="pc-colors"><span style="--swatch:#262E45"></span><span style="--swatch:#C9A24B"></span></div>
-  </a>
-</div><div class="product-card reveal">
+  <div class="pc-info">
+    <div class="pc-cat">&nbsp;</div>
+    <div class="pc-title">&nbsp;</div>
+    <div class="pc-price"><span>&nbsp;</span></div>
+  </div>
+</div>
+<div class="product-card reveal is-loading" aria-hidden="true">
   <div class="pc-media">
     <div class="img-placeholder ar-portrait">
-  <img src="images/6.jpg" width="1200" height="800" alt="Sage Leaf Baby Blanket" loading="lazy">
-</div><span class="pc-tag">New</span>
-    <div class="pc-actions">
-      <button class="pc-icon-btn" data-wish-toggle data-name="Sage Leaf Baby Blanket" data-price="₹2,950" data-img="images/6.jpg" aria-label="Add Sage Leaf Baby Blanket to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
-      <button class="pc-icon-btn" data-quick-add data-name="Sage Leaf Baby Blanket" data-price="₹2,950" data-img="images/6.jpg" aria-label="Quick add Sage Leaf Baby Blanket to bag"><svg viewBox="0 0 24 24"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg></button>
+      <div class="ph-inner">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="ph-label">Loading&hellip;</span>
+      </div>
     </div>
   </div>
-  <a href="product.html" class="pc-info">
-    <div class="pc-cat">Kidswear</div>
-    <div class="pc-title">Sage Leaf Baby Blanket</div>
-    <div class="pc-price"><span>₹2,950</span></div>
-    <div class="pc-colors"><span style="--swatch:#6E7A5C"></span><span style="--swatch:#F2EBDC"></span><span style="--swatch:#D9A9A2"></span></div>
-  </a>
-</div><div class="product-card reveal">
+  <div class="pc-info">
+    <div class="pc-cat">&nbsp;</div>
+    <div class="pc-title">&nbsp;</div>
+    <div class="pc-price"><span>&nbsp;</span></div>
+  </div>
+</div>
+<div class="product-card reveal is-loading" aria-hidden="true">
   <div class="pc-media">
     <div class="img-placeholder ar-portrait">
-  <img src="images/18.jpg" width="1200" height="655" alt="Golden Paisley Clutch" loading="lazy">
-</div><div class="pc-actions">
-      <button class="pc-icon-btn" data-wish-toggle data-name="Golden Paisley Clutch" data-price="₹3,600" data-img="images/18.jpg" aria-label="Add Golden Paisley Clutch to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
-      <button class="pc-icon-btn" data-quick-add data-name="Golden Paisley Clutch" data-price="₹3,600" data-img="images/18.jpg" aria-label="Quick add Golden Paisley Clutch to bag"><svg viewBox="0 0 24 24"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg></button>
+      <div class="ph-inner">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="ph-label">Loading&hellip;</span>
+      </div>
     </div>
   </div>
-  <a href="product.html" class="pc-info">
-    <div class="pc-cat">Accessories</div>
-    <div class="pc-title">Golden Paisley Clutch</div>
-    <div class="pc-price"><span>₹3,600</span></div>
-    <div class="pc-colors"><span style="--swatch:#C9A24B"></span><span style="--swatch:#7A2231"></span></div>
-  </a>
-</div><div class="product-card reveal">
+  <div class="pc-info">
+    <div class="pc-cat">&nbsp;</div>
+    <div class="pc-title">&nbsp;</div>
+    <div class="pc-price"><span>&nbsp;</span></div>
+  </div>
+</div>
+<div class="product-card reveal is-loading" aria-hidden="true">
   <div class="pc-media">
     <div class="img-placeholder ar-portrait">
-  <img src="images/22.jpg" width="1200" height="655" alt="Blossom Trail Runner Scarf" loading="lazy">
-</div><span class="pc-tag">Bestseller</span>
-    <div class="pc-actions">
-      <button class="pc-icon-btn" data-wish-toggle data-name="Blossom Trail Runner Scarf" data-price="₹2,200" data-img="images/22.jpg" aria-label="Add Blossom Trail Runner Scarf to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
-      <button class="pc-icon-btn" data-quick-add data-name="Blossom Trail Runner Scarf" data-price="₹2,200" data-img="images/22.jpg" aria-label="Quick add Blossom Trail Runner Scarf to bag"><svg viewBox="0 0 24 24"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg></button>
+      <div class="ph-inner">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="ph-label">Loading&hellip;</span>
+      </div>
     </div>
   </div>
-  <a href="product.html" class="pc-info">
-    <div class="pc-cat">Accessories</div>
-    <div class="pc-title">Blossom Trail Runner Scarf</div>
-    <div class="pc-price"><span>₹2,200</span><span class="was">₹2,650</span></div>
-    <div class="pc-colors"><span style="--swatch:#D9A9A2"></span><span style="--swatch:#6E7A5C"></span><span style="--swatch:#C9A24B"></span></div>
-  </a>
-</div><div class="product-card reveal">
+  <div class="pc-info">
+    <div class="pc-cat">&nbsp;</div>
+    <div class="pc-title">&nbsp;</div>
+    <div class="pc-price"><span>&nbsp;</span></div>
+  </div>
+</div>
+<div class="product-card reveal is-loading" aria-hidden="true">
   <div class="pc-media">
     <div class="img-placeholder ar-portrait">
-  <img src="images/9.jpg" width="1200" height="655" alt="Terracotta Bird Hoop" loading="lazy">
-</div><div class="pc-actions">
-      <button class="pc-icon-btn" data-wish-toggle data-name="Terracotta Bird Hoop" data-price="₹2,300" data-img="images/9.jpg" aria-label="Add Terracotta Bird Hoop to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
-      <button class="pc-icon-btn" data-quick-add data-name="Terracotta Bird Hoop" data-price="₹2,300" data-img="images/9.jpg" aria-label="Quick add Terracotta Bird Hoop to bag"><svg viewBox="0 0 24 24"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg></button>
+      <div class="ph-inner">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        <span class="ph-label">Loading&hellip;</span>
+      </div>
     </div>
   </div>
-  <a href="product.html" class="pc-info">
-    <div class="pc-cat">Wall Art</div>
-    <div class="pc-title">Terracotta Bird Hoop</div>
-    <div class="pc-price"><span>₹2,300</span></div>
-    <div class="pc-colors"><span style="--swatch:#7A2231"></span><span style="--swatch:#C9A24B"></span></div>
-  </a>
+  <div class="pc-info">
+    <div class="pc-cat">&nbsp;</div>
+    <div class="pc-title">&nbsp;</div>
+    <div class="pc-price"><span>&nbsp;</span></div>
+  </div>
 </div>
         </div>
         <div class="load-more" id="loadMoreWrap"><button class="btn btn-secondary" id="loadMoreBtn">Load More Pieces</button></div>

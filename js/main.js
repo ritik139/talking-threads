@@ -412,6 +412,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }[c]));
   }
 
+  // Cache-busting for product photos. Product images are plain files under /images and
+  // are referenced by filename only (e.g. "images/4.jpg"). When a product photo is
+  // replaced, it's common for the new file to be saved over the old one under the exact
+  // same filename — the URL never changes, so browsers that already have that URL in
+  // their HTTP cache keep serving the old bytes instantly on load, then swap to the new
+  // ones a moment later once the cache entry revalidates over the network. That's the
+  // "old image for ~1s, then the new one" flicker. CSS/JS assets already avoid this with
+  // a "?v=" query string bumped on every change (see the asset versioning fix); apply the
+  // same convention to product photos so a stale cache can never be painted first.
+  // Bump IMG_VERSION whenever image files are replaced in place (same filename, new bytes).
+  const IMG_VERSION = '20260801';
+  function withImgVersion(src) {
+    if (!src) return src;
+    return src + (src.indexOf('?') === -1 ? '?' : '&') + 'v=' + IMG_VERSION;
+  }
+
   // Only allow http(s) (or protocol-relative/relative) URLs into src/href attributes.
   // Blocks `javascript:`/`data:`/etc. schemes that would otherwise execute when a
   // crafted image or link URL (e.g. a cart item's img, or a review photo URL) is clicked
@@ -437,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const priceStr = p.displayPrice || ('₹' + Number(p.price || 0).toLocaleString('en-IN'));
     const wasStr = p.compareAtPrice ? '₹' + Number(p.compareAtPrice).toLocaleString('en-IN') : '';
     const colorDots = (p.colors || []).map(c => `<span style="--swatch:${SWATCH_HEX[c] || '#ccc'}"></span>`).join('');
-    const photo = (p.images && p.images.length && p.images[0]) ? p.images[0] : '';
+    const photo = (p.images && p.images.length && p.images[0]) ? withImgVersion(p.images[0]) : '';
     const href = productHref(p);
     const mediaInner = photo
       ? `<img src="${photo}" alt="${p.name}" loading="lazy">`
@@ -473,6 +489,26 @@ document.addEventListener('DOMContentLoaded', () => {
   function hydrateStaticProductCardLinks(root) {
     (root || document).querySelectorAll('.product-card').forEach(card => {
       if (card.dataset.href) return; // already has a real link (came from productCardTemplate)
+      if (card.classList.contains('is-loading')) return; // neutral skeleton, no real product to link to
+      // Cards inside #homeFeaturedGrid are the pre-fetch fallback for "Newly stitched
+      // and best loved" — apiRequest('/products?sort=featured&limit=6') below always
+      // replaces them shortly after load with real cards whose hrefs come straight
+      // from productHref(p) using the product's actual slug/_id. Guessing a href here
+      // instead — slugifying the hardcoded fallback title client-side — is exactly the
+      // bug: that guess doesn't have to match the real database slug. If it happens to
+      // coincidentally match a DIFFERENT real product's slug, a click during this brief
+      // window navigates to that unrelated product, not a stale copy of the right one.
+      // Leave these cards inert (no href at all) until the authoritative fetch replaces
+      // them — an inert click is a no-op, never a wrong navigation.
+      if (card.closest('#homeFeaturedGrid')) {
+        // Also strip any href already baked directly into the static markup's anchor.
+        // A click on that <a> navigates natively and never reaches the card-level
+        // dataset.href logic above, so leaving a hand-authored guess in place there
+        // would still let this exact bug through.
+        const staleLink = card.querySelector('.pc-info[href]');
+        if (staleLink) staleLink.removeAttribute('href');
+        return;
+      }
       const titleEl = card.querySelector('.pc-title');
       if (!titleEl) return;
       const href = productHref({ name: titleEl.textContent.trim() });
@@ -553,7 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
           name: btn.getAttribute('data-name') || 'Talking-Thread Piece',
           price: btn.getAttribute('data-price') || '',
           img: resolveProductImage(btn, '.pc-media'),
-          size: 'Medium', color: 'Antique Gold', text: '—', qty: 1
+          size: 'Medium — 12in', color: 'Antique Gold', text: '—', qty: 1
         });
         showToast('Added to your bag');
       }));
@@ -563,6 +599,38 @@ document.addEventListener('DOMContentLoaded', () => {
   bindWishToggleButtons();
   bindQuickAddButtons();
   hydrateStaticProductCardLinks();
+
+  /* ============================================================
+     HOME PAGE — "Newly stitched and best loved"
+     The static cards above are only a pre-JS fallback, and
+     hydrateStaticProductCardLinks() can only *guess* a slug from
+     their hard-coded title text — which is what let a card link to
+     product.html?slug=... for a product that doesn't actually exist
+     in the database ("Product Not Found"). Once the API is reachable,
+     replace them with the real featured/new/bestseller products and
+     build each link with productHref()/productCardTemplate() from the
+     product's real slug or _id — the exact same mapping the Shop
+     page's grid uses — so every image and title opens the correct
+     product.
+     ============================================================ */
+  const homeFeaturedGrid = document.getElementById('homeFeaturedGrid');
+  if (homeFeaturedGrid) {
+    (async () => {
+      try {
+        const data = await apiRequest('/products?sort=featured&limit=6');
+        const products = data.products || [];
+        if (products.length) {
+          homeFeaturedGrid.innerHTML = products.map(productCardTemplate).join('');
+          bindWishToggleButtons(homeFeaturedGrid);
+          bindQuickAddButtons(homeFeaturedGrid);
+        }
+        // If the API returns no products, leave the static fallback cards
+        // (already hydrated above) in place rather than showing an empty section.
+      } catch (err) {
+        // API unreachable — keep showing the static fallback cards.
+      }
+    })();
+  }
 
   /* ============================================================
      SHOP PAGE — search, filters, sort & pagination wired to the API
@@ -585,6 +653,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let state = { page: 1, limit: 9, products: [], pages: 1, total: 0 };
     let searchDebounce;
+    // Bumped on every fetchAndRender call. Filter checkboxes/swatches and sort all call
+    // refresh() immediately with no debounce, so a user toggling a couple of filters in
+    // quick succession can have two requests in flight at once. Network timing doesn't
+    // guarantee they resolve in the order they were sent — if the *older* request's
+    // response lands after the newer one, it would overwrite the grid with the previous
+    // (now-stale) set of products/images: a visible flash of the wrong photo before the
+    // real, correct one appears. Each call captures the id it was issued with and, once
+    // its response comes back, only applies it if it's still the most recent request.
+    let latestRequestId = 0;
 
     function currentFilters() {
       const f = { category: [], collection: [], size: [], color: [], availability: [], price: [] };
@@ -632,28 +709,56 @@ document.addEventListener('DOMContentLoaded', () => {
       loadMoreWrap.style.display = state.page < state.pages ? 'flex' : 'none';
     }
 
+    // Snapshot of what's currently painted in the grid (name + image, in order) — used to
+    // detect when an API response is identical to what's already on screen, so we can skip
+    // tearing the grid down and rebuilding it. Replacing innerHTML unconditionally destroys
+    // and recreates every <img>, which forces the browser to redecode/repaint each photo —
+    // visible as a brief flicker even though the "new" image is the same as the old one.
+    function currentGridSignature() {
+      return Array.from(productGrid.querySelectorAll('.product-card')).map(card => {
+        const title = (card.querySelector('.pc-title') || {}).textContent || '';
+        const img = card.querySelector('.pc-media img');
+        return title.trim() + '|' + (img ? img.getAttribute('src') : '');
+      }).join('~~');
+    }
+
     async function fetchAndRender(page, append) {
+      const requestId = ++latestRequestId;
       try {
         if (loadMoreBtn && append) { loadMoreBtn.textContent = 'Loading…'; loadMoreBtn.disabled = true; }
         const data = await apiRequest('/products?' + buildQuery(page));
+        // A newer fetchAndRender() call has started since this one was sent — its own
+        // response will land shortly and is what should end up on screen. Applying this
+        // stale response now would flash the wrong products/images before the real ones
+        // arrive, so drop it silently.
+        if (requestId !== latestRequestId) return;
+
         state.page = data.page || page;
         state.pages = data.pages || 1;
         state.total = data.total || 0;
 
-        const html = (data.products || []).map(productCardTemplate).join('');
+        const products = data.products || [];
         if (append) {
+          const html = products.map(productCardTemplate).join('');
           productGrid.insertAdjacentHTML('beforeend', html);
         } else {
-          productGrid.innerHTML = html || '<p class="result-count">No pieces match these filters just yet.</p>';
+          const incomingSignature = products
+            .map(p => (p.name || '').trim() + '|' + withImgVersion((p.images && p.images[0]) || ''))
+            .join('~~');
+          if (incomingSignature !== currentGridSignature()) {
+            const html = products.map(productCardTemplate).join('');
+            productGrid.innerHTML = html || '<p class="result-count">No pieces match these filters just yet.</p>';
+          }
         }
         bindWishToggleButtons(productGrid);
         bindQuickAddButtons(productGrid);
         renderResultCount();
         renderLoadMore();
       } catch (err) {
+        if (requestId !== latestRequestId) return; // a newer request superseded this one; don't surface its error
         showToast(err.message || 'Could not load products right now.');
       } finally {
-        if (loadMoreBtn) { loadMoreBtn.textContent = 'Load More Pieces'; loadMoreBtn.disabled = false; }
+        if (requestId === latestRequestId && loadMoreBtn) { loadMoreBtn.textContent = 'Load More Pieces'; loadMoreBtn.disabled = false; }
       }
     }
 
@@ -751,7 +856,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Images: main photo + up to 4 thumbnails (reusing the same photo where the
       // product only has one, same as the page's original static markup did),
       // split alternately across the left/right thumb columns around the main image.
-      const photos = (p.images && p.images.length) ? p.images : [];
+      const photos = ((p.images && p.images.length) ? p.images : []).map(withImgVersion);
       const mainPhoto = photos[0] || '';
       const thumbLabels = ['Front View', 'Detail — Stitch Close-up', 'Styled on Wall', 'Back & Packaging'];
       const thumbsLeft = document.querySelector('.pd-thumbs-left');
@@ -799,9 +904,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (colorOut) colorOut.textContent = COLOR_LABELS[colors[0]] || colors[0];
 
       const addBtn = document.getElementById('addToCartBtn');
-      if (addBtn) { addBtn.setAttribute('data-name', p.name); addBtn.setAttribute('data-price', priceStr); }
+      if (addBtn) {
+        addBtn.setAttribute('data-name', p.name);
+        addBtn.setAttribute('data-price', priceStr);
+        addBtn.disabled = false;
+        addBtn.textContent = 'Add to Cart';
+      }
       const pdWish = document.getElementById('pdWishBtn');
-      if (pdWish) { pdWish.setAttribute('data-name', p.name); pdWish.setAttribute('data-price', priceStr); }
+      if (pdWish) {
+        pdWish.setAttribute('data-name', p.name);
+        pdWish.setAttribute('data-price', priceStr);
+        pdWish.disabled = false;
+      }
     }
 
     // Wires up all the interactive bits — run once, after the product's own data (if any)
@@ -897,7 +1011,7 @@ document.addEventListener('DOMContentLoaded', () => {
           Store.addToCart({
             name, price,
             img: (mainImg && mainImg.getAttribute('src')) || '',
-            size: selectedSize || 'Medium — 12in Hoop',
+            size: selectedSize || 'Medium — 12in',
             color: selectedColor || 'Antique Gold',
             text: (customText && customText.value.trim()) || '—',
             qty: parseInt(qtyInput ? qtyInput.value : '1', 10)
@@ -930,6 +1044,45 @@ document.addEventListener('DOMContentLoaded', () => {
       bindQuickAddButtons(grid);
     }
 
+    // Shown when the requested slug/id doesn't match any product in the database (wrong
+    // link, product renamed/removed, or the API is unreachable). Previously this case just
+    // fired a toast and left whatever placeholder markup was already in the page fully
+    // visible and interactive — so a broken link LOOKED like it had opened a real product
+    // (often the same stale one, on every failed click), instead of clearly failing.
+    function renderProductNotFound() {
+      document.title = 'Product Not Found — Talking-Thread';
+      const crumb = document.querySelector('.breadcrumb li[aria-current="page"]');
+      if (crumb) crumb.textContent = 'Not Found';
+
+      const pdMain = document.querySelector('.pd-main');
+      if (pdMain) pdMain.innerHTML = '<div class="img-placeholder ar-portrait"><div class="ph-inner"><span class="ph-label">Product Not Found</span></div></div>';
+      const thumbsLeft = document.querySelector('.pd-thumbs-left');
+      const thumbsRight = document.querySelector('.pd-thumbs-right');
+      if (thumbsLeft) thumbsLeft.innerHTML = '';
+      if (thumbsRight) thumbsRight.innerHTML = '';
+
+      const pcCat = document.querySelector('.pd-info > .pc-cat');
+      if (pcCat) pcCat.textContent = '';
+      const h1 = document.querySelector('.pd-info h1');
+      if (h1) h1.textContent = "Sorry, we couldn't find that piece";
+      const priceRow = document.querySelector('.pd-price-row');
+      if (priceRow) priceRow.innerHTML = '';
+      const desc = document.querySelector('.pd-desc');
+      if (desc) desc.textContent = 'This product may have been renamed, removed, or the link is out of date. Please head back to the shop to find it.';
+      const sizePills = document.querySelector('.size-pills');
+      if (sizePills) sizePills.innerHTML = '';
+      const colorOptions = document.querySelector('.color-options');
+      if (colorOptions) colorOptions.innerHTML = '';
+
+      const addBtn = document.getElementById('addToCartBtn');
+      if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Unavailable'; }
+      const pdWish = document.getElementById('pdWishBtn');
+      if (pdWish) pdWish.disabled = true;
+
+      const related = document.querySelector('.related-products');
+      if (related) related.style.display = 'none';
+    }
+
     const productKey = new URLSearchParams(window.location.search).get('slug')
       || new URLSearchParams(window.location.search).get('id');
 
@@ -943,11 +1096,16 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(relData => { if (relData) renderRelated(relData.products); })
         .catch(err => {
           showToast(err.message || 'Could not load that product.');
+          renderProductNotFound();
           bindProductInteractions(); // still let people interact with whatever is on the page
         });
     } else {
-      // No product specified in the URL (e.g. someone opened product.html directly) —
-      // just wire up interactions on whatever example markup is already in the page.
+      // No product specified in the URL (e.g. someone opened product.html directly).
+      // The gallery/title/price/buy-buttons in the HTML are a neutral loading skeleton,
+      // not a real product — with no slug to fetch, nothing will ever fill it in, so
+      // show the same "not found" state used for an unresolvable slug rather than
+      // leaving the page stuck on "Loading…" forever.
+      renderProductNotFound();
       bindProductInteractions();
     }
   }
@@ -1327,7 +1485,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         el.querySelector('[data-act="move"]').addEventListener('click', (e) => {
           e.stopPropagation();
-          Store.addToCart({ name: item.name, price: item.price, img: item.img || '', size: 'Medium', color: 'Antique Gold', text: '—', qty: 1 });
+          Store.addToCart({ name: item.name, price: item.price, img: item.img || '', size: 'Medium — 12in', color: 'Antique Gold', text: '—', qty: 1 });
           Store.setWishlist(Store.getWishlist().filter((i) => i.id !== item.id));
           if (Auth.isLoggedIn()) apiRequest('/wishlist/' + encodeURIComponent(item.id), { method: 'DELETE', keepalive: true }).catch(() => {});
           render();

@@ -276,11 +276,22 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     },
     updateCartQty(id, qty) {
-      const cart = Store.getCart().map(i => i.id === id ? Object.assign({}, i, { qty: Math.max(1, qty) }) : i);
+      const before = Store.getCart().find(i => i.id === id);
+      const newQty = Math.max(1, qty);
+      const cart = Store.getCart().map(i => i.id === id ? Object.assign({}, i, { qty: newQty }) : i);
       Store.setCart(cart);
       if (Auth.isLoggedIn()) {
-        // Same navigation-cancellation risk as addToCart above.
-        apiRequest('/cart/' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ qty: Math.max(1, qty) }), keepalive: true }).catch(() => {});
+        // Sent as a relative delta (not the absolute target qty) so the server can apply it
+        // with a single atomic, order-independent $inc — two rapid stepper clicks racing
+        // over a real network can then never clobber each other regardless of which one's
+        // round trip finishes first. (Root cause of a production-only cart/order total
+        // mismatch: the old absolute-qty PATCH let an out-of-order write silently revert a
+        // quantity change, and that reverted qty then got frozen into the order total at
+        // checkout. See cartController.updateCartItem for the server-side fix.)
+        const delta = newQty - (before ? (before.qty || 1) : 0);
+        if (delta !== 0) {
+          apiRequest('/cart/' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ delta }), keepalive: true }).catch(() => {});
+        }
       }
     },
 

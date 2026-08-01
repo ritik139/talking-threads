@@ -26,6 +26,7 @@ const contactRoutes = require('./routes/contactRoutes');
 const newsletterRoutes = require('./routes/newsletterRoutes');
 const journalRoutes = require('./routes/journalRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 
@@ -128,6 +129,16 @@ const authLimiter = rateLimit({
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
+// Chat calls the Gemini API (real cost per call) — cap per IP separately from the general limiter.
+const chatLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "I'm getting a lot of questions right now — please try again in a few minutes." }
+});
+app.use('/api/chat', chatLimiter);
+
 // ---- API routes ----
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -140,6 +151,7 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/journal', journalRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Talking-Thread API is running.' });
@@ -185,3 +197,5 @@ server.listen(PORT, () => {
 });
 
 module.exports = app;
+
+// true

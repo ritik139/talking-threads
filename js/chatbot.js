@@ -1,13 +1,26 @@
 /* ==========================================================================
    Talking-Thread — Support Chat Widget
-   100% free, client-side, rule-based assistant. No paid API / no external
-   AI service — keyword matching against a small knowledge base below.
-   Edit TT_CHAT_KB to change what the bot knows about your shop.
+   AI-powered: sends the customer's message + recent conversation history to
+   POST /api/chat (Express + Google Gemini, backend/controllers/chatController.js),
+   which grounds every reply in live product/order data from MongoDB.
+   Falls back to the original local keyword-matcher if the network/API call
+   fails for any reason, so the widget never goes silent.
+   DOM structure, classes and CSS are unchanged from the original widget.
    ========================================================================== */
 (function () {
   "use strict";
 
-  /* ---------------- Knowledge base — edit freely ---------------- */
+  /* ---------------- Config ---------------- */
+  var TT_CONFIG = {
+    apiEndpoint: "/api/chat",   // same-origin: server.js serves the API and the static site on one port
+    requestTimeoutMs: 20000,
+    maxHistoryTurns: 8,         // user+assistant pairs kept and sent for context
+    historyStorageKey: "tt_chat_history_v1"
+  };
+
+  /* ---------------- Offline fallback knowledge base ---------------- */
+  /* Used only if the AI backend is unreachable, times out, or errors — keeps the
+     widget useful even if the server/API key/DB is briefly down. */
   var TT_CHAT_KB = [
     {
       id: "greeting",
@@ -66,7 +79,7 @@
     }
   ];
 
-  var FALLBACK_REPLY = "I'm not quite sure about that one — I can help with products, orders, shipping, returns, or how to reach our team. You can also try the <a href=\"contact.html\">Contact page</a> for anything more specific.";
+  var FALLBACK_REPLY = "I'm having trouble reaching our AI assistant right now — but I can still help with products, orders, shipping, returns, or how to reach our team. You can also try the <a href=\"contact.html\">Contact page</a> for anything more specific.";
 
   var QUICK_REPLIES = [
     { label: "Products", text: "Tell me about your products" },
@@ -75,8 +88,10 @@
     { label: "Contact us", text: "How can I contact you" }
   ];
 
-  /* ---------------- Matching ---------------- */
-  function findReply(input) {
+  var GREETING = "Hello! Welcome to Talking-Thread. I can help with products, orders, shipping, returns or getting in touch with our team. What would you like to know?";
+
+  /* ---------------- Local keyword-match fallback ---------------- */
+  function findLocalReply(input) {
     var text = input.toLowerCase();
     var best = null;
     var bestScore = 0;
@@ -91,6 +106,117 @@
       }
     }
     return best ? best.reply : FALLBACK_REPLY;
+  }
+
+  /* ---------------- Conversation memory (persists for the browser session) ---------------- */
+  var conversationHistory = loadHistory();
+
+  function loadHistory() {
+    try {
+      var raw = sessionStorage.getItem(TT_CONFIG.historyStorageKey);
+      var parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveHistory() {
+    try {
+      sessionStorage.setItem(TT_CONFIG.historyStorageKey, JSON.stringify(conversationHistory));
+    } catch (e) {
+      /* sessionStorage unavailable (e.g. private mode) — conversation just won't persist across reload */
+    }
+  }
+
+  function pushHistory(role, content) {
+    conversationHistory.push({ role: role, content: content });
+    var maxEntries = TT_CONFIG.maxHistoryTurns * 2;
+    if (conversationHistory.length > maxEntries) {
+      conversationHistory = conversationHistory.slice(-maxEntries);
+    }
+    saveHistory();
+  }
+
+  /* ---------------- Minimal allow-list sanitizer for AI-generated HTML ---------------- */
+  /* The backend is instructed to only ever emit <a>/<b>/<strong>/<em>/<br>, but this widget
+     never trusts network output blindly — anything else is stripped client-side too. */
+  var ALLOWED_TAGS = { A: true, B: true, STRONG: true, EM: true, BR: true };
+
+  function sanitizeBotHtml(html) {
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = html;
+    (function clean(node) {
+      var children = Array.prototype.slice.call(node.childNodes);
+      children.forEach(function (child) {
+        if (child.nodeType === 1) {
+          if (!ALLOWED_TAGS[child.tagName]) {
+            var text = document.createTextNode(child.textContent);
+            node.replaceChild(text, child);
+            return;
+          }
+          if (child.tagName === "A") {
+            var href = child.getAttribute("href") || "";
+            // Only allow relative links to the site's own pages — never external/javascript: URLs.
+            if (/^[a-z0-9_\-]+\.html(\?.*)?$/i.test(href)) {
+              var cleanA = document.createElement("a");
+              cleanA.setAttribute("href", href);
+              cleanA.setAttribute("rel", "noopener");
+              cleanA.innerHTML = child.innerHTML;
+              node.replaceChild(cleanA, child);
+              child = cleanA;
+            } else {
+              var text2 = document.createTextNode(child.textContent);
+              node.replaceChild(text2, child);
+              return;
+            }
+          } else {
+            Array.from(child.attributes).forEach(function (attr) {
+              child.removeAttribute(attr.name);
+            });
+          }
+          clean(child);
+        }
+      });
+    })(wrapper);
+    return wrapper.innerHTML;
+  }
+
+  /* ---------------- AI backend call ---------------- */
+  function askBackend(message) {
+    var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    var timeoutId = controller ? setTimeout(function () { controller.abort(); }, TT_CONFIG.requestTimeoutMs) : null;
+
+    return fetch(TT_CONFIG.apiEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include", // send the sign-in cookie if present, so order questions can be answered accurately
+      body: JSON.stringify({
+        message: message,
+        history: conversationHistory.slice(-TT_CONFIG.maxHistoryTurns * 2)
+      }),
+      signal: controller ? controller.signal : undefined
+    })
+      .then(function (res) {
+        if (timeoutId) clearTimeout(timeoutId);
+        if (!res.ok) throw new Error("Chat API responded with " + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success || !data.reply) throw new Error("Malformed chat API response");
+        return data.reply;
+      });
+  }
+
+  function getBotReply(userText) {
+    return askBackend(userText)
+      .then(function (reply) {
+        return sanitizeBotHtml(reply);
+      })
+      .catch(function () {
+        // Network/API failure — degrade gracefully to the local rule-based reply.
+        return findLocalReply(userText);
+      });
   }
 
   /* ---------------- DOM build ---------------- */
@@ -139,33 +265,68 @@
     var body = win.querySelector("#ttChatBody");
     var form = win.querySelector("#ttChatForm");
     var input = win.querySelector("#ttChatInput");
+    var sendBtn = form.querySelector("button[type=submit]");
     var quickWrap = win.querySelector("#ttQuickReplies");
     var closeBtn = win.querySelector("#ttChatCloseBtn");
     var opened = false;
+    var awaitingReply = false;
 
-    function addMessage(text, who) {
+    function addMessage(html, who) {
       var msg = document.createElement("div");
       msg.className = "tt-msg " + who;
-      msg.innerHTML = text;
+      msg.innerHTML = html;
       body.appendChild(msg);
       body.scrollTop = body.scrollHeight;
     }
 
-    function showTyping(cb) {
+    function escapeHtml(text) {
+      var d = document.createElement("div");
+      d.textContent = text;
+      return d.innerHTML;
+    }
+
+    function showTyping() {
       var t = el('<div class="tt-typing" id="ttTyping"><span></span><span></span><span></span></div>');
       body.appendChild(t);
       body.scrollTop = body.scrollHeight;
-      setTimeout(function () {
-        t.remove();
-        cb();
-      }, 500 + Math.random() * 400);
+      return t;
+    }
+
+    function setBusy(busy) {
+      awaitingReply = busy;
+      input.disabled = busy;
+      sendBtn.disabled = busy;
+    }
+
+    function stripTags(html) {
+      var d = document.createElement("div");
+      d.innerHTML = html;
+      return d.textContent || "";
     }
 
     function respondTo(text) {
-      addMessage(text, "user");
-      showTyping(function () {
-        addMessage(findReply(text), "bot");
-      });
+      if (awaitingReply) return;
+      addMessage(escapeHtml(text), "user");
+      pushHistory("user", text);
+      setBusy(true);
+      var typingEl = showTyping();
+      var minDelay = new Promise(function (resolve) { setTimeout(resolve, 450); });
+
+      Promise.all([getBotReply(text), minDelay])
+        .then(function (results) {
+          var replyHtml = results[0];
+          typingEl.remove();
+          addMessage(replyHtml, "bot");
+          pushHistory("assistant", stripTags(replyHtml));
+        })
+        .catch(function () {
+          typingEl.remove();
+          addMessage(FALLBACK_REPLY, "bot");
+        })
+        .finally(function () {
+          setBusy(false);
+          input.focus();
+        });
     }
 
     function renderQuickReplies() {
@@ -179,13 +340,24 @@
       });
     }
 
+    function restoreConversation() {
+      // Re-render any history already in this browser session (context memory across reloads).
+      conversationHistory.forEach(function (turn) {
+        addMessage(turn.role === "user" ? escapeHtml(turn.content) : turn.content, turn.role === "user" ? "user" : "bot");
+      });
+    }
+
     function openChat() {
       opened = true;
       win.classList.add("open");
       launcher.classList.add("open");
       launcher.setAttribute("aria-expanded", "true");
       if (!body.hasChildNodes()) {
-        addMessage("Hello! Welcome to Talking-Thread. I can help with products, orders, shipping, returns or getting in touch with our team. What would you like to know?", "bot");
+        if (conversationHistory.length) {
+          restoreConversation();
+        } else {
+          addMessage(GREETING, "bot");
+        }
         renderQuickReplies();
       }
       setTimeout(function () { input.focus(); }, 200);
@@ -206,7 +378,7 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var val = input.value.trim();
-      if (!val) return;
+      if (!val || awaitingReply) return;
       input.value = "";
       respondTo(val);
     });
@@ -222,3 +394,4 @@
     init();
   }
 })();
+// treu

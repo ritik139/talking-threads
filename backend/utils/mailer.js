@@ -418,4 +418,83 @@ async function sendNewOrderEmail({ order, customerName, customerEmail }) {
   });
 }
 
-module.exports = { sendContactEmail, sendNewOrderEmail, verifyMailer };
+// Sends the order confirmation to the customer themselves, right after checkout —
+// separate from sendNewOrderEmail above, which notifies the studio's own inbox.
+// Both are fired from notifyNewOrder() in orderController.js so a single order
+// always produces both emails.
+async function sendOrderConfirmationEmail({ order, customerName, customerEmail }) {
+  if (!customerEmail) throw new Error('No customer email on the order — cannot send confirmation.');
+
+  const itemsText = order.items
+    .map((i) => `  - ${i.qty} x ${i.name}${i.size ? ` (${i.size})` : ''}${i.color ? ` [${i.color}]` : ''} — ${i.price}`)
+    .join('\n');
+
+  const itemsHtml = order.items
+    .map(
+      (i) => `
+        <tr>
+          <td style="padding:6px 10px;border-bottom:1px solid #eee;">${escapeHtml(i.name)}${i.size ? ` (${escapeHtml(i.size)})` : ''}${i.color ? ` [${escapeHtml(i.color)}]` : ''}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center;">${i.qty}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right;">${escapeHtml(i.price)}</td>
+        </tr>`
+    )
+    .join('');
+
+  const shippingLines = order.shippingAddress
+    ? [
+        order.shippingAddress.fullName,
+        order.shippingAddress.line1,
+        order.shippingAddress.line2,
+        `${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}`,
+        order.shippingAddress.country
+      ].filter(Boolean)
+    : [];
+
+  await sendViaResend({
+    to: customerEmail,
+    subject: `Your Talking-Thread order ${order.orderNumber} is confirmed`,
+    text: [
+      `Thank you for shopping with Talking-Thread, ${customerName || 'there'}!`,
+      '',
+      `Order: ${order.orderNumber}`,
+      `Payment: ${order.paymentMethod} — ${order.paymentStatus}`,
+      '',
+      'Items:',
+      itemsText,
+      '',
+      `Subtotal: ${order.subtotal}`,
+      `Shipping: ${order.shipping}`,
+      `Total: ${order.total}`,
+      '',
+      shippingLines.length ? ['Shipping to:', ...shippingLines].join('\n') : '',
+      '',
+      'We hand-stitch every piece to order, so please allow 10–14 days before it ships.',
+      'You can track this order any time from "My Orders" on the site.'
+    ].join('\n'),
+    html: `
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.6;">
+        <h2 style="margin:0 0 16px;">Thank you for your order, ${escapeHtml(customerName || 'there')}!</h2>
+        <p style="margin:0 0 16px;">Your order <strong>${escapeHtml(order.orderNumber)}</strong> has been received and is being prepared by our artisans in Jaipur. We hand-stitch every piece to order, so please allow 10&ndash;14 days before it ships.</p>
+        <table style="border-collapse:collapse;width:100%;max-width:480px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:6px 10px;border-bottom:2px solid #222;">Item</th>
+              <th style="text-align:center;padding:6px 10px;border-bottom:2px solid #222;">Qty</th>
+              <th style="text-align:right;padding:6px 10px;border-bottom:2px solid #222;">Price</th>
+            </tr>
+          </thead>
+          <tbody>${itemsHtml}</tbody>
+        </table>
+        <p style="margin:16px 0 0;"><strong>Subtotal:</strong> ${order.subtotal}</p>
+        <p style="margin:0;"><strong>Shipping:</strong> ${order.shipping}</p>
+        <p style="margin:0;"><strong>Total:</strong> ${order.total}</p>
+        <p style="margin:0;"><strong>Payment:</strong> ${escapeHtml(order.paymentMethod)} — ${escapeHtml(order.paymentStatus)}</p>
+        ${shippingLines.length ? `<p style="margin:16px 0 0;"><strong>Shipping to:</strong><br>${shippingLines.map(escapeHtml).join('<br>')}</p>` : ''}
+        <p style="margin:20px 0 0;">You can track this order any time from "My Orders" on the site.</p>
+        <p style="margin:16px 0 0;">With thread and thanks,<br>Talking-Thread</p>
+      </div>
+    `
+  });
+}
+
+module.exports = { sendContactEmail, sendNewOrderEmail, sendOrderConfirmationEmail, verifyMailer };

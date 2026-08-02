@@ -6,6 +6,8 @@ Disallow: /cart.html
 Disallow: /login.html
 Disallow: /register.html
 Disallow: /wishlist.html
+Disallow: /my-orders.html
 Disallow: /admin-dashboard.html
+Disallow: /admin-login.html
 
 Sitemap: https://talking-threads.onrender.com/sitemap.xml

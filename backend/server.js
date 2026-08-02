@@ -230,10 +230,12 @@ app.use('/videos', express.static(path.join(FRONTEND_DIR, 'videos'), versionedAs
 
 app.use(express.static(FRONTEND_DIR, { extensions: ['html'], dotfiles: 'ignore' }));
 
-// Any non-API route falls back to the matching HTML file, or index.html
+// Any non-API route that didn't match a real file above is an unknown page —
+// serve the branded 404 page with an actual 404 status (previously this fell
+// back to index.html, so bad/mistyped URLs silently looked like the homepage).
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(FRONTEND_DIR, 'index.html'), (err) => {
+  res.status(404).sendFile(path.join(FRONTEND_DIR, '404.html'), (err) => {
     if (err) next(err);
   });
 });

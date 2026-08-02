@@ -162,6 +162,7 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .footer-newsletter-form{ flex: 0 1 auto; width: 100%; }
   .footer-bottom{ padding: 20px 0; }
   .footer-bottom .payment-icons{ gap: 12px; }
+  .footer-legal{ gap: 12px; }
 
   /* ---------- 13. Toast / floating buttons ----------
      Fixed-position elements sized with `right` + `max-width` can spill

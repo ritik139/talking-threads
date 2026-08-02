@@ -4,7 +4,7 @@ const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const Notification = require('../models/Notification');
-const { sendNewOrderEmail } = require('../utils/mailer');
+const { sendNewOrderEmail, sendOrderConfirmationEmail } = require('../utils/mailer');
 
 function generateOrderNumber() {
   const rand = Math.random().toString(36).slice(2, 7).toUpperCase();
@@ -78,6 +78,17 @@ function notifyNewOrder(io, order, customer) {
     customerEmail: customer.email
   }).catch((err) => {
     console.error(`New order email failed for ${order.orderNumber}:`, err.message);
+  });
+
+  // Customer-facing order confirmation — sent to the person who placed the order, in
+  // addition to (never instead of) the studio's own new-order inbox notification above.
+  // Same fire-and-forget pattern: a failed/slow send must never block or fail checkout.
+  sendOrderConfirmationEmail({
+    order,
+    customerName: customer.name,
+    customerEmail: customer.email
+  }).catch((err) => {
+    console.error(`Order confirmation email failed for ${order.orderNumber}:`, err.message);
   });
 
   // ROOT CAUSE FIX: the admin dashboard's notification bell used to exist only as an

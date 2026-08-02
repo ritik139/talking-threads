@@ -1006,6 +1006,9 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   font-size: 0.76rem; color: var(--ink-faint);
 }
 .footer-bottom .payment-icons{ display: flex; gap: 16px; opacity: .7; list-style: none; margin: 0; padding: 0; }
+.footer-legal{ display: flex; gap: 18px; }
+.footer-legal a{ color: var(--ink-faint); text-decoration: none; }
+.footer-legal a:hover{ color: var(--thread); }
 .payment-icon{ display: flex; align-items: center; gap: 6px; font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-faint); }
 .payment-icon svg{ width: 22px; height: 15px; stroke: var(--ink-soft); fill: none; stroke-width: 1.2; }
 
@@ -1069,6 +1072,7 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   .footer-newsletter-mini{ flex-direction: column; align-items: flex-start; gap: 18px; }
   .footer-newsletter-form{ max-width: 100%; }
   .footer-bottom{ flex-direction: column; gap: 10px; text-align: center; }
+  .footer-legal{ justify-content: center; }
   .footer-bottom .payment-icons{ justify-content: center; flex-wrap: wrap; }
   .hero-meta{ gap: 24px; flex-wrap: wrap; }
   .cart-item{ grid-template-columns: 80px minmax(0,1fr); }

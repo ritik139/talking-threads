@@ -33,7 +33,8 @@ async function findRelevantProducts(message) {
       { score: { $meta: 'textScore' } }
     )
       .sort({ score: { $meta: 'textScore' } })
-      .limit(PRODUCT_CONTEXT_LIMIT);
+      .limit(PRODUCT_CONTEXT_LIMIT)
+      .lean();
     if (textResults.length) return textResults;
   } catch (err) {
     // $text throws if the query has no indexable terms (e.g. only stopwords/punctuation) — fall through.
@@ -41,12 +42,13 @@ async function findRelevantProducts(message) {
 
   return Product.find({ isActive: true, $or: [{ isFeatured: true }, { isBestSeller: true }] })
     .sort('-isBestSeller -isFeatured -createdAt')
-    .limit(PRODUCT_CONTEXT_LIMIT);
+    .limit(PRODUCT_CONTEXT_LIMIT)
+    .lean();
 }
 
 async function findOrderContext(user) {
   if (!user) return [];
-  return Order.find({ user: user._id }).sort('-createdAt').limit(5);
+  return Order.find({ user: user._id }).sort('-createdAt').limit(5).lean();
 }
 
 // @desc   AI support chat — grounds replies in live product/order data, then asks Gemini

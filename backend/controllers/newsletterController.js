@@ -30,6 +30,6 @@ exports.unsubscribe = asyncHandler(async (req, res) => {
 // @route  GET /api/newsletter
 // @access Private/Admin
 exports.getSubscribers = asyncHandler(async (req, res) => {
-  const subscribers = await Newsletter.find({ subscribed: true }).sort('-createdAt');
+  const subscribers = await Newsletter.find({ subscribed: true }).sort('-createdAt').lean();
   res.json({ success: true, count: subscribers.length, subscribers });
 });

@@ -51,6 +51,14 @@ const productSchema = new mongoose.Schema(
 
 productSchema.index({ name: 'text', description: 'text', tags: 'text' });
 
+// PERF: every public product query (shop grid, related products, chat product lookup) filters
+// on isActive first, then usually category and/or the default sort order below — these mirror
+// productController.js#getProducts / getRelatedProducts and chatController.js#findRelevantProducts
+// so those queries can use an index instead of scanning the whole collection under load.
+productSchema.index({ isActive: 1, category: 1, createdAt: -1 });
+productSchema.index({ isActive: 1, isFeatured: -1, isBestSeller: -1, createdAt: -1 });
+productSchema.index({ isActive: 1, price: 1 });
+
 productSchema.pre('validate', function generateSlug(next) {
   if (this.name && (!this.slug || this.isModified('name'))) {
     this.slug = slugify(this.name, { lower: true, strict: true });

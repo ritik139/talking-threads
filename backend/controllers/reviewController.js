@@ -17,7 +17,7 @@ async function recalcProductRating(productId) {
 // @route  GET /api/products/:productId/reviews
 // @access Public
 exports.getReviews = asyncHandler(async (req, res) => {
-  const reviews = await Review.find({ product: req.params.productId }).sort('-createdAt');
+  const reviews = await Review.find({ product: req.params.productId }).sort('-createdAt').lean();
   res.json({ success: true, count: reviews.length, reviews });
 });
 
@@ -26,10 +26,10 @@ exports.getReviews = asyncHandler(async (req, res) => {
 // @access Private
 exports.addReview = asyncHandler(async (req, res) => {
   const { rating, comment } = req.body;
-  const product = await Product.findById(req.params.productId);
+  const product = await Product.findById(req.params.productId).lean();
   if (!product) throw new ApiError(404, 'Product not found.');
 
-  const existing = await Review.findOne({ product: product._id, user: req.user._id });
+  const existing = await Review.findOne({ product: product._id, user: req.user._id }).lean();
   if (existing) throw new ApiError(409, 'You have already reviewed this product.');
 
   const review = await Review.create({
@@ -88,7 +88,8 @@ exports.getAllReviews = asyncHandler(async (req, res) => {
       .sort(sortOrder)
       .skip((pageNum - 1) * limitNum)
       .limit(limitNum)
-      .populate('product', 'name slug images'),
+      .populate('product', 'name slug images')
+      .lean(),
     Review.countDocuments(filter)
   ]);
 
@@ -125,10 +126,10 @@ exports.addSiteReview = asyncHandler(async (req, res) => {
   const { productId, rating, comment, photos } = req.body;
   if (!productId) throw new ApiError(400, 'Please choose which piece you are reviewing.');
 
-  const product = await Product.findById(productId);
+  const product = await Product.findById(productId).lean();
   if (!product) throw new ApiError(404, 'Product not found.');
 
-  const existing = await Review.findOne({ product: product._id, user: req.user._id });
+  const existing = await Review.findOne({ product: product._id, user: req.user._id }).lean();
   if (existing) throw new ApiError(409, 'You have already reviewed this product.');
 
   const hasOrder = await Order.exists({

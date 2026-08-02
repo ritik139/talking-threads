@@ -1044,12 +1044,21 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   .pd-thumbs{ flex-direction: row; flex-wrap: wrap; justify-content: center; }
   .footer-grid{ grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); }
   .auth-media{ display: none; }
+  /* Root-cause fix: the 7-link .nav-links row + logo + header-icons has no
+     room to shrink (nav-links items are single words with no min-width:0
+     shrink path), so it no longer fits once the viewport drops below its
+     combined intrinsic width (~868px) — that's inside this existing
+     tablet breakpoint, not only below 768px, so the desktop nav needs to
+     switch to the hamburger drawer here instead of waiting until 768px.
+     Without this, viewports roughly 769–868px (e.g. small/portrait
+     tablets, split-screen windows) had the header spill past the right
+     edge and forced the whole page to scroll horizontally. */
+  .nav-links{ display: none; }
+  .menu-toggle{ display: block; }
 }
 @media (max-width: 768px){
   .container{ padding: 0 22px; }
   .nav{ padding: 18px 22px; }
-  .nav-links{ display: none; }
-  .menu-toggle{ display: block; }
   .section{ padding: 72px 0; }
   .journal-tabs{ gap: 22px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .journal-tabs::-webkit-scrollbar{ display: none; }

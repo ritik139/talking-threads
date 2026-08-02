@@ -59,4 +59,8 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// PERF: backs reviewController.js#addSiteReview's Order.exists({ user, status, 'items.product' })
+// verified-purchase check.
+orderSchema.index({ user: 1, 'items.product': 1 });
+
 module.exports = mongoose.model('Order', orderSchema);

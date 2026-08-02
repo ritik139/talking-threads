@@ -30,7 +30,7 @@ exports.submitContact = asyncHandler(async (req, res) => {
 // @route  GET /api/contact
 // @access Private/Admin
 exports.getMessages = asyncHandler(async (req, res) => {
-  const messages = await Contact.find().sort('-createdAt');
+  const messages = await Contact.find().sort('-createdAt').lean();
   res.json({ success: true, count: messages.length, messages });
 });
 

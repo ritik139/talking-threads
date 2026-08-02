@@ -2,6 +2,7 @@ require('dotenv').config();
 const path = require('path');
 const http = require('http');
 const express = require('express');
+const compression = require('compression');
 const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -40,6 +41,11 @@ app.use(
     contentSecurityPolicy: false // the existing static pages load Google Fonts etc.; keep this simple/off for now
   })
 );
+
+// PERF: gzip/deflate-compress responses (JSON API payloads + the static HTML/CSS/JS bundle).
+// Pure transport-level change — same bytes decompressed client-side, so no observable
+// difference to any API consumer or page; lowers bandwidth and per-request latency under load.
+app.use(compression());
 
 const allowedOrigins = (process.env.CLIENT_ORIGINS || '')
   .split(',')

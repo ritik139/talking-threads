@@ -17,7 +17,8 @@ exports.getPosts = asyncHandler(async (req, res) => {
     JournalPost.find(filter)
       .sort('-publishedAt')
       .skip((pageNum - 1) * limitNum)
-      .limit(limitNum),
+      .limit(limitNum)
+      .lean(),
     JournalPost.countDocuments(filter)
   ]);
 
@@ -28,7 +29,7 @@ exports.getPosts = asyncHandler(async (req, res) => {
 // @route  GET /api/journal/:slug
 // @access Public
 exports.getPost = asyncHandler(async (req, res) => {
-  const post = await JournalPost.findOne({ slug: req.params.slug, isPublished: true });
+  const post = await JournalPost.findOne({ slug: req.params.slug, isPublished: true }).lean();
   if (!post) throw new ApiError(404, 'Journal post not found.');
   res.json({ success: true, post });
 });

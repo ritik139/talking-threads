@@ -175,7 +175,7 @@ exports.createOrder = asyncHandler(async (req, res) => {
 // @route  GET /api/orders
 // @access Private
 exports.getMyOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ user: req.user._id }).sort('-createdAt');
+  const orders = await Order.find({ user: req.user._id }).sort('-createdAt').lean();
   res.json({ success: true, orders });
 });
 
@@ -183,7 +183,7 @@ exports.getMyOrders = asyncHandler(async (req, res) => {
 // @route  GET /api/orders/:id
 // @access Private
 exports.getOrder = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id);
+  const order = await Order.findById(req.params.id).lean();
   if (!order) throw new ApiError(404, 'Order not found.');
   if (order.user.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
     throw new ApiError(403, 'You do not have access to this order.');
@@ -195,7 +195,7 @@ exports.getOrder = asyncHandler(async (req, res) => {
 // @route  GET /api/orders/admin/all
 // @access Private/Admin
 exports.getAllOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find().sort('-createdAt').populate('user', 'name email phone');
+  const orders = await Order.find().sort('-createdAt').populate('user', 'name email phone').lean();
   res.json({ success: true, count: orders.length, orders });
 });
 

@@ -210,6 +210,24 @@ app.get('/admin-dashboard.html', adminPageGuard, (req, res, next) => {
   });
 });
 
+// PERF: every reference to an image/CSS/JS file in the HTML is cache-busted with a
+// `?v=YYYYMMDD` query string (see index.html, shop.html, etc.), so the content at a given
+// URL never changes silently — a real change always ships as a new URL. Without telling
+// browsers that, express.static's default `Cache-Control: public, max-age=0` forces a
+// revalidation round trip (conditional GET) to this server for every single image on
+// every repeat view, which is why images that are reused across pages (2.jpg, 3.jpg,
+// 4.jpg, 6.jpg, 14.jpg, etc.) were re-requested from the network instead of loading
+// instantly from the browser's disk cache. Marking these directories long-lived +
+// immutable removes that unnecessary round trip; a version bump still busts the cache
+// immediately because it's a different URL. HTML pages themselves are untouched (still
+// served below with the original no-cache-by-default behavior) since they aren't
+// version-tagged and must keep revalidating normally.
+const versionedAssetCache = { maxAge: '365d', immutable: true, dotfiles: 'ignore' };
+app.use('/images', express.static(path.join(FRONTEND_DIR, 'images'), versionedAssetCache));
+app.use('/css', express.static(path.join(FRONTEND_DIR, 'css'), versionedAssetCache));
+app.use('/js', express.static(path.join(FRONTEND_DIR, 'js'), versionedAssetCache));
+app.use('/videos', express.static(path.join(FRONTEND_DIR, 'videos'), versionedAssetCache));
+
 app.use(express.static(FRONTEND_DIR, { extensions: ['html'], dotfiles: 'ignore' }));
 
 // Any non-API route falls back to the matching HTML file, or index.html

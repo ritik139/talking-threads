@@ -37,7 +37,10 @@ router.post(
     body('shippingAddress.state').trim().notEmpty().withMessage('State is required'),
     body('shippingAddress.postalCode').trim().notEmpty().withMessage('Postal code is required'),
     body('shippingAddress.country').trim().notEmpty().withMessage('Country is required'),
-    body('paymentMethod').optional().isIn(['cod', 'card', 'upi', 'paypal']).withMessage('Invalid payment method'),
+    // 'card' / 'upi' / 'paypal' are legacy values kept only so pre-existing orders still
+    // validate (see models/Order.js) — this endpoint creates Cash-on-Delivery orders only;
+    // real online payment must go through paymentController's verified Razorpay flow.
+    body('paymentMethod').optional().isIn(['cod']).withMessage('Invalid payment method'),
     body('notes').optional().trim().isLength({ max: 500 }).withMessage('Order notes must be 500 characters or fewer')
   ],
   validate,

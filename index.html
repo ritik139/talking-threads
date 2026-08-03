@@ -36,7 +36,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&amp;family=Instrument+Sans:wght@400;500;600&amp;display=swap">
-  <link rel="stylesheet" href="css/style.css?v=20260731">
+  <link rel="stylesheet" href="css/style.css?v=20260803b">
   <link rel="stylesheet" href="css/chatbot.css?v=20260731">
   <link rel="stylesheet" href="css/welcome-modal.css?v=20260802">
   <link rel="stylesheet" href="css/responsive-fixes.css?v=20260731">
@@ -65,7 +65,11 @@
           <a href="contact.html" class="">Contact</a>
         </nav>
         <div class="header-icons">
-          <a href="login.html" class="icon-btn" aria-label="Account"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <button type="button" class="icon-btn" data-search-toggle aria-label="Search" aria-haspopup="true" aria-expanded="false" aria-controls="headerSearch"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <circle cx="10.5" cy="10.5" r="6.5" />
+              <path d="M20 20l-4.6-4.6" />
+            </svg></button>
+                    <a href="login.html" class="icon-btn" aria-label="Account"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <circle cx="12" cy="8.2" r="3.6" />
               <path d="M4.6 20c1.4-4.1 4.4-6.1 7.4-6.1s6 2 7.4 6.1" />
             </svg></a>
@@ -91,6 +95,22 @@
         <a href="wishlist.html">Wishlist</a>
         <a href="cart.html">Shopping Bag</a>
         <a href="login.html">Account</a>
+      </div>
+    
+      <div class="header-search" id="headerSearch" data-search-overlay hidden>
+        <div class="header-search-inner">
+          <form class="header-search-form" role="search" data-search-form autocomplete="off">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="hs-icon">
+              <circle cx="10.5" cy="10.5" r="6.5" />
+              <path d="M20 20l-4.6-4.6" />
+            </svg>
+            <input type="search" id="headerSearchInput" placeholder="Search hoops, linens, keepsakes&hellip;" aria-label="Search products" aria-controls="headerSearchResults" aria-expanded="false" aria-autocomplete="list" role="combobox">
+            <button type="button" class="hs-close" data-search-close aria-label="Close search">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 5l14 14M19 5L5 19" /></svg>
+            </button>
+          </form>
+          <div class="header-search-results" id="headerSearchResults" role="listbox" aria-label="Search suggestions"></div>
+        </div>
       </div>
     </header>
     <main id="main-content">
@@ -521,7 +541,7 @@
       </div>
     </footer>
   </div>
-  <script src="js/main.js?v=20260731" defer></script>
+  <script src="js/main.js?v=20260803b" defer></script>
 <script src="js/chatbot.js?v=20260731" defer></script>
 <script src="js/welcome-modal.js?v=20260802" defer></script>
 </body>

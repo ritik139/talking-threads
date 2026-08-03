@@ -18,6 +18,13 @@ router.post(
 );
 
 router.get('/', protect, adminOnly, ctrl.getMessages);
-router.put('/:id', protect, adminOnly, ctrl.updateMessageStatus);
+router.put(
+  '/:id',
+  protect,
+  adminOnly,
+  [body('status').isIn(['new', 'read', 'replied']).withMessage('Invalid status')],
+  validate,
+  ctrl.updateMessageStatus
+);
 
 module.exports = router;

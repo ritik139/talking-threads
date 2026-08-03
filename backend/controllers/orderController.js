@@ -17,6 +17,16 @@ const REQUIRED_ADDRESS_FIELDS = ['fullName', 'phone', 'line1', 'city', 'state', 
 // re-prices every cart line against the live Product record instead of trusting whatever
 // price is sitting in the cart, since the cart's stored price is client-supplied (see
 // cartController.addToCart) and must never be treated as authoritative at checkout.
+//
+// SECURITY FIX: a cart line with no linked `product` used to fall back to whatever
+// name/price the client had originally POSTed for that line — i.e. exactly the
+// client-supplied value this whole function exists to NOT trust. `product` is an
+// optional field on POST /api/cart, so this was trivially triggerable by any signed-in
+// user (omit the field, or send any name/price) to check out — COD or Razorpay, since
+// both flows share this function — at whatever price they chose, including ₹0. Every
+// real add-to-cart path now sends the catalog product's id (see js/main.js), so a line
+// with no `product` reference can no longer be priced at all; it's rejected instead of
+// trusted.
 async function pricedItemsFromCart(userId) {
   const cart = await Cart.findOne({ user: userId });
   if (!cart || !cart.items.length) throw new ApiError(400, 'Your bag is empty.');
@@ -26,26 +36,22 @@ async function pricedItemsFromCart(userId) {
   const productById = new Map(products.map((p) => [p._id.toString(), p]));
 
   const orderItems = cart.items.map((i) => {
-    const product = i.product && productById.get(i.product.toString());
-    if (product) {
-      if (!product.isActive) throw new ApiError(400, `"${product.name}" is no longer available.`);
-      return {
-        product: product._id,
-        name: product.name,
-        price: product.displayPrice,
-        priceValue: product.price,
-        size: i.size,
-        color: i.color,
-        text: i.text,
-        qty: i.qty
-      };
+    if (!i.product) {
+      throw new ApiError(
+        400,
+        `"${i.name || 'One of the items'}" in your bag could not be verified — please remove and re-add it before checking out.`
+      );
     }
-    // No linked product (e.g. a legacy/guest cart line) — fall back to what's on the cart line.
+    const product = productById.get(i.product.toString());
+    if (!product) {
+      throw new ApiError(400, `"${i.name || 'One of the items'}" is no longer available.`);
+    }
+    if (!product.isActive) throw new ApiError(400, `"${product.name}" is no longer available.`);
     return {
-      product: i.product,
-      name: i.name,
-      price: i.price,
-      priceValue: i.priceValue,
+      product: product._id,
+      name: product.name,
+      price: product.displayPrice,
+      priceValue: product.price,
       size: i.size,
       color: i.color,
       text: i.text,
@@ -153,6 +159,17 @@ exports.createOrder = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Please use the Razorpay checkout to pay online.');
   }
 
+  // SECURITY FIX: 'card' / 'upi' / 'paypal' are only kept in the schema/validator so
+  // pre-existing orders from before Razorpay was integrated still validate — nothing in
+  // this codebase actually processes a payment for them (see paymentController.js, which
+  // only ever handles 'razorpay'). The previous logic here — paymentStatus 'paid' for
+  // ANY non-'cod' paymentMethod — meant any signed-in user could POST paymentMethod:
+  // 'card' (still allowed by the route validator) and get an order marked "paid" for
+  // free, with no payment of any kind having happened. This endpoint only ever creates
+  // Cash-on-Delivery orders now (genuine online payment goes through
+  // paymentController.createRazorpayOrder/verifyRazorpayPayment, which requires a
+  // verified Razorpay signature before it will ever set paymentStatus to 'paid'), so
+  // every order created here starts 'pending' regardless of the paymentMethod value.
   const { cart, orderItems, subtotal, shipping, total } = await pricedItemsFromCart(req.user._id);
 
   const order = await Order.create({
@@ -164,7 +181,7 @@ exports.createOrder = asyncHandler(async (req, res) => {
     total,
     shippingAddress,
     paymentMethod: paymentMethod || 'cod',
-    paymentStatus: (paymentMethod && paymentMethod !== 'cod') ? 'paid' : 'pending',
+    paymentStatus: 'pending',
     notes
   });
 

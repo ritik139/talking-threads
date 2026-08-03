@@ -153,6 +153,28 @@ document.addEventListener('DOMContentLoaded', () => {
     let data = null;
     try { data = await res.json(); } catch (e) { /* no body */ }
     if (!res.ok) {
+      // ROOT CAUSE FIX (stale "signed in" state after the server session actually expired):
+      // tt_user in localStorage has no expiry of its own — it's just a cached mirror of
+      // whoever last successfully signed in, written once and never re-checked against the
+      // real session. The actual session lives in an httpOnly JWT cookie that DOES expire
+      // (1 day if "Remember me" was off, 30 days otherwise) or can be invalidated server-side
+      // (account disabled, etc.) — see backend/middleware/auth.js. Previously nothing ever
+      // reconciled the two: once the cookie/JWT went stale, every protected endpoint started
+      // returning 401, but Auth.isLoggedIn() (which only reads tt_user) kept reporting "signed
+      // in" indefinitely. That let the header keep showing "My Orders", requireLogin() kept
+      // waving guests-who-were-actually-logged-out straight through to Checkout, and the
+      // eventual /cart or /orders call just failed with a generic "Request failed (401)"
+      // instead of the real "please sign in again."
+      //
+      // Fix: the moment the server tells us a request was unauthorized WHILE we believed we
+      // were signed in, drop the local user record so every subsequent Auth.isLoggedIn()
+      // check in this page (and the next one) reflects reality instead of a stale cache.
+      // Gated on Auth.getUser() so this never fires for an ordinary wrong-password 401 on
+      // the login form itself (tt_user is never set at that point — the login/register pages
+      // already redirect away before showing the form if someone is signed in).
+      if (res.status === 401 && Auth.getUser()) {
+        Auth.clearUser();
+      }
       const message = (data && data.message) || `Request failed (${res.status})`;
       throw new Error(message);
     }
@@ -166,6 +188,30 @@ document.addEventListener('DOMContentLoaded', () => {
     setUser(user) { localStorage.setItem('tt_user', JSON.stringify(user)); },
     clearUser() { localStorage.removeItem('tt_user'); },
     isLoggedIn() { return !!Auth.getUser(); },
+
+    // ROOT CAUSE FIX (intermittent "guest can open Checkout" bug):
+    //
+    // Previously, the "must be signed in" check only lived at individual call sites —
+    // the checkoutBtn click handler had one, but Store.addToCart() and the various
+    // "Add to Cart"/"Quick Add"/"Move to Bag" buttons that call it had none at all, and
+    // openCheckoutModal() itself had none either (it trusted whoever called it to have
+    // already checked). That meant the gate only existed where someone remembered to
+    // write it, which is exactly the kind of thing that's consistent in some flows and
+    // silently missing in others — e.g. a guest could always add to cart (no gate there),
+    // then a leftover cart from a previous signed-in session on the same device, or any
+    // future code path that calls openCheckoutModal() directly, could still open the
+    // modal because the modal itself never checked.
+    //
+    // Fix: put the check in exactly one place — this helper — and call it from the two
+    // places that actually need to enforce it (Store.addToCart and openCheckoutModal
+    // itself, not just its button handler), so the gate exists structurally at the
+    // point of action rather than being something every call site has to remember.
+    requireLogin(message) {
+      if (Auth.isLoggedIn()) return true;
+      showToast(message || 'Please sign in to continue.');
+      setTimeout(() => { window.location.href = 'login.html'; }, 700);
+      return false;
+    },
 
     async register(name, email, password, newsletterSubscribed) {
       const data = await apiRequest('/auth/register', {
@@ -190,6 +236,12 @@ document.addEventListener('DOMContentLoaded', () => {
     async logout() {
       try { await apiRequest('/auth/logout', { method: 'POST' }); } catch (e) { /* ignore network errors on logout */ }
       Auth.clearUser();
+      // Also drop any local cart/wishlist on sign-out. Without this, a cart built up while
+      // signed in stays in localStorage after logout — so on a shared/public device the
+      // very next (now signed-out) visitor would see items already sitting in their bag,
+      // which is the "leftover cart" route to a guest reaching the Checkout modal.
+      Store.setCart([]);
+      Store.setWishlist([]);
     },
 
     // Pushes whatever is currently in the guest (localStorage) cart/wishlist up to the
@@ -225,6 +277,38 @@ document.addEventListener('DOMContentLoaded', () => {
         ]);
         if (forceOverwrite || Store.getCart().length === 0) Store.setCart(cartData.cart || []);
         if (forceOverwrite || Store.getWishlist().length === 0) Store.setWishlist(wishlistData.wishlist || []);
+
+        // ROOT-CAUSE CLEANUP: a line with no `product` predates the checkout
+        // price-verification fix (orderController.pricedItemsFromCart requires every line
+        // to be linked to a real Product, since an unlinked line's price can't be trusted —
+        // see that file for the full explanation). Such a line can never be priced, so it
+        // would otherwise sit in the cart indefinitely and only surface as a "could not be
+        // verified" error deep in checkout — one item at a time, since checkout stops at
+        // the first bad line it finds.
+        //
+        // This runs unconditionally (not only on the branch above that overwrites from the
+        // server) and checks whatever cart is currently active — because the common case
+        // is exactly the opposite: someone already signed in, with a non-empty local cart
+        // carried over from before this fix shipped, whose plain page reloads always take
+        // the "local cart is non-empty, don't touch it" branch above and would otherwise
+        // never get cleaned. Checking Store.getCart() here (its state *after* the decision
+        // above) covers both cases with one pass.
+        const dropped = Store.getCart().filter((i) => !i.product);
+        if (dropped.length) {
+          Store.setCart(Store.getCart().filter((i) => i.product));
+          // Best-effort cleanup so these can't reappear on the next sync — same
+          // fire-and-forget pattern as Store.removeFromCart (DELETE is idempotent, so a
+          // dropped/slow request here just means the line lingers server-side until the
+          // next successful cleanup, with no other effect).
+          dropped.forEach((i) => {
+            apiRequest('/cart/' + encodeURIComponent(i.id), { method: 'DELETE', keepalive: true }).catch(() => {});
+          });
+          showToast(
+            dropped.length === 1
+              ? `"${dropped[0].name || 'One item'}" was removed from your bag — please add it again.`
+              : `${dropped.length} items were removed from your bag — please add them again.`
+          );
+        }
       } catch (e) { /* if this fails (e.g. session expired) just keep local state */ }
     }
   };
@@ -268,6 +352,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setWishlist(w) { localStorage.setItem('tt_wishlist', JSON.stringify(w)); Store.refreshCounts(); },
 
     addToCart(item) {
+      // Must be signed in before anything else happens — no localStorage write, no
+      // server call, no "Added to your bag" toast. See Auth.requireLogin() above for why
+      // this lives here rather than at each button's click handler.
+      if (!Auth.requireLogin('Please sign in to add items to your bag.')) return false;
+
       // Generate the id once and use it for BOTH the local line item and the server
       // request. Previously the local id was created here but never sent to the server
       // (the POST body was built from the original `item`, without an id), so the
@@ -282,16 +371,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const cart = Store.getCart();
       cart.push(newItem);
       Store.setCart(cart);
-      if (Auth.isLoggedIn()) {
-        // keepalive: true lets this request finish in the background even if the user
-        // immediately navigates away (e.g. clicking the cart icon right after adding).
-        // Without it, the browser cancels in-flight fetches on page unload — so the
-        // item never actually reaches the server, and the very next page load's
-        // Auth.pullServerState() (which GETs the server cart and overwrites localStorage
-        // with it) wipes out the item that had just been added. This was the root cause
-        // of "item added, but Cart page shows empty".
-        apiRequest('/cart', { method: 'POST', body: JSON.stringify(newItem), keepalive: true }).catch(() => {});
-      }
+      // Auth.requireLogin() above already guarantees we're signed in here, so the server
+      // sync always fires — there is no "guest cart, sync later" path anymore.
+      // keepalive: true lets this request finish in the background even if the user
+      // immediately navigates away (e.g. clicking the cart icon right after adding).
+      // Without it, the browser cancels in-flight fetches on page unload — so the
+      // item never actually reaches the server, and the very next page load's
+      // Auth.pullServerState() (which GETs the server cart and overwrites localStorage
+      // with it) wipes out the item that had just been added. This was the root cause
+      // of "item added, but Cart page shows empty".
+      apiRequest('/cart', { method: 'POST', body: JSON.stringify(newItem), keepalive: true }).catch(() => {});
+      return true;
     },
     removeFromCart(id) {
       Store.setCart(Store.getCart().filter(i => i.id !== id));
@@ -351,6 +441,39 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     },
 
+    // ROOT CAUSE FIX ("Checkout shows bag is empty" even though the Cart page has items):
+    //
+    // addToCart()/removeFromCart()/updateCartQty() all sync to the server with a
+    // fire-and-forget POST/PATCH/DELETE (`.catch(() => {})`, `keepalive: true`) so the UI
+    // never blocks on the network. That's fine for the *cart page*, which only ever reads
+    // from localStorage. But order creation (orderController.pricedItemsFromCart) re-prices
+    // and validates against the CART DOCUMENT IN THE DATABASE ONLY — on purpose, since the
+    // client-supplied price/qty can't be trusted at checkout. If any one of those
+    // best-effort background calls silently failed (a dropped request, a slow network, a
+    // brief server hiccup, an expired session at the moment it fired) localStorage and the
+    // DB permanently disagree from that point on: the Cart page (reading localStorage) keeps
+    // showing the item, the header badge keeps counting it, "Proceed to Checkout" opens
+    // normally (it only checks localStorage) — and then submitting the order 400s with
+    // "Your bag is empty" because the DB cart never actually received it. Nothing in the
+    // old flow ever re-checked or repaired that drift, so the person could fill in their
+    // entire address and only find out at the very last step.
+    //
+    // Fix: instead of trusting whatever background syncs happened to succeed, force the
+    // server's cart to exactly match localStorage — the thing the person is actually
+    // looking at — at the one moment it matters most: right before checkout opens (see the
+    // checkoutBtn handler below, and again right before order submission as a second
+    // safety net). PUT /api/cart (replaceCart) does a full, idempotent overwrite, so this
+    // is correct however the drift happened, not just for the specific failure modes above.
+    async ensureServerSynced() {
+      if (!Auth.isLoggedIn()) return true; // guest checkout path handles its own thing (login redirect)
+      try {
+        await apiRequest('/cart', { method: 'PUT', body: JSON.stringify({ items: Store.getCart() }) });
+        return true;
+      } catch (e) {
+        return false;
+      }
+    },
+
     toggleWishlist(product) {
       let wl = Store.getWishlist();
       const exists = wl.find(i => i.name === product.name);
@@ -390,6 +513,15 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   window.TTStore = Store;
   Store.refreshCounts();
+
+  // Keep the header's cart/wishlist badge counts correct across tabs. Same-tab mutations
+  // already call Store.refreshCounts() directly (see setCart/setWishlist above); this
+  // covers the other case — tt_cart/tt_wishlist changing because a DIFFERENT tab (or
+  // window) on this browser just added/removed/checked-out — which the 'storage' event
+  // is exactly designed to report and nothing here was previously listening for.
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'tt_cart' || e.key === 'tt_wishlist') Store.refreshCounts();
+  });
 
   /* ============================================================
      PRODUCT LINKS — every product card (Shop grid, Home highlights,
@@ -469,8 +601,8 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     ${tag ? `<span class="pc-tag">${tag}</span>` : ''}
     <div class="pc-actions">
-      <button class="pc-icon-btn" data-wish-toggle data-name="${p.name}" data-price="${priceStr}" data-img="${photo}" aria-label="Add ${p.name} to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
-      <button class="pc-icon-btn" data-quick-add data-name="${p.name}" data-price="${priceStr}" data-img="${photo}" aria-label="Quick add ${p.name} to bag"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg></button>
+      <button class="pc-icon-btn" data-wish-toggle data-id="${p._id || ''}" data-name="${p.name}" data-price="${priceStr}" data-img="${photo}" aria-label="Add ${p.name} to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
+      <button class="pc-icon-btn" data-quick-add data-id="${p._id || ''}" data-name="${p.name}" data-price="${priceStr}" data-img="${photo}" aria-label="Quick add ${p.name} to bag"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg></button>
     </div>
   </div>
   <a href="${href}" class="pc-info">
@@ -528,6 +660,133 @@ document.addEventListener('DOMContentLoaded', () => {
     if (card && card.dataset.href) window.location.href = card.dataset.href;
   });
 
+  /* ============================================================
+     HEADER SEARCH — live suggestions, present on every page.
+     Reuses the same /api/products?q= endpoint the Shop page's own
+     search box already calls, and "View all results" hands off to
+     Shop with ?q= so the full filter/sort/pagination UI takes over.
+     ============================================================ */
+  (function initHeaderSearch() {
+    const toggleBtns = document.querySelectorAll('[data-search-toggle]');
+    const panel = document.querySelector('[data-search-overlay]');
+    if (!toggleBtns.length || !panel) return;
+
+    const form = panel.querySelector('[data-search-form]');
+    const input = panel.querySelector('#headerSearchInput');
+    const closeBtn = panel.querySelector('[data-search-close]');
+    const resultsEl = panel.querySelector('#headerSearchResults');
+    let debounceId;
+    let latestRequestId = 0;
+    let activeIndex = -1;
+    let lastQuery = '';
+
+    function openPanel() {
+      panel.hidden = false;
+      // Next frame, so the `hidden` removal + `.open` transition don't collapse into
+      // one un-animated jump (hidden elements can't transition).
+      requestAnimationFrame(() => panel.classList.add('open'));
+      toggleBtns.forEach(b => b.setAttribute('aria-expanded', 'true'));
+      input.focus();
+    }
+    function closePanel() {
+      panel.classList.remove('open');
+      toggleBtns.forEach(b => b.setAttribute('aria-expanded', 'false'));
+      setTimeout(() => { if (!panel.classList.contains('open')) panel.hidden = true; }, 280);
+    }
+    function isOpen() { return panel.classList.contains('open'); }
+
+    toggleBtns.forEach(btn => {
+      btn.addEventListener('click', () => (isOpen() ? closePanel() : openPanel()));
+    });
+    if (closeBtn) closeBtn.addEventListener('click', closePanel);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen()) { closePanel(); toggleBtns[0].focus(); }
+    });
+    document.addEventListener('click', (e) => {
+      if (!isOpen()) return;
+      if (panel.contains(e.target) || e.target.closest('[data-search-toggle]')) return;
+      closePanel();
+    });
+
+    function priceOf(p) { return p.displayPrice || ('₹' + Number(p.price || 0).toLocaleString('en-IN')); }
+
+    function renderResults(products, query) {
+      activeIndex = -1;
+      if (!products.length) {
+        resultsEl.innerHTML = `<p class="hs-empty">No pieces found for &ldquo;${escapeHtml(query)}&rdquo;. Try a different word, or browse the full shop.</p>
+          <a class="hs-view-all" href="shop.html?q=${encodeURIComponent(query)}">Browse All Pieces</a>`;
+        return;
+      }
+      const items = products.map(p => {
+        const photo = (p.images && p.images.length) ? withImgVersion(p.images[0]) : '';
+        return `<a class="hs-result" role="option" href="${productHref(p)}">
+          <span class="hs-result-thumb">${photo ? `<img src="${photo}" alt="" loading="lazy" width="48" height="48">` : ''}</span>
+          <span class="hs-result-info">
+            <span class="hs-result-name">${escapeHtml(p.name)}</span>
+            <span class="hs-result-cat">${escapeHtml(p.category || '')}</span>
+          </span>
+          <span class="hs-result-price">${priceOf(p)}</span>
+        </a>`;
+      }).join('');
+      resultsEl.innerHTML = `<div class="hs-section-label">Suggestions</div>
+        <div class="hs-result-list">${items}</div>
+        <a class="hs-view-all" href="shop.html?q=${encodeURIComponent(query)}">View All Results for &ldquo;${escapeHtml(query)}&rdquo;</a>`;
+    }
+
+    async function runSearch(query) {
+      const requestId = ++latestRequestId;
+      try {
+        const data = await apiRequest('/products?q=' + encodeURIComponent(query) + '&limit=6');
+        if (requestId !== latestRequestId) return; // superseded by a newer keystroke
+        renderResults(data.products || [], query);
+      } catch (err) {
+        if (requestId !== latestRequestId) return;
+        resultsEl.innerHTML = `<p class="hs-error">Could not load suggestions right now. Press Enter to search anyway.</p>`;
+      }
+    }
+
+    if (input) {
+      input.addEventListener('input', () => {
+        const query = input.value.trim();
+        lastQuery = query;
+        clearTimeout(debounceId);
+        input.setAttribute('aria-expanded', String(!!query));
+        if (!query) {
+          resultsEl.innerHTML = `<p class="hs-hint">Search hoops, linens, motifs&hellip; try &ldquo;initial hoop&rdquo; or &ldquo;linen napkin&rdquo;.</p>`;
+          return;
+        }
+        if (query.length < 2) { resultsEl.innerHTML = ''; return; }
+        debounceId = setTimeout(() => runSearch(query), 300);
+      });
+
+      input.addEventListener('keydown', (e) => {
+        const options = Array.from(resultsEl.querySelectorAll('.hs-result'));
+        if (e.key === 'ArrowDown' && options.length) {
+          e.preventDefault();
+          activeIndex = Math.min(activeIndex + 1, options.length - 1);
+          options.forEach((o, i) => o.classList.toggle('is-active', i === activeIndex));
+          options[activeIndex].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'ArrowUp' && options.length) {
+          e.preventDefault();
+          activeIndex = Math.max(activeIndex - 1, 0);
+          options.forEach((o, i) => o.classList.toggle('is-active', i === activeIndex));
+          options[activeIndex].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Enter' && activeIndex >= 0 && options[activeIndex]) {
+          e.preventDefault();
+          window.location.href = options[activeIndex].getAttribute('href');
+        }
+      });
+    }
+
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const query = (input.value || '').trim();
+        if (query) window.location.href = 'shop.html?q=' + encodeURIComponent(query);
+      });
+    }
+  })();
+
   /* ---------- Resolve the real product photo already shown on the page ----------
      Cart/Wishlist were showing placeholder icons because nothing captured which
      actual <img> (the same one visible on Home/Shop/Product) belonged to the item
@@ -549,11 +808,12 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.dataset.ttBound = '1';
       const name = btn.getAttribute('data-name') || 'Talking-Thread Piece';
       const price = btn.getAttribute('data-price') || '';
+      const product = btn.getAttribute('data-id') || undefined;
       if (Store.isWishlisted(name)) btn.classList.add('active');
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         const img = resolveProductImage(btn, '.pc-media');
-        const added = Store.toggleWishlist({ name, price, img });
+        const added = Store.toggleWishlist({ product, name, price, img });
         btn.classList.toggle('active', added);
         showToast(added ? 'Added to your wishlist' : 'Removed from wishlist');
       });
@@ -585,13 +845,14 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.dataset.ttBound = '1';
       btn.addEventListener('click', guardAgainstDoubleFire((e) => {
         e.preventDefault();
-        Store.addToCart({
+        const added = Store.addToCart({
+          product: btn.getAttribute('data-id') || undefined,
           name: btn.getAttribute('data-name') || 'Talking-Thread Piece',
           price: btn.getAttribute('data-price') || '',
           img: resolveProductImage(btn, '.pc-media'),
           size: 'Medium — 12in', color: 'Antique Gold', text: '—', qty: 1
         });
-        showToast('Added to your bag');
+        if (added) showToast('Added to your bag');
       }));
     });
   }
@@ -822,6 +1083,10 @@ document.addEventListener('DOMContentLoaded', () => {
       loadMoreBtn.addEventListener('click', () => fetchAndRender(state.page + 1, true));
     }
 
+    // Prefill from ?q= (header search's "View all results" links here with the query)
+    const urlQ = new URLSearchParams(window.location.search).get('q');
+    if (urlQ && searchInput) searchInput.value = urlQ;
+
     // Initial load from the API (replaces the server-rendered fallback cards above)
     refresh();
   }
@@ -905,6 +1170,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const addBtn = document.getElementById('addToCartBtn');
       if (addBtn) {
+        addBtn.setAttribute('data-id', p._id || '');
         addBtn.setAttribute('data-name', p.name);
         addBtn.setAttribute('data-price', priceStr);
         addBtn.disabled = false;
@@ -912,6 +1178,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       const pdWish = document.getElementById('pdWishBtn');
       if (pdWish) {
+        pdWish.setAttribute('data-id', p._id || '');
         pdWish.setAttribute('data-name', p.name);
         pdWish.setAttribute('data-price', priceStr);
         pdWish.disabled = false;
@@ -938,6 +1205,123 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
       });
+
+      /* ---------- Image zoom ----------
+         Desktop (hover-capable pointers): moving the mouse over the main photo
+         magnifies it, following the cursor as a lens would — the image itself
+         scales inside the already-`overflow:hidden` .pd-main box, so nothing
+         about the page layout moves.
+         Mobile (touch): the confined lens doesn't work well with a finger, so
+         double-tap or a two-finger pinch instead opens the same photo full-
+         screen, pannable and pinch-zoomable, in a small on-demand overlay. */
+      (function initImageZoom() {
+        const pdMain = document.querySelector('.pd-main');
+        if (!pdMain) return;
+        const ZOOM = 2.4;
+        const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+        if (canHover) {
+          pdMain.addEventListener('mousemove', (e) => {
+            const img = pdMain.querySelector('img');
+            if (!img) return;
+            const rect = pdMain.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            img.style.transformOrigin = `${x}% ${y}%`;
+            img.style.transform = `scale(${ZOOM})`;
+          });
+          pdMain.addEventListener('mouseleave', () => {
+            const img = pdMain.querySelector('img');
+            if (img) { img.style.transform = ''; img.style.transformOrigin = ''; }
+          });
+        }
+
+        /* Full-screen pan/pinch viewer for touch devices, built once and reused
+           for whichever photo is currently showing (thumbnail swaps just update
+           .pd-main img's src, which this reads fresh each time it opens). */
+        let modal, modalImg, scale = 1, panX = 0, panY = 0;
+        function buildModal() {
+          if (modal) return modal;
+          modal = document.createElement('div');
+          modal.className = 'pd-zoom-modal';
+          modal.innerHTML = `<button type="button" class="pd-zoom-close" aria-label="Close zoomed image">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 5l14 14M19 5L5 19"/></svg>
+            </button>
+            <img alt="">`;
+          document.body.appendChild(modal);
+          modalImg = modal.querySelector('img');
+          modal.querySelector('.pd-zoom-close').addEventListener('click', closeModal);
+          modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+          // Pinch-to-zoom (two touches) + drag-to-pan once zoomed in.
+          let startDist = 0, startScale = 1, startX = 0, startY = 0, lastPanX = 0, lastPanY = 0, dragging = false;
+          function dist(touches) {
+            const [a, b] = touches;
+            return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+          }
+          modal.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+              startDist = dist(e.touches);
+              startScale = scale;
+            } else if (e.touches.length === 1) {
+              dragging = true;
+              startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+              lastPanX = panX; lastPanY = panY;
+            }
+          }, { passive: true });
+          modal.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && startDist) {
+              e.preventDefault();
+              scale = Math.min(4, Math.max(1, startScale * (dist(e.touches) / startDist)));
+              applyTransform();
+            } else if (e.touches.length === 1 && dragging && scale > 1) {
+              e.preventDefault();
+              panX = lastPanX + (e.touches[0].clientX - startX);
+              panY = lastPanY + (e.touches[0].clientY - startY);
+              applyTransform();
+            }
+          }, { passive: false });
+          modal.addEventListener('touchend', () => { dragging = false; startDist = 0; });
+
+          return modal;
+        }
+        function applyTransform() {
+          if (modalImg) modalImg.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        }
+        function openModal(src, alt, focusX, focusY) {
+          buildModal();
+          modalImg.src = src;
+          modalImg.alt = alt || '';
+          scale = ZOOM; panX = 0; panY = 0;
+          applyTransform();
+          modal.classList.add('open');
+          document.body.style.overflow = 'hidden';
+        }
+        function closeModal() {
+          if (!modal) return;
+          modal.classList.remove('open');
+          document.body.style.overflow = '';
+          scale = 1; panX = 0; panY = 0;
+        }
+
+        /* Double-tap detection on the inline photo (two touchend events inside
+           ~350ms and close together in position) opens the full-screen viewer. */
+        let lastTapTime = 0, lastTapX = 0, lastTapY = 0;
+        pdMain.addEventListener('touchend', (e) => {
+          const img = pdMain.querySelector('img');
+          if (!img || !e.changedTouches.length) return;
+          const t = e.changedTouches[0];
+          const now = Date.now();
+          const closeEnough = Math.hypot(t.clientX - lastTapX, t.clientY - lastTapY) < 40;
+          if (now - lastTapTime < 350 && closeEnough) {
+            e.preventDefault();
+            openModal(img.getAttribute('src'), img.getAttribute('alt'));
+            lastTapTime = 0;
+          } else {
+            lastTapTime = now; lastTapX = t.clientX; lastTapY = t.clientY;
+          }
+        });
+      })();
 
       /* size pills */
       let selectedSize = document.querySelector('.size-pill.selected')?.textContent.trim() || '';
@@ -1005,29 +1389,31 @@ document.addEventListener('DOMContentLoaded', () => {
       const addBtn = document.getElementById('addToCartBtn');
       if (addBtn) {
         addBtn.addEventListener('click', guardAgainstDoubleFire(() => {
+          const product = addBtn.getAttribute('data-id') || undefined;
           const name = addBtn.getAttribute('data-name') || 'Talking-Thread Piece';
           const price = addBtn.getAttribute('data-price') || '';
           const mainImg = document.querySelector('.pd-main img');
-          Store.addToCart({
-            name, price,
+          const added = Store.addToCart({
+            product, name, price,
             img: (mainImg && mainImg.getAttribute('src')) || '',
             size: selectedSize || 'Medium — 12in',
             color: selectedColor || 'Antique Gold',
             text: (customText && customText.value.trim()) || '—',
             qty: parseInt(qtyInput ? qtyInput.value : '1', 10)
           });
-          showToast('Added to your bag');
+          if (added) showToast('Added to your bag');
         }));
       }
 
       /* wishlist toggle on product page */
       const pdWish = document.getElementById('pdWishBtn');
       if (pdWish) {
+        const product = pdWish.getAttribute('data-id') || undefined;
         const name = pdWish.getAttribute('data-name');
         if (Store.isWishlisted(name)) pdWish.classList.add('active');
         pdWish.addEventListener('click', () => {
           const mainImg = document.querySelector('.pd-main img');
-          const added = Store.toggleWishlist({ name, price: pdWish.getAttribute('data-price'), img: (mainImg && mainImg.getAttribute('src')) || '' });
+          const added = Store.toggleWishlist({ product, name, price: pdWish.getAttribute('data-price'), img: (mainImg && mainImg.getAttribute('src')) || '' });
           pdWish.classList.toggle('active', added);
           showToast(added ? 'Saved to wishlist' : 'Removed from wishlist');
         });
@@ -1181,6 +1567,13 @@ document.addEventListener('DOMContentLoaded', () => {
     Store.setCart = function (c) { origSetCart(c); render(); };
     render();
 
+    /* ...and also when tt_cart changes in a DIFFERENT tab (e.g. an item added, or an
+       order placed and the bag cleared, over there) — the wrapped setCart above only
+       ever fires for this tab's own writes. */
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'tt_cart') render();
+    });
+
     /* ---------- Checkout modal: shipping address + payment method ---------- */
     const checkoutBtn = document.getElementById('checkoutBtn');
     const checkoutModal = document.getElementById('checkoutModal');
@@ -1205,6 +1598,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openCheckoutModal() {
+      // ROOT CAUSE FIX: this used to trust that whoever calls openCheckoutModal() had
+      // already verified the person was signed in — true for the checkoutBtn handler
+      // below, but nothing stopped some other path (a future feature, a leftover cart
+      // from before a fix, a race between two handlers) from calling this directly and
+      // skipping that check. The modal itself now refuses to open for anyone who isn't
+      // signed in, no matter how it was triggered.
+      if (!Auth.requireLogin('Please sign in to complete your order.')) return;
       if (!checkoutModal) return;
       lastFocusedEl = document.activeElement;
       hideCheckoutError();
@@ -1231,11 +1631,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (checkoutBtn) {
-      checkoutBtn.addEventListener('click', () => {
+      checkoutBtn.addEventListener('click', async () => {
+        // Authentication is checked before any cart/checkout action — first, before
+        // even looking at cart contents — so a guest is always sent to sign in rather
+        // than ever reaching a state that depends on cart contents.
+        if (!Auth.requireLogin('Please sign in to complete your order.')) return;
         if (!Store.getCart().length) return;
-        if (!Auth.isLoggedIn()) {
-          showToast('Please sign in to complete your order.');
-          setTimeout(() => { window.location.href = 'login.html'; }, 1100);
+        // Reconcile the server's cart with what's on screen BEFORE opening the checkout
+        // modal — see Store.ensureServerSynced() for why this is required, not optional.
+        // A brief button-disable here is a small price for guaranteeing "what you see in
+        // the bag is what checkout will actually charge/ship."
+        const originalLabel = checkoutBtn.textContent;
+        checkoutBtn.disabled = true;
+        checkoutBtn.textContent = 'Preparing checkout…';
+        const synced = await Store.ensureServerSynced();
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = originalLabel;
+        if (!synced) {
+          showToast('Could not reach the server to confirm your bag — please check your connection and try again.');
           return;
         }
         openCheckoutModal();
@@ -1405,6 +1818,18 @@ document.addEventListener('DOMContentLoaded', () => {
         placeOrderBtn.disabled = true;
 
         try {
+          // Second safety net: re-confirm the server cart matches localStorage right
+          // before creating the order. The checkoutBtn handler already does this once
+          // before the modal opens, but the shopper may have taken a while filling in the
+          // address, so re-check here rather than assume nothing changed in the meantime.
+          const stillSynced = await Store.ensureServerSynced();
+          if (!stillSynced) {
+            throw new Error('Could not reach the server to confirm your bag — please check your connection and try again.');
+          }
+          if (!Store.getCart().length) {
+            throw new Error('Your bag is empty.');
+          }
+
           if (paymentMethod === 'razorpay') {
             placeOrderBtn.textContent = 'Starting payment…';
             const paymentInit = await apiRequest('/payments/razorpay/order', {
@@ -1485,7 +1910,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         el.querySelector('[data-act="move"]').addEventListener('click', (e) => {
           e.stopPropagation();
-          Store.addToCart({ name: item.name, price: item.price, img: item.img || '', size: 'Medium — 12in', color: 'Antique Gold', text: '—', qty: 1 });
+          const added = Store.addToCart({ product: item.product || undefined, name: item.name, price: item.price, img: item.img || '', size: 'Medium — 12in', color: 'Antique Gold', text: '—', qty: 1 });
+          if (!added) return; // not signed in — Store.addToCart already redirected to login
           Store.setWishlist(Store.getWishlist().filter((i) => i.id !== item.id));
           if (Auth.isLoggedIn()) apiRequest('/wishlist/' + encodeURIComponent(item.id), { method: 'DELETE', keepalive: true }).catch(() => {});
           render();
@@ -1494,6 +1920,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     };
     render();
+
+    /* keep this tab's wishlist grid correct if a DIFFERENT tab changes tt_wishlist
+       (toggled a heart, moved an item to bag, etc.) — same reasoning as the Cart page. */
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'tt_wishlist') render();
+    });
   }
 
   /* ============================================================

@@ -39,7 +39,7 @@ exports.getMessages = asyncHandler(async (req, res) => {
 // @access Private/Admin
 exports.updateMessageStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
-  const entry = await Contact.findByIdAndUpdate(req.params.id, { status }, { new: true });
+  const entry = await Contact.findByIdAndUpdate(req.params.id, { status }, { new: true, runValidators: true });
   if (!entry) throw new ApiError(404, 'Message not found.');
   res.json({ success: true, message: entry });
 });

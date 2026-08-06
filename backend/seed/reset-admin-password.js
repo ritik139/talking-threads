@@ -6,7 +6,7 @@
  * password (e.g. the ChangeMe123! fallback, or it started life as a normal
  * customer registration) and seed.js never updates an existing user's password.
  *
- * This does NOT touch products, orders, journal posts, or any other user —
+ * This does NOT touch products, orders, or any other user —
  * it only updates the password field on the one admin account.
  *
  * Usage (from backend/):

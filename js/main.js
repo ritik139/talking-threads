@@ -545,7 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Cache-busting for product photos. Product images are plain files under /images and
-  // are referenced by filename only (e.g. "images/4.jpg"). When a product photo is
+  // are referenced by filename only (e.g. "images/baby-birth-hoop.jpg"). When a product photo is
   // replaced, it's common for the new file to be saved over the old one under the exact
   // same filename — the URL never changes, so browsers that already have that URL in
   // their HTTP cache keep serving the old bytes instantly on load, then swap to the new
@@ -587,13 +587,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const colorDots = (p.colors || []).map(c => `<span style="--swatch:${SWATCH_HEX[c] || '#ccc'}"></span>`).join('');
     const photo = (p.images && p.images.length && p.images[0]) ? withImgVersion(p.images[0]) : '';
     const href = productHref(p);
-    const mediaInner = photo
-      ? `<img src="${photo}" alt="${p.name}" loading="lazy">`
-      : `<div class="ph-inner">
+    // Same "no photo" placeholder used when a product has no image at all — kept as
+    // markup here so a *broken* image (file missing/404 on the server) can fall back
+    // to it too, instead of leaving a blank box with just the img-placeholder's
+    // background pattern showing through, which is what a bare <img> with a dead src
+    // renders as. The placeholder starts hidden and is only revealed by the <img>'s
+    // onerror handler below — a successfully-loading photo never shows it.
+    const placeholderMarkup = `<div class="ph-inner"${photo ? ' style="display:none"' : ''}>
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
         <span class="ph-label">Product Image</span>
         <span class="ph-dim">1200 x 1500</span>
       </div>`;
+    const mediaInner = photo
+      ? `<img src="${photo}" alt="${p.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">${placeholderMarkup}`
+      : placeholderMarkup;
     return `<div class="product-card reveal in" data-href="${href}">
   <div class="pc-media">
     <div class="img-placeholder ar-portrait">
@@ -816,8 +823,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const added = Store.toggleWishlist({ product, name, price, img });
         btn.classList.toggle('active', added);
         showToast(added ? 'Added to your wishlist' : 'Removed from wishlist');
+        pulseIconBtn(btn);
       });
     });
+  }
+
+  /* Brief scale pulse on a pc-icon-btn right after a click, alongside the
+     existing showToast() message — purely visual, doesn't touch wishlist/
+     cart state or the toast itself. Safe to call repeatedly. */
+  function pulseIconBtn(btn) {
+    btn.classList.remove('tt-pulse');
+    // force reflow so the animation restarts if clicked again quickly
+    void btn.offsetWidth;
+    btn.classList.add('tt-pulse');
+    setTimeout(() => btn.classList.remove('tt-pulse'), 460);
   }
 
   /* ---------- Guard against a single tap registering twice ----------
@@ -853,6 +872,7 @@ document.addEventListener('DOMContentLoaded', () => {
           size: 'Medium — 12in', color: 'Antique Gold', text: '—', qty: 1
         });
         if (added) showToast('Added to your bag');
+        pulseIconBtn(btn);
       }));
     });
   }
@@ -879,7 +899,20 @@ document.addEventListener('DOMContentLoaded', () => {
     (async () => {
       try {
         const data = await apiRequest('/products?sort=featured&limit=6');
-        const products = data.products || [];
+        const rawProducts = data.products || [];
+        // Defensive de-dupe: guard against the same product showing up twice in the
+        // API response (a duplicate DB record, a re-run seed, a manual admin entry
+        // that collides with an existing one, etc.) so the grid can never render two
+        // cards for the same product no matter what the backend returns. Key on _id
+        // first since it's the authoritative unique identifier; fall back to slug,
+        // then name, for any legacy/partial records that might lack one.
+        const seen = new Set();
+        const products = rawProducts.filter((p) => {
+          const key = String(p._id || p.slug || p.name || '').toLowerCase().trim();
+          if (!key || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
         if (products.length) {
           homeFeaturedGrid.innerHTML = products.map(productCardTemplate).join('');
           bindWishToggleButtons(homeFeaturedGrid);
@@ -962,7 +995,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderResultCount() {
-      if (resultCountEl) resultCountEl.textContent = `${state.total} piece${state.total === 1 ? '' : 's'}`;
+      if (resultCountEl) resultCountEl.textContent = `${state.total} Piece${state.total === 1 ? '' : 's'}`;
     }
 
     function renderLoadMore() {
@@ -983,7 +1016,42 @@ document.addEventListener('DOMContentLoaded', () => {
       }).join('~~');
     }
 
-    async function fetchAndRender(page, append) {
+    // ROOT CAUSE FIX (product images appearing to never load on the Shop page):
+    // fetchAndRender()'s catch block used to only call showToast() on failure. A toast
+    // auto-dismisses after a few seconds and leaves whatever was already in #productGrid
+    // untouched — and on the very first load (or after changing filters/sort), what's
+    // "already in #productGrid" is the neutral, image-less "Loading…" skeleton markup
+    // baked into shop.html (see the big HTML comment above that markup). If the initial
+    // GET /api/products request fails or times out for any reason (a slow cold start,
+    // a dropped connection, a brief network blip), that skeleton was left on screen
+    // permanently, with no visible error and no way to recover short of a manual page
+    // refresh — which looks exactly like "product images are stuck / never loading",
+    // even though every individual image file and URL is completely fine.
+    // Fix: (1) one silent automatic retry shortly after a failed *initial* (non-append)
+    // load, to ride out a transient blip without bothering the person at all, and
+    // (2) if that retry also fails, replace the stuck skeleton with a real, visible
+    // error state and a "Try Again" button — so the grid can never be left silently
+    // empty forever. "Load more" failures (append === true) are unaffected: the
+    // already-loaded products stay on screen and the existing toast + re-enabled button
+    // is still exactly right there, since there's no skeleton to get stuck on.
+    function renderGridError(message) {
+      if (!productGrid) return;
+      productGrid.innerHTML =
+        '<div class="shop-grid-error" style="grid-column:1/-1;text-align:center;padding:48px 20px;">' +
+        '<p style="margin:0 0 16px;">' + escapeHtml(message || 'Could not load products right now.') + '</p>' +
+        '<button type="button" class="btn btn-secondary" id="shopGridRetryBtn">Try Again</button>' +
+        '</div>';
+      const retryBtn = document.getElementById('shopGridRetryBtn');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', () => {
+          retryBtn.disabled = true;
+          retryBtn.textContent = 'Retrying…';
+          fetchAndRender(1, false);
+        });
+      }
+    }
+
+    async function fetchAndRender(page, append, isAutoRetry) {
       const requestId = ++latestRequestId;
       try {
         if (loadMoreBtn && append) { loadMoreBtn.textContent = 'Loading…'; loadMoreBtn.disabled = true; }
@@ -1017,7 +1085,22 @@ document.addEventListener('DOMContentLoaded', () => {
         renderLoadMore();
       } catch (err) {
         if (requestId !== latestRequestId) return; // a newer request superseded this one; don't surface its error
-        showToast(err.message || 'Could not load products right now.');
+        if (!append && !isAutoRetry) {
+          // First failure on an initial/refresh load: try once more, silently, shortly
+          // after — covers a brief network blip or slow cold start without ever
+          // bothering the person if the very next attempt just works.
+          setTimeout(() => {
+            if (requestId === latestRequestId) fetchAndRender(page, append, true);
+          }, 1500);
+          return;
+        }
+        if (!append) {
+          // Auto-retry also failed (or this isn't the first load attempt) — don't leave
+          // the skeleton stuck forever, show a real error state with a way to recover.
+          renderGridError(err.message);
+        } else {
+          showToast(err.message || 'Could not load products right now.');
+        }
       } finally {
         if (requestId === latestRequestId && loadMoreBtn) { loadMoreBtn.textContent = 'Load More Pieces'; loadMoreBtn.disabled = false; }
       }
@@ -2479,23 +2562,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (headerIcons && !headerIcons.querySelector('a[href="my-orders.html"]')) {
       const link = document.createElement('a');
       link.href = 'my-orders.html';
-      link.className = 'icon-btn';
+      link.className = 'icon-btn icon-btn-ext';
       link.setAttribute('aria-label', 'My Orders');
       link.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3h12v18l-2.5-1.6L13 21l-1-1.6-1 1.6-2.5-1.6L6 21V3z"/><path d="M9 8h6M9 12h4"/></svg>';
       const cartIcon = headerIcons.querySelector('a[href="cart.html"]');
       if (cartIcon) headerIcons.insertBefore(link, cartIcon);
       else headerIcons.appendChild(link);
     }
-
-    const mobilePanel = document.querySelector('.mobile-panel');
-    if (mobilePanel && !mobilePanel.querySelector('a[href="my-orders.html"]')) {
-      const link = document.createElement('a');
-      link.href = 'my-orders.html';
-      link.textContent = 'My Orders';
-      const accountLink = mobilePanel.querySelector('a[href="login.html"]');
-      if (accountLink) mobilePanel.insertBefore(link, accountLink);
-      else mobilePanel.appendChild(link);
-    }
+    // The mobile drawer already ships with a static "My orders" link inside
+    // .mobile-panel-account (added directly to the markup), so there is
+    // nothing left to inject there — doing so used to risk a duplicate entry.
   })();
 
   /* ---------- Account icon: sign out if already signed in (no markup changes) ---------- */
@@ -2521,6 +2597,41 @@ document.addEventListener('DOMContentLoaded', () => {
   if (header) {
     window.addEventListener('scroll', () => {
       header.style.boxShadow = window.scrollY > 8 ? '0 6px 24px -18px rgba(33,28,21,0.4)' : 'none';
+      // .scrolled compresses .nav's padding slightly (see style.css) — a
+      // purely visual settle-in on top of the shadow set above.
+      header.classList.toggle('scrolled', window.scrollY > 8);
     });
   }
+
+  /* ---------- Hero stat count-up ----------
+     Animates any [data-count-to] element from 0 to its target once it
+     scrolls into view. The element's original text (e.g. "500+") is kept
+     as-is until then, so nothing changes for no-JS / reduced-motion. */
+  (function initCountUp() {
+    const els = document.querySelectorAll('[data-count-to]');
+    if (!els.length) return;
+    const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced || !('IntersectionObserver' in window)) return;
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        const target = parseInt(el.getAttribute('data-count-to'), 10);
+        const suffix = el.getAttribute('data-count-suffix') || '';
+        if (Number.isNaN(target)) { io.unobserve(el); return; }
+        const duration = 1100;
+        const start = performance.now();
+        function tick(now) {
+          const progress = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          el.textContent = Math.round(eased * target) + suffix;
+          if (progress < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+        io.unobserve(el);
+      });
+    }, { threshold: 0.6 });
+    els.forEach(el => io.observe(el));
+  })();
 });

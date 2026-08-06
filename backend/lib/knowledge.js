@@ -36,7 +36,6 @@ const ALLOWED_PAGES = [
   'wishlist.html',
   'my-orders.html',
   'about.html',
-  'journal.html',
   'reviews.html'
 ];
 
@@ -49,7 +48,7 @@ const POLICIES = `
 - Order status/cancel: a signed-in customer can cancel from My Orders (my-orders.html) while an order is still pending/early in processing. If ORDER CONTEXT below lists the customer's real orders, use that data (order number, status) directly instead of asking them to look it up. If they're not signed in or have no matching order, direct them to sign in and check My Orders, or Contact (contact.html) with their order number.
 - Returns/refunds/exchanges: for damaged or defective items only. Customer should email photos within 48 hours of delivery via Contact (contact.html).
 - Wishlist: signed-in customers can save items via the heart icon, viewable at wishlist.html.
-- About: Talking-Thread is a hand-embroidery house founded by Ritik Parihar, stitching heirloom pieces to order in Jaipur (about.html). There's also a Journal (journal.html) and customer Reviews (reviews.html).
+- About: Talking-Thread is a hand-embroidery house founded by Ritik Parihar, stitching heirloom pieces to order in Jaipur (about.html). There's also customer Reviews (reviews.html).
 - Human support: Contact page (contact.html), typical reply time 1–2 business days. Always ask for the order number on order-specific queries.
 `.trim();
 

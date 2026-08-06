@@ -11,7 +11,7 @@ const productSchema = new mongoose.Schema(
     compareAtPrice: { type: Number, default: null },
     category: {
       type: String,
-      enum: ['Wall Art', 'Table Linen', 'Home', 'Kidswear', 'Accessories'],
+      enum: ['Wall Art', 'Table Linen', 'Home', 'Kidswear', 'Accessories', 'Clothing'],
       default: 'Wall Art'
     },
     // Marketing groupings shown on collections.html (a product can belong to more than one)
@@ -33,7 +33,7 @@ const productSchema = new mongoose.Schema(
     tags: [{ type: String, trim: true }],
     images: [{ type: String }],
     // Matches the exact thread-colour swatches in shop.html's filter sidebar (.swatch[data-color])
-    sizes: [{ type: String, enum: ['Small — 8in', 'Medium — 12in', 'Large — 16in'] }],
+    sizes: [{ type: String, enum: ['Small — 8in', 'Medium — 12in', 'Large — 16in', 'S', 'M', 'L', 'XL'] }],
     colors: [{ type: String, enum: ['maroon', 'gold', 'sage', 'ivory', 'midnight', 'blush'] }],
     availability: { type: String, enum: ['In Stock', 'Made to Order'], default: 'Made to Order' },
     isNewArrival: { type: Boolean, default: false },

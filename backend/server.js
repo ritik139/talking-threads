@@ -27,7 +27,6 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const newsletterRoutes = require('./routes/newsletterRoutes');
-const journalRoutes = require('./routes/journalRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 
@@ -165,6 +164,21 @@ const chatLimiter = rateLimit({
 });
 app.use('/api/chat', chatLimiter);
 
+// API responses are dynamic (product catalog, cart, orders, etc.) and must never be served
+// from a stale copy by the browser's HTTP cache or an intermediary/CDN cache sitting in front
+// of this server. Express sets no Cache-Control on res.json() by default, which is usually
+// harmless — but "no header" is not the same as "don't cache": nothing here actively PREVENTS
+// a shared cache in front of the app (a CDN, a corporate proxy, etc.) from applying its own
+// default caching rules to a GET request. That's a plausible explanation for a symptom like
+// "the Shop page briefly shows the current catalog, then reverts to an older one a moment
+// later" — a second, slightly slower response for the exact same request arriving from a
+// cache that hadn't picked up the latest write yet. Marking every /api response no-store
+// removes that ambiguity outright.
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
 // ---- API routes ----
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -175,7 +189,6 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/newsletter', newsletterRoutes);
-app.use('/api/journal', journalRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/chat', chatRoutes);
 

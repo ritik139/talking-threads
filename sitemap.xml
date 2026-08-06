@@ -26,16 +26,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://talking-threads.onrender.com/journal.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://talking-threads.onrender.com/journal-post.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://talking-threads.onrender.com/contact.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>

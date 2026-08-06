@@ -58,6 +58,7 @@ table{ border-collapse: collapse; width: 100%; }
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
     scroll-behavior: auto !important;
   }
 }
@@ -179,6 +180,7 @@ h1,h2,h3,h4{
 
 /* ---------- Buttons ---------- */
 .btn{
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -190,21 +192,39 @@ h1,h2,h3,h4{
   font-weight: 600;
   border: 1px solid var(--ink);
   border-radius: var(--radius);
-  transition: background .35s var(--ease), color .35s var(--ease), border-color .35s var(--ease), transform .2s var(--ease);
+  overflow: hidden;
+  isolation: isolate;
+  transition: background .35s var(--ease), color .35s var(--ease), border-color .35s var(--ease), transform .25s var(--ease), box-shadow .35s var(--ease);
   white-space: nowrap;
 }
 .btn-primary{ background: var(--ink); color: var(--paper); }
 .btn{ touch-action: manipulation; }
-.btn-primary:hover{ background: var(--thread); border-color: var(--thread); transform: translateY(-1px); }
+/* Directional colour sweep on hover, layered under the button's own
+   background via ::before (z-index:-1, isolated to this button by
+   `isolation: isolate` above) — the background/color transition on .btn
+   itself still runs alongside it, so buttons degrade gracefully to a
+   plain colour swap if ::before is ever unsupported. */
+.btn-primary::before, .btn-secondary::before{
+  content: "";
+  position: absolute; inset: 0; z-index: -1;
+  transform: translateX(-101%);
+  transition: transform .45s var(--ease);
+}
+.btn-primary::before{ background: var(--thread); }
+.btn-primary:hover{ background: var(--thread); border-color: var(--thread); transform: translateY(-2px); box-shadow: 0 14px 30px -16px rgba(139,46,58,0.55); }
+.btn-primary:hover::before{ transform: translateX(0); }
 .btn-secondary{ background: transparent; color: var(--ink); }
-.btn-secondary:hover{ background: var(--ink); color: var(--paper); }
+.btn-secondary::before{ background: var(--ink); }
+.btn-secondary:hover{ background: var(--ink); color: var(--paper); transform: translateY(-2px); box-shadow: 0 14px 30px -16px rgba(33,28,21,0.4); }
+.btn-secondary:hover::before{ transform: translateX(0); }
 .btn-thread{ background: var(--thread); color: var(--paper); border-color: var(--thread); }
-.btn-thread:hover{ background: var(--thread-dark); border-color: var(--thread-dark); }
+.btn-thread:hover{ background: var(--thread-dark); border-color: var(--thread-dark); transform: translateY(-2px); box-shadow: 0 14px 30px -16px rgba(108,35,44,0.5); }
 .btn-ghost{ border-color: var(--line); color: var(--ink-soft); }
 .btn-ghost:hover{ border-color: var(--ink); color: var(--ink); }
 .btn-block{ width: 100%; }
 .btn-sm{ padding: 11px 20px; font-size: 0.68rem; }
-.btn:disabled{ opacity: 0.45; cursor: not-allowed; transform: none !important; }
+.btn:active{ transform: translateY(0); box-shadow: none; }
+.btn:disabled{ opacity: 0.45; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
 .link-underline{
   position: relative;
@@ -263,45 +283,89 @@ h1,h2,h3,h4{
   position: sticky; top: 0; z-index: 50;
   background: rgba(242,235,220,0.86);
   backdrop-filter: blur(10px);
+  border-top: 2px solid var(--thread);
   border-bottom: 1px solid var(--line-soft);
 }
 .nav{
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 22px 40px;
+  padding: 20px 40px;
   max-width: var(--container);
   margin: 0 auto;
-  gap: 24px;
+  gap: 22px;
+  transition: padding .35s var(--ease);
   min-width: 0; /* flex items default to min-width:auto; without this the row
                    (and every ancestor up to <body>) refuses to shrink below
                    its children's combined intrinsic width, which is the
                    actual root cause of the page-wide horizontal scrollbar */
 }
-.logo{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  letter-spacing: 0.01em;
-  min-width: 0; /* allow the wordmark to shrink instead of forcing .nav wider */
-  flex-shrink: 1;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+/* Header settles into a slightly tighter row once the page has scrolled —
+   layered on top of the existing scroll shadow (set inline by main.js).
+   `.scrolled` is toggled by main.js; padding-only change, so header height
+   shrinks a touch but nothing reflows or moves position. */
+.site-header{ transition: box-shadow .4s var(--ease); }
+.site-header.scrolled .nav{ padding-top: 13px; padding-bottom: 13px; }
+/* Decorative botanical sprig to the left of the wordmark (desktop only).
+   Sized to sit inside the existing header row — it never grows taller
+   than the row itself, so it can't spill into the announce bar above or
+   the nav-links divider below. Bottom-aligned against the brand block so
+   its base sits level with the tagline, matching a hand-drawn wildflower
+   spray that grows taller/bolder toward the base. */
+.header-floral{
+  display: inline-flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+  color: var(--sage);
+  height: 68px;
+  margin: 0 8px 0 0;
 }
-.logo em{ font-style: italic; color: var(--thread); font-weight: 500; }
-.logo-mark{ flex-shrink: 0; color: var(--thread); }
+.header-floral svg{ height: 100%; width: auto; display: block; }
+.brand{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.brand-name{
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.brand-name em{ font-style: normal; color: var(--thread); font-weight: 500; }
+.brand-tag{
+  font-family: var(--font-body);
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--thread);
+  margin-top: 4px;
+  white-space: nowrap;
+}
 
+.nav-links-row{
+  border-top: 1px solid var(--line-soft);
+}
 .nav-links{
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 38px;
   font-size: 0.78rem;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   font-weight: 600;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 12px 40px;
 }
 .nav-links a{
   position: relative;
@@ -322,26 +386,46 @@ h1,h2,h3,h4{
 .header-icons{
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 26px;
   flex-shrink: 0; /* icons keep their tappable size; .logo is what yields space */
+}
+/* Header keeps exactly 3 action icons (Search, Wishlist, Cart) at every
+   breakpoint. Contact still exists in markup (used by the mobile drawer /
+   footer / nav-links) but is not shown as a header icon.
+   Specificity raised (.header-icons .icon-btn.icon-btn-ext) so this wins
+   over the plain .icon-btn{ display:inline-flex } rule below it. */
+.header-icons .icon-btn.icon-btn-ext{ display: none; }
+/* Account is hidden by default (same as mobile always was) and only
+   revealed on desktop (≥1025px, once the full nav-links row is showing
+   instead of the hamburger), matching the 4-icon reference: Search /
+   Wishlist / Account / Cart. Mobile keeps its original 3-icon set. */
+.header-icons .icon-btn.icon-btn-account{ display: none; }
+@media (min-width: 1025px){
+  .header-icons .icon-btn.icon-btn-account{ display: inline-flex; }
 }
 .icon-btn{
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px; height: 22px;
+  width: 26px; height: 26px;
 }
-/* Invisible hit-area extension: keeps the 22px icon's visual size and the
+/* Invisible hit-area extension: keeps the icon's visual size and the
    header's alignment unchanged while giving the tap/click target a ~44px
    footprint, matching the WCAG 2.5.8 (AA) minimum for touch targets. */
 .icon-btn::before{
   content: "";
   position: absolute;
-  inset: -11px;
+  inset: -9px;
 }
-.icon-btn svg{ width: 100%; height: 100%; stroke: var(--ink); fill: none; stroke-width: 1.4; transition: stroke .25s; }
+.icon-btn svg{ width: 100%; height: 100%; stroke: var(--ink); fill: none; stroke-width: 1.3; transition: stroke .25s; }
 .icon-btn:hover svg{ stroke: var(--thread); }
+/* The magnifying-glass glyph's own strokes only fill a small fraction of
+   its 24x24 viewBox (a thin circle + handle), so at matching box sizes it
+   reads visibly smaller than the solid heart/bag/person glyphs next to it.
+   Scaling just this glyph up brings its apparent (visual) size in line with
+   the other header icons without changing anyone's tappable box. */
+.icon-btn[data-search-toggle] svg{ transform: scale(1.8); }
 .icon-btn .count{
   position: absolute; top: -9px; right: -11px;
   background: var(--thread); color: var(--paper);
@@ -396,6 +480,27 @@ h1,h2,h3,h4{
   transition: transform .35s var(--ease);
 }
 .mobile-panel.open{ transform: translateX(0); }
+.mobile-panel-account{
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-soft);
+  margin-bottom: 8px;
+}
+.mp-link{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  border-bottom: none !important;
+  color: var(--ink);
+}
+.mp-link svg{ width: 17px; height: 17px; stroke: var(--thread); fill: none; stroke-width: 1.5; flex-shrink: 0; }
+.mobile-panel-links{ display: flex; flex-direction: column; }
 .mobile-panel a{
   padding: 12px 0;
   border-bottom: 1px solid var(--line-soft);
@@ -497,40 +602,10 @@ h1,h2,h3,h4{
 .hs-close svg{ width: 100%; height: 100%; stroke: var(--ink); fill: none; stroke-width: 1.4; transition: stroke .25s; }
 .hs-close:hover svg{ stroke: var(--thread); }
 
-/* Search trigger: a larger circular badge (not just a bare line icon) so it
-   reads as the primary entry point into search, distinct from the smaller
-   utility icons (account/wishlist/cart) beside it — desktop/tablet only,
-   where there's room; collapses back to the compact icon at the same
-   breakpoint the nav itself collapses to the hamburger menu, so the
-   condensed mobile header stays exactly as tight as it was before. */
-.icon-btn[data-search-toggle]{
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--white);
-  box-shadow: 0 2px 8px rgba(33,28,21,0.14);
-  transition: box-shadow .25s var(--ease), background-color .25s var(--ease);
-}
-.icon-btn[data-search-toggle] svg{ width: 18px; height: 18px; stroke-width: 1.6; }
-.icon-btn[data-search-toggle]:hover{ box-shadow: 0 4px 14px rgba(33,28,21,0.2); }
-/* Give the toggle icon in the header its own subtle feedback once the panel
-   is open, so there's a visible "you're here" state beyond the panel itself. */
-.icon-btn[data-search-toggle][aria-expanded="true"]{ background: var(--ivory-deep); }
+/* Search trigger: kept as a plain line icon, matching the size and style
+   of the other header icons (wishlist/cart) at every breakpoint. Only a
+   subtle color change on open, no circle/badge/shadow. */
 .icon-btn[data-search-toggle][aria-expanded="true"] svg{ stroke: var(--thread); }
-
-@media (max-width: 1024px){
-  .icon-btn[data-search-toggle]{
-    width: 32px; height: 32px;
-  }
-  .icon-btn[data-search-toggle] svg{ width: 15px; height: 15px; }
-}
-
-@media (max-width: 480px){
-  .icon-btn[data-search-toggle]{
-    width: 30px; height: 30px;
-  }
-  .icon-btn[data-search-toggle] svg{ width: 14px; height: 14px; }
-}
 
 .header-search-results{
   margin-top: 20px;
@@ -652,7 +727,19 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 .hero-meta div strong{ display: block; font-family: var(--font-display); font-size: 1.5rem; }
 .hero-meta div span{ font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); }
 
-.hero-media{ position: relative; }
+/* ---------- Hero entrance sequence ----------
+   Runs once on page load (independent of the scroll-triggered .reveal
+   system, since the hero starts in view). Scoped to direct children of
+   .hero-copy only, so no other ".eyebrow"/heading/paragraph on the site
+   is affected. Respects prefers-reduced-motion via the global rule above
+   (animation-duration is forced to ~0 there). */
+@keyframes tt-hero-rise{ from{ opacity: 0; transform: translateY(18px); } to{ opacity: 1; transform: translateY(0); } }
+.hero-copy > .eyebrow{ opacity: 0; animation: tt-hero-rise .7s var(--ease) .05s forwards; }
+.hero-copy > h1{ opacity: 0; animation: tt-hero-rise .8s var(--ease) .18s forwards; }
+.hero-copy > p{ opacity: 0; animation: tt-hero-rise .8s var(--ease) .32s forwards; }
+.hero-copy > .hero-ctas{ opacity: 0; animation: tt-hero-rise .8s var(--ease) .46s forwards; }
+.hero-copy > .hero-meta{ opacity: 0; animation: tt-hero-rise .8s var(--ease) .6s forwards; }
+.hero-media{ position: relative; opacity: 0; animation: tt-hero-rise .9s var(--ease) .22s forwards; }
 .hero-tag{
   position: absolute; bottom: -22px; left: -22px;
   background: var(--paper);
@@ -673,6 +760,11 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   padding: 20px 0;
   margin-top: 90px;
   background: var(--ivory-deep);
+  /* Soft fade at both edges instead of a hard clip where the marquee text
+     is cut off mid-word. mask-image is additive/visual only — doesn't
+     change layout, scroll speed, or the duplicated-content loop logic. */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
 }
 .ticker{
   display: flex;
@@ -734,9 +826,9 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
    on about.html), so this cannot affect .ar-banner anywhere else it might be
    used, or any other section/page.
 
-   The source photo (images/22.jpg) is a PORTRAIT image (768x1024, ~3:4), not
-   a wide banner shot. The previous fixed --ar: 21/8 (from .ar-banner) forced
-   that portrait photo into an extreme wide letterbox on every screen size —
+   The source photo (images/about-hero.jpg) is a wide banner shot. An earlier
+   version of this image was a PORTRAIT photo (~3:4), and the fixed --ar: 21/8
+   (from .ar-banner) forced that portrait photo into an extreme wide letterbox —
    cropping away most of the picture and losing the embroidery/hoop detail
    that's the whole point of the image, worst of all on narrow phones where
    the resulting strip was only a sliver of the original frame.
@@ -775,8 +867,38 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   border-top: 1px solid var(--line);
   padding-top: 14px;
 }
-.collection-card h3{ font-size: 1.25rem; }
+.collection-card h3{
+  font-size: 1.25rem;
+  position: relative; display: inline-block;
+}
+/* Animated underline on hover — purely decorative ::after, doesn't affect
+   the flex layout of .cc-caption (title/count spacing unchanged). */
+.collection-card h3::after{
+  content: ""; position: absolute; left: 0; bottom: -3px; width: 100%; height: 1px;
+  background: var(--thread);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .4s var(--ease);
+}
+.collection-card:hover h3::after{ transform: scaleX(1); }
 .collection-card .cc-count{ font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+
+/* ---------- Staggered scroll-in for grids ----------
+   Adds a small transition-delay per card, on top of the existing
+   .reveal/.reveal.in fade-up (unchanged). Purely additive — a card
+   with no matching nth-child rule just uses .reveal's default (no
+   delay), so this degrades safely for any grid with more items. */
+.collection-grid .collection-card:nth-child(1),
+.product-grid .product-card:nth-child(1){ transition-delay: 0s; }
+.collection-grid .collection-card:nth-child(2),
+.product-grid .product-card:nth-child(2){ transition-delay: .09s; }
+.collection-grid .collection-card:nth-child(3),
+.product-grid .product-card:nth-child(3){ transition-delay: .18s; }
+.collection-grid .collection-card:nth-child(4),
+.product-grid .product-card:nth-child(4){ transition-delay: .27s; }
+.collection-grid .collection-card:nth-child(5),
+.product-grid .product-card:nth-child(5){ transition-delay: .36s; }
+.collection-grid .collection-card:nth-child(6),
+.product-grid .product-card:nth-child(6){ transition-delay: .45s; }
 
 /* ---------- Product grid & card ---------- */
 .toolbar{
@@ -855,8 +977,12 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 }
 .product-card:hover .pc-actions{ opacity: 1; transform: translateX(0); }
 .product-card:focus-within .pc-actions{ opacity: 1; transform: translateX(0); }
+/* Slight stagger between the wishlist and quick-add icons as they enter,
+   instead of both appearing in perfect unison — icon count/order unchanged. */
+.pc-actions .pc-icon-btn:nth-child(2){ transition-delay: .05s; }
 @media (hover: none){
   .pc-actions{ opacity: 1; transform: translateX(0); }
+  .pc-actions .pc-icon-btn:nth-child(2){ transition-delay: 0s; }
 }
 .pc-icon-btn{
   position: relative;
@@ -865,14 +991,25 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   display: flex; align-items: center; justify-content: center;
   box-shadow: var(--shadow-card);
   touch-action: manipulation;
+  transition: background .3s var(--ease), border-color .3s var(--ease), transform .3s var(--ease), box-shadow .3s var(--ease);
 }
 .pc-icon-btn::before{
   content: "";
   position: absolute;
   inset: -4px;
 }
-.pc-icon-btn svg{ width: 16px; height: 16px; stroke: var(--ink); fill: none; stroke-width: 1.5; }
+.pc-icon-btn svg{ width: 16px; height: 16px; stroke: var(--ink); fill: none; stroke-width: 1.5; transition: stroke .3s var(--ease); }
 .pc-icon-btn.active svg{ fill: var(--thread); stroke: var(--thread); }
+@media (hover: hover) and (pointer: fine){
+  .pc-icon-btn:hover{ background: var(--thread); border-color: var(--thread); box-shadow: 0 10px 22px -10px rgba(139,46,58,0.55); }
+  .pc-icon-btn:hover svg{ stroke: var(--paper); }
+  .pc-icon-btn:hover.active svg{ fill: var(--paper); }
+}
+/* Brief confirmation pulse — toggled on/off by main.js for ~450ms right
+   after a wishlist/quick-add click, alongside the existing showToast()
+   message. Doesn't change the button's resting or hover appearance. */
+@keyframes tt-icon-pulse{ 0%{ transform: scale(1); } 40%{ transform: scale(1.18); } 100%{ transform: scale(1); } }
+.pc-icon-btn.tt-pulse{ animation: tt-icon-pulse .45s var(--ease); }
 .pc-tag{
   position: absolute; top: 14px; left: 14px;
   background: var(--thread); color: var(--paper);
@@ -1112,24 +1249,6 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 .stat-row div strong{ font-family: var(--font-display); font-size: 2.6rem; display: block; color: var(--thread); }
 .stat-row div span{ font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); }
 
-/* ---------- Journal ---------- */
-.journal-tabs{ display: flex; gap: 30px; margin-bottom: 44px; border-bottom: 1px solid var(--line); }
-.journal-tabs button{ padding: 0 0 16px; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); position: relative; }
-.journal-tabs button.active{ color: var(--ink); }
-.journal-tabs button.active::after{ content:""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--thread); }
-.journal-grid{ display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 40px 30px; }
-.journal-card .jc-date{ font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); margin: 18px 0 8px; }
-.journal-card h3{ font-size: 1.3rem; margin-bottom: 10px; }
-.journal-card p{ color: var(--ink-soft); font-size: 0.92rem; }
-.journal-feature{ display: grid; grid-template-columns: 1.1fr minmax(0,1fr); gap: 50px; align-items: center; margin-bottom: 90px; }
-.journal-feature .eyebrow{ margin-bottom: 16px; }
-.journal-feature h2{ font-size: 2.3rem; margin-bottom: 18px; }
-.journal-feature p{ color: var(--ink-soft); margin-bottom: 26px; }
-
-.post-header{ text-align: center; max-width: 760px; margin: 0 auto 50px; }
-.post-header .eyebrow{ justify-content: center; margin-bottom: 20px; }
-.post-header h1{ font-size: clamp(2rem, 4vw, 3rem); margin-bottom: 20px; }
-.post-header .post-meta{ font-size: 0.78rem; color: var(--ink-faint); letter-spacing: 0.06em; }
 .post-body{ max-width: 700px; margin: 60px auto 0; }
 .post-body p{ color: var(--ink-soft); margin-bottom: 22px; font-size: 1.05rem; line-height: 1.85; }
 .post-body h3{ font-size: 1.5rem; margin: 40px 0 18px; }
@@ -1181,13 +1300,15 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 .newsletter-band .eyebrow{ color: var(--gold-soft); justify-content: center; }
 .newsletter-band .eyebrow::before{ background: var(--gold-soft); }
 .newsletter-band h2{ color: var(--paper); font-size: clamp(1.8rem, 3.2vw, 2.6rem); margin: 18px 0 30px; }
-.newsletter-form{ display: flex; max-width: 440px; margin: 0 auto; border-bottom: 1px solid rgba(251,248,241,0.4); padding-bottom: 14px; }
+.newsletter-form{ display: flex; max-width: 440px; margin: 0 auto; border-bottom: 1px solid rgba(251,248,241,0.4); padding-bottom: 14px; transition: border-color .35s var(--ease); }
+.newsletter-form:focus-within{ border-color: var(--gold-soft); }
 .newsletter-form input{
   flex: 1; background: transparent; border: none; color: var(--paper);
   font-size: 1rem; font-family: var(--font-display); font-style: italic;
 }
 .newsletter-form input::placeholder{ color: rgba(251,248,241,0.5); }
-.newsletter-form button{ font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-soft); font-weight: 600; }
+.newsletter-form button{ font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-soft); font-weight: 600; transition: color .3s var(--ease), transform .3s var(--ease); }
+.newsletter-form button:hover{ color: var(--paper); transform: translateX(3px); }
 
 /* ---------- Footer ---------- */
 .site-footer{ margin-top: auto; background: var(--ivory-deep); border-top: 1px solid var(--line); padding-top: 76px; }
@@ -1197,11 +1318,11 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 .footer-brand .logo{ margin-bottom: 18px; }
 .footer-brand p{ color: var(--ink-soft); font-size: 0.9rem; max-width: 32ch; margin-bottom: 22px; }
 .social-icons{ display: flex; gap: 14px; }
-.social-icons a{ position: relative; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: border-color .2s, background .2s; }
+.social-icons a{ position: relative; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: border-color .2s, background .2s, transform .35s var(--ease); }
 .social-icons a::before{ content: ""; position: absolute; inset: -5px; }
-.social-icons a:hover{ border-color: var(--thread); background: var(--thread); }
+.social-icons a:hover{ border-color: var(--thread); background: var(--thread); transform: rotate(-8deg) scale(1.08); }
 .social-icons a:hover svg{ stroke: var(--paper); }
-.social-icons svg{ width: 14px; height: 14px; stroke: var(--ink); fill: none; stroke-width: 1.4; }
+.social-icons svg{ width: 14px; height: 14px; stroke: var(--ink); fill: none; stroke-width: 1.4; transition: stroke .2s; }
 .footer-col h4{ font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px; }
 .footer-col ul{ list-style: none; margin: 0; padding: 0; }
 .footer-col a{ display: block; font-size: 0.88rem; color: var(--ink-soft); padding: 7px 0; }
@@ -1224,7 +1345,9 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 .footer-newsletter-form{
   display: flex; align-items: center; gap: 14px; flex: 1 1 320px; max-width: 400px;
   border-bottom: 1px solid var(--line); padding-bottom: 12px;
+  transition: border-color .35s var(--ease);
 }
+.footer-newsletter-form:focus-within{ border-color: var(--thread); }
 .footer-newsletter-form input{
   flex: 1; min-width: 0; background: transparent; border: none;
   color: var(--ink); font-size: 0.92rem;
@@ -1233,8 +1356,9 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 .footer-newsletter-form button{
   font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--thread); font-weight: 600; white-space: nowrap;
+  transition: color .3s var(--ease), transform .3s var(--ease);
 }
-.footer-newsletter-form button:hover{ color: var(--thread-dark); }
+.footer-newsletter-form button:hover{ color: var(--thread-dark); transform: translateX(3px); }
 
 .footer-bottom{
   display: flex; justify-content: space-between; align-items: center;
@@ -1275,8 +1399,6 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   .filters{ position: static; flex-direction: row; flex-wrap: wrap; gap: 30px; }
   .filters .filter-group{ flex: 1 1 160px; min-width: 160px; }
   .process-grid, .stat-row{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-  .journal-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-  .journal-feature{ grid-template-columns: minmax(0,1fr); }
   .product-detail{ grid-template-columns: minmax(0,1fr); }
   .pd-gallery{ grid-template-columns: minmax(0,1fr); }
   .pd-gallery .pd-main{ order: -1; }
@@ -1292,16 +1414,50 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
      Without this, viewports roughly 769–868px (e.g. small/portrait
      tablets, split-screen windows) had the header spill past the right
      edge and forced the whole page to scroll horizontally. */
-  .nav-links{ display: none; }
-  .menu-toggle{ display: block; }
+  .nav-links-row{ display: none; }
+  .menu-toggle{ display: block; order: -1; }
+  /* Mobile header row mirrors the approved reference: hamburger far left,
+     badge + wordmark next to it, search/wishlist/cart on the right.
+     (Contact is hidden at every breakpoint by the .header-icons
+     .icon-btn.icon-btn-ext rule above; Account is hidden here too — the
+     ≥1025px rule that reveals it doesn't apply below this breakpoint —
+     so mobile keeps its original 3-icon set.) */
+  .nav{ padding: 14px 18px; gap: 8px; }
+  /* Mobile/tablet keeps the exact same botanical sprig markup as desktop
+     (same <svg>, so it's pixel-identical line-art) — just scaled down to
+     fit the tighter header row, sitting close against the wordmark
+     instead of desktop's wider 8px gap. Matches the reference mobile
+     header, which pairs a small left-hand floral mark with the full
+     wordmark rather than dropping the icon entirely. */
+  .header-floral{ display: inline-flex; height: 32px; margin: 0 4px 0 0; }
+  /* Announcement bar ("On every order..."/shipping strip) sits above the
+     header and is desktop-only from here down — on phones/tablets it was
+     competing with the wordmark + icons for very limited width and read
+     as a slab of dark text before anything else on the page. Hiding it
+     is scoped to this exact ≤1024px mobile-header breakpoint, so the
+     desktop header (>1024px) keeps it exactly as before. */
+  .announce{ display: none; }
+  .brand{ order: 0; flex: 0 1 auto; align-items: flex-start; text-align: left; }
+  /* Header wordmark: desktop's 1.7rem/0.16em tracking has no room to
+     shrink to at mobile/tablet widths once icons + hamburger are also
+     on the row, which is what forced ellipsis ("TALKI…") in the
+     previous mobile layout. Scaling both down here keeps the full
+     "Talking-Thread" on one line at every width from 1024px down to
+     the narrowest phones (further fine-tuned in responsive-fixes.css
+     for ≤480px / ≤374px, where the row gets tighter still). */
+  .brand-name{ font-size: 1.15rem; letter-spacing: 0.07em; }
+  .brand-tag{ display: none; }
+  /* Icons sized up to match the reference's bolder, more tappable mobile
+     glyphs (was 22px) — gap trimmed slightly so the larger icons don't
+     eat into the wordmark's space. */
+  .header-icons{ order: 2; margin-left: auto; gap: 14px; }
+  .icon-btn{ width: 25px; height: 25px; }
+  .icon-btn svg{ stroke-width: 1.4; }
 }
 @media (max-width: 768px){
   .container{ padding: 0 22px; }
   .nav{ padding: 18px 22px; }
   .section{ padding: 72px 0; }
-  .journal-tabs{ gap: 22px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-  .journal-tabs::-webkit-scrollbar{ display: none; }
-  .journal-tabs button{ flex: 0 0 auto; white-space: nowrap; }
   .collection-grid, .product-grid{ grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 20px; }
   .process-grid, .stat-row{ grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
   .footer-grid{ grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 34px; }
@@ -1315,7 +1471,7 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   .ci-right{ grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; margin-top: 10px; }
 }
 @media (max-width: 480px){
-  .collection-grid, .product-grid, .journal-grid{ grid-template-columns: minmax(0,1fr); }
+  .collection-grid, .product-grid{ grid-template-columns: minmax(0,1fr); }
   .stat-row, .process-grid{ grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
   .hero-ctas{ flex-direction: column; align-items: stretch; }
   .footer-grid{ grid-template-columns: minmax(0,1fr); }

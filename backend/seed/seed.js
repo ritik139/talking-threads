@@ -1,11 +1,11 @@
 /*
  * Populates MongoDB with the Talking-Thread product catalog (matching the names/prices
- * already hardcoded into shop.html and product.html), an admin account, and a sample
- * journal post. Safe to re-run — it upserts by slug/email so it won't create duplicates.
+ * already hardcoded into shop.html and product.html) and an admin account.
+ * Safe to re-run — it upserts by slug/email so it won't create duplicates.
  *
  * Usage:
  *   npm run seed            (from backend/)
- *   npm run seed:destroy    (wipes products, users, journal posts)
+ *   npm run seed:destroy    (wipes products and users)
  */
 require('dotenv').config();
 const mongoose = require('mongoose');
@@ -14,158 +14,164 @@ const connectDB = require('../config/db');
 
 const Product = require('../models/Product');
 const User = require('../models/User');
-const JournalPost = require('../models/JournalPost');
 const Cart = require('../models/Cart');
 const Wishlist = require('../models/Wishlist');
 
 const products = [
   {
-    name: 'Marigold Trellis Heirloom Hoop',
-    images: ['images/4.jpg'],
+    // Photo: hoop reading "Welcome, our little miracle", baby name, birth time/weight/date,
+    // and hand-embroidered elephant, monkey, giraffe and baby motifs with a pearl trim.
+    name: 'Baby Birth Announcement Embroidery Hoop',
+    images: ['images/baby-birth-hoop.jpg'],
     price: 2450,
+    category: 'Wall Art',
+    collections: ['Wall Art Hoops', 'Little Ones'],
+    isFeatured: true,
+    isNewArrival: true,
+    availability: 'Made to Order',
+    shortDescription: 'A pearl-trimmed hoop hand-embroidered with baby birth details and cute animal motifs.',
+    description:
+      'A hand-embroidered baby birth announcement hoop finished with a pearl trim, featuring space for the baby\'s name, birth date, time and weight alongside a hand-stitched elephant, monkey, giraffe and baby motif. Made to order in our Jaipur atelier and personalised with your own birth details.',
+    sizes: ['Small — 8in', 'Medium — 12in', 'Large — 16in'],
+    colors: ['gold', 'sage', 'ivory'],
+    tags: ['baby hoop', 'birth announcement hoop', 'baby milestone embroidery hoop', 'nursery hoop', 'new baby gift', 'personalized hoop']
+  },
+  {
+    // Photo: hoop with an illustrated couple holding hands, hearts, and the handwritten
+    // quote "With my whole heart, for my whole life" above an embroidered infinity symbol.
+    name: 'Couple Love Quote Embroidery Hoop',
+    images: ['images/couple-love-hoop.jpg'],
+    price: 3200,
+    category: 'Wall Art',
+    collections: ['Wall Art Hoops', 'Bridal Trousseau'],
+    isFeatured: true,
+    availability: 'Made to Order',
+    shortDescription: 'A hoop hand-embroidered with an illustrated couple, hearts and a handwritten love quote.',
+    description:
+      'A wooden embroidery hoop featuring a hand-stitched illustrated couple holding hands, surrounded by little hearts, the handwritten quote "With my whole heart, for my whole life" and an embroidered infinity symbol. A keepsake gift for anniversaries, weddings or engagements.',
+    sizes: ['Medium — 12in', 'Large — 16in'],
+    colors: ['ivory', 'blush', 'gold'],
+    tags: ['couple hoop', 'love quote embroidery hoop', 'anniversary gift', 'engagement gift', 'wedding gift hoop']
+  },
+  {
+    // Photo: a small folded white cotton cloth held in a hand, embroidered with two
+    // hugging bear cubs and hearts.
+    name: 'Hugging Bears Embroidered Handkerchief',
+    images: ['images/hugging-bears-handkerchief.jpg'],
+    price: 4100,
+    category: 'Accessories',
+    collections: ['Everyday Carry', 'Little Ones'],
+    availability: 'Made to Order',
+    shortDescription: 'A soft cotton handkerchief hand-embroidered with two hugging bear cubs and hearts.',
+    description:
+      'A soft white cotton handkerchief finished with a hand-embroidered design of two hugging bear cubs and little hearts. A pocket-sized, thoughtful gift for a partner, friend or new parent.',
+    sizes: ['Small — 8in'],
+    colors: ['ivory', 'blush'],
+    tags: ['embroidered handkerchief', 'bear embroidery', 'cute gift', 'pocket cloth', 'hand-embroidered gift']
+  },
+  {
+    // Photo: heart-shaped floral wreath hoop with tassels ("Welcome home heena").
+    // This is now the single listing for this design — the near-duplicate
+    // "Welcome Home Floral Heart Embroidery Hoop" (images/14.jpg) was removed
+    // from the catalog since it was the same piece/photo as this one.
+    name: 'Welcome Home Floral Heart Embroidery Hoop with Tassels',
+    images: ['images/welcome-home-hoop.jpg'],
+    price: 2750,
     category: 'Wall Art',
     collections: ['Wall Art Hoops', 'Floral Reverie'],
     isFeatured: true,
-    isNewArrival: true,
     availability: 'Made to Order',
-    shortDescription: 'An heirloom marigold trellis, hand-embroidered in antique gold and olive silk on a brass hoop.',
+    shortDescription: 'A larger tasseled hoop hand-embroidered with a floral heart wreath and a "Welcome Home" message.',
     description:
-      'An heirloom trellis of marigold and vine, hand-stitched in antique gold and warm amber silk threads with soft olive vine work, set inside a polished brass hoop. Each piece is made to order in our Jaipur atelier and can be personalised with a short embroidered name or date.',
+      'A hanging hoop hand-embroidered with a heart-shaped wreath of roses in maroon, blush and gold thread, personalised with a "Welcome Home" message, a name and a date, finished with a bow and a fringe of beaded maroon-and-gold tassels.',
     sizes: ['Small — 8in', 'Medium — 12in', 'Large — 16in'],
-    colors: ['gold', 'sage', 'ivory'],
-    tags: ['hoop', 'floral', 'new']
+    colors: ['maroon', 'gold', 'blush'],
+    tags: ['welcome home hoop', 'floral heart wreath hoop', 'housewarming gift', 'tasseled hoop', 'personalized hoop']
   },
   {
-    name: 'Ivory Rose Monogram Heirloom Linen',
-    images: ['images/2.jpg'],
-    price: 3200,
-    category: 'Table Linen',
-    collections: ['Monogram Edit', 'Bridal Trousseau'],
-    isFeatured: true,
-    availability: 'Made to Order',
-    shortDescription: 'A dusty-rose monogram bloom, hand-embroidered on pure ivory linen with gold lettering.',
-    description:
-      'Fine pure ivory linen finished with a hand-embroidered dusty-rose bloom and a custom monogram traced in antique gold thread. A timeless keepsake piece for weddings, anniversaries or a considered gift.',
-    sizes: ['Medium — 12in', 'Large — 16in'],
-    colors: ['ivory', 'blush', 'gold'],
-    tags: ['linen', 'monogram', 'wedding']
-  },
-  {
-    name: 'Jewel Peacock Feather Cushion',
-    images: ['images/14.jpg'],
-    price: 1850,
-    compareAtPrice: 2300,
-    category: 'Home',
-    collections: ['Floral Reverie'],
-    isBestSeller: true,
-    availability: 'In Stock',
-    shortDescription: 'Jewel-toned peacock feather embroidery in emerald teal and midnight sapphire thread.',
-    description:
-      'A statement cushion cover featuring a hand-embroidered peacock feather worked in emerald teal, midnight sapphire and antique gold thread, backed with soft natural linen.',
-    sizes: ['Medium — 12in', 'Large — 16in'],
-    colors: ['midnight', 'sage', 'gold'],
-    tags: ['cushion', 'peacock', 'best seller']
-  },
-  {
-    name: 'Blush Bloom Trailing Table Runner',
-    images: ['images/3.jpg'],
-    price: 4100,
-    category: 'Table Linen',
-    collections: ['Table & Linen', 'Festive Table'],
-    availability: 'Made to Order',
-    shortDescription: 'A trailing bloom in blush rose and sage, hand-embroidered along a fine linen runner.',
-    description:
-      'A long table runner in soft linen, hand-embroidered with a trailing bloom motif in blush rose and sage-green thread, finished with fine antique gold detailing along both ends. Made for everyday dining or special occasions.',
-    sizes: ['Medium — 12in', 'Large — 16in'],
-    colors: ['blush', 'sage', 'gold'],
-    tags: ['runner', 'floral', 'dining']
-  },
-  {
-    name: 'Midnight Vine Statement Hoop',
-    images: ['images/13.jpg'],
-    price: 2750,
-    category: 'Wall Art',
-    collections: ['Wall Art Hoops'],
-    isFeatured: true,
-    availability: 'Made to Order',
-    shortDescription: 'A dramatic vine in midnight indigo and antique gold thread, framed on a statement hoop.',
-    description:
-      'A dramatic vine and leaf design hand-stitched in deep midnight-indigo and antique gold thread on a large wooden hoop, designed to be framed as wall art.',
-    sizes: ['Small — 8in', 'Medium — 12in', 'Large — 16in'],
-    colors: ['midnight', 'gold'],
-    tags: ['hoop', 'wall art', 'botanical']
-  },
-  {
-    name: 'Sage Leaf Heirloom Baby Blanket',
-    images: ['images/6.jpg'],
+    // Photo: hoop reading "[Couple names] — Griha Pravesh" in Hindi/English with a
+    // rose garland border in pink, coral and yellow, set against a housewarming backdrop.
+    name: 'Griha Pravesh Housewarming Embroidery Hoop',
+    images: ['images/housewarming-hoop.jpg'],
     price: 2950,
-    category: 'Kidswear',
-    collections: ['Little Ones'],
+    category: 'Wall Art',
+    collections: ['Wall Art Hoops', 'Floral Reverie'],
     isNewArrival: true,
     availability: 'Made to Order',
-    shortDescription: 'Soft cotton baby blanket with hand-embroidered sage leaf border.',
+    shortDescription: 'A hoop hand-embroidered with a couple\'s names, "Griha Pravesh" text and a rose garland border.',
     description:
-      'A generously sized cotton baby blanket finished with a delicate hand-embroidered leaf border in sage green. Can be personalised with baby\'s name.',
-    sizes: ['Medium — 12in'],
-    colors: ['sage', 'ivory', 'blush'],
-    tags: ['baby', 'blanket', 'gift', 'new']
+      'A pearl-trimmed embroidery hoop hand-stitched with a couple\'s names, the Hindi text "Griha Pravesh" (housewarming) and a date, framed by a garland of rose blooms in pink, coral and yellow thread. A traditional keepsake for a housewarming ceremony.',
+    sizes: ['Medium — 12in', 'Large — 16in'],
+    colors: ['blush', 'gold', 'sage'],
+    tags: ['griha pravesh hoop', 'housewarming gift', 'new home hoop', 'rose garland hoop', 'personalized hoop']
   },
   {
-    name: 'Antique Gold Paisley Clutch',
-    images: ['images/18.jpg'],
-    price: 3600,
-    category: 'Accessories',
-    collections: ['Everyday Carry'],
-    availability: 'In Stock',
-    shortDescription: 'Hand-embroidered paisley clutch in antique gold thread.',
-    description:
-      'A structured evening clutch hand-embroidered with a classic paisley motif in antique gold thread on deep wine silk, lined and finished with a magnetic clasp.',
-    sizes: ['Medium — 12in'],
-    colors: ['gold', 'maroon'],
-    tags: ['clutch', 'paisley', 'accessory']
-  },
-  {
-    name: 'Blossom Trail Silk Scarf',
-    images: ['images/22.jpg'],
+    // Photo: hoop with a house icon, "Griha Pravesh" text, a pink/blue floral wreath,
+    // two names ("Ishvik", "Shridha") and "A sweet new beginning".
+    name: 'Griha Pravesh New Home Embroidery Hoop',
+    images: ['images/new-home-hoop.jpg'],
     price: 2200,
     compareAtPrice: 2650,
-    category: 'Accessories',
-    collections: ['Everyday Carry'],
+    category: 'Wall Art',
+    collections: ['Wall Art Hoops', 'Floral Reverie'],
     isBestSeller: true,
     availability: 'In Stock',
-    shortDescription: 'Lightweight silk scarf with a trailing blossom embroidery.',
+    shortDescription: 'A hoop hand-embroidered with a house motif, "Griha Pravesh" text and a floral wreath.',
     description:
-      'A lightweight silk scarf finished with a delicate hand-embroidered blossom trail along one edge — an easy layer for any season.',
+      'A pearl-trimmed embroidery hoop hand-stitched with a little house motif, the text "Griha Pravesh" (new home), two names, the message "A sweet new beginning" and a date, framed by a wreath of pink and blue flowers.',
     sizes: ['Medium — 12in'],
-    colors: ['blush', 'sage', 'gold'],
-    tags: ['scarf', 'floral', 'accessory', 'best seller']
+    colors: ['blush', 'gold', 'sage'],
+    tags: ['griha pravesh hoop', 'new home gift', 'housewarming hoop', 'floral wreath hoop', 'personalized hoop']
   },
   {
-    name: 'Terracotta Songbird Hoop',
-    images: ['images/9.jpg'],
-    price: 2300,
+    // Photo: hoop reading "Welcome prince Ishvik", with birth time/weight/date,
+    // parents' names, and hand-stitched elephant, monkey and baby-boy motifs.
+    name: 'Baby Welcome Embroidery Hoop',
+    images: ['images/baby-welcome-hoop.jpg'],
+    price: 2950,
     category: 'Wall Art',
-    collections: ['Wall Art Hoops'],
+    collections: ['Wall Art Hoops', 'Little Ones'],
+    isNewArrival: true,
     availability: 'Made to Order',
-    shortDescription: 'A perched songbird motif in warm terracotta and gold thread.',
+    shortDescription: 'A hand-embroidered hoop announcing a new arrival, personalised with name, date and birth details.',
     description:
-      'A charming songbird perched among leaves, hand-embroidered in warm terracotta and gold thread on a 12in wooden hoop.',
+      'A wooden embroidery hoop hand-stitched to welcome a new baby boy, personalised with his name, birth time, date and weight, alongside hand-embroidered elephant, monkey and baby motifs. A keepsake gift for new parents, made to order in our Jaipur atelier.',
     sizes: ['Small — 8in', 'Medium — 12in'],
-    colors: ['maroon', 'gold'],
-    tags: ['hoop', 'bird', 'nature']
-  }
-];
-
-const journalPosts = [
+    colors: ['ivory', 'multicolour'],
+    tags: ['baby birth hoop', 'newborn announcement hoop', 'welcome baby hoop', 'personalized baby gift', 'new baby embroidery hoop']
+  },
   {
-    title: 'Notes From The Studio: How We Choose Our Thread Colours',
-    excerpt:
-      'A short look at how our artisans hand-mix and select thread palettes for every new Talking-Thread piece.',
-    content:
-      'Every Talking-Thread motif begins with a palette pinned to the studio wall in Jaipur. Our artisans work through dozens of thread combinations before settling on the handful that make it into a finished piece — balancing traditional Rajasthani colourways with a softer, modern hand. This post walks through that process, from raw silk thread to the finished hoop.',
-    author: 'Ritik Parihar',
-    tags: ['studio', 'craft'],
-    isPublished: true
+    // Photo: heart-shaped floral wreath hoop with gold-and-white tassels,
+    // reading "Welcome home aesha" with a hand-date, hung against a plain wall.
+    name: 'Welcome Home Floral Heart Embroidery Hoop (Gold Tassels)',
+    images: ['images/welcome-home-gold-hoop.jpg'],
+    price: 2750,
+    category: 'Wall Art',
+    collections: ['Wall Art Hoops', 'Floral Reverie'],
+    isNewArrival: true,
+    availability: 'Made to Order',
+    shortDescription: 'A heart-shaped floral wreath hoop with gold tassels, personalised with a name and date.',
+    description:
+      'A wooden embroidery hoop hand-stitched into a heart-shaped floral wreath, personalised with a name and date, finished with gold-and-white tasseled trim. A warm housewarming or homecoming gift, made to order in our Jaipur atelier.',
+    sizes: ['Medium — 10in'],
+    colors: ['ivory', 'gold', 'blush'],
+    tags: ['welcome home hoop', 'floral heart hoop', 'housewarming gift hoop', 'personalized hoop', 'tasseled embroidery hoop']
+  },
+  {
+    // Photo: a folded white cotton handkerchief held in a hand, hand-embroidered
+    // with a peacock-feather-and-flute motif and a devotional Krishna quote.
+    name: 'Krishna Quote Embroidered Handkerchief',
+    images: ['images/krishna-quote-handkerchief.jpg'],
+    price: 950,
+    category: 'Accessories',
+    collections: ['Everyday Carry'],
+    isNewArrival: true,
+    availability: 'Made to Order',
+    shortDescription: 'A cotton handkerchief hand-embroidered with a peacock feather and a devotional Krishna quote.',
+    description:
+      'A soft cotton handkerchief hand-embroidered with a peacock feather and flute motif alongside a comforting devotional line about Krishna. A small, meaningful keepsake, made to order in our Jaipur atelier.',
+    colors: ['white'],
+    tags: ['krishna handkerchief', 'devotional embroidery', 'spiritual gift', 'embroidered handkerchief', 'peacock feather embroidery']
   }
 ];
 
@@ -177,10 +183,9 @@ async function seed() {
   if (destroy) {
     await Promise.all([
       Product.deleteMany({}),
-      JournalPost.deleteMany({}),
       User.deleteMany({ role: 'admin' })
     ]);
-    console.log('Destroyed products, journal posts and admin users.');
+    console.log('Destroyed products and admin users.');
     await mongoose.disconnect();
     return;
   }
@@ -195,15 +200,32 @@ async function seed() {
   }
   console.log(`Seeded ${products.length} products.`);
 
-  for (const post of journalPosts) {
-    const postDoc = { ...post, slug: slugify(post.title, { lower: true, strict: true }) };
-    await JournalPost.findOneAndUpdate({ title: post.title }, postDoc, {
-      upsert: true,
-      new: true,
-      setDefaultsOnInsert: true
-    });
+  // One-time cleanup: "Welcome Home Floral Heart Embroidery Hoop" (images/14.jpg) was
+  // removed from the products array above because it duplicated the same design/photo
+  // as "Welcome Home Floral Heart Embroidery Hoop with Tassels" (images/welcome-home-hoop.jpg). Upserting
+  // the array above never deletes anything, so on a database that was seeded before this
+  // change, the retired product would otherwise keep existing and keep showing up (and
+  // keep being served by the API) even though it's no longer in the source list. Deleting
+  // it explicitly here — by its exact former name, not by image, so this can never touch
+  // an unrelated product — makes re-running the seed actually retire it everywhere.
+  const retired = await Product.deleteOne({ name: 'Welcome Home Floral Heart Embroidery Hoop' });
+  if (retired.deletedCount) console.log('Removed retired duplicate product: Welcome Home Floral Heart Embroidery Hoop.');
+
+  // One-time cleanup: products photographed with images/18.jpg, images/9.jpg or
+  // images/21.jpg were pulled from the catalog above, but (same reasoning as the
+  // block just above) the upsert loop never deletes anything — so on any database
+  // that was seeded before this change, those old product documents would keep
+  // existing and keep being served by the API/appearing on the site after a refresh,
+  // even though their images are no longer part of the source list. Deleting them
+  // explicitly here, matched by the exact retired image paths (never by name, so this
+  // can't accidentally touch an unrelated product that happens to share a name),
+  // makes re-running the seed actually retire them everywhere, including live Atlas.
+  const retiredByImage = await Product.deleteMany({
+    images: { $in: ['images/18.jpg', 'images/9.jpg', 'images/21.jpg'] }
+  });
+  if (retiredByImage.deletedCount) {
+    console.log(`Removed ${retiredByImage.deletedCount} retired product(s) using images/18.jpg, images/9.jpg or images/21.jpg.`);
   }
-  console.log(`Seeded ${journalPosts.length} journal post(s).`);
 
   // Bootstrap an admin account from env vars, if it doesn't already exist
   const adminEmail = (process.env.ADMIN_EMAIL || 'admin@talking-thread.com').toLowerCase();

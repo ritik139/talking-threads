@@ -7,7 +7,7 @@ const ctrl = require('../controllers/orderController');
 const router = express.Router();
 
 // Admin Dashboard (Orders) routes — require a signed-in admin, same as the other
-// admin-only endpoints (productRoutes.js, journalRoutes.js, etc.).
+// admin-only endpoints (productRoutes.js, etc.).
 router.get('/admin/all', protect, adminOnly, ctrl.getAllOrders);
 router.put(
   '/:id/status',
@@ -50,4 +50,4 @@ router.get('/', protect, ctrl.getMyOrders);
 router.get('/:id', protect, ctrl.getOrder);
 router.put('/:id/cancel', protect, ctrl.cancelOrder);
 
-module.exports = router;
+module.exports = router; 

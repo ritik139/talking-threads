@@ -58,11 +58,22 @@ exports.getProducts = asyncHandler(async (req, res) => {
     if (maxPrice) filter.price.$lte = Number(maxPrice);
   }
 
+  // ROOT CAUSE FIX (Shop page images/order changing between identical requests):
+  // None of these sort keys are unique on their own — plenty of products can tie on
+  // isFeatured/isBestSeller/createdAt (especially several added in the same batch, which
+  // can land on the exact same createdAt millisecond) or on price. Mongo does not guarantee
+  // any particular order among documents that tie on every requested sort field; which
+  // tied document ends up right at the skip/limit page boundary can differ between two
+  // otherwise-identical requests. That's enough to make a newly added product swap places
+  // with an older one right at the edge of page 1 — visually indistinguishable from "the
+  // new product's image got replaced by an old one". Appending `_id` (unique, always
+  // present) as the final tiebreaker on every branch makes the order fully deterministic:
+  // the same filter+sort always returns the same order, every time.
   const sortMap = {
-    featured: '-isFeatured -isBestSeller -createdAt',
-    price_asc: 'price',
-    price_desc: '-price',
-    newest: '-createdAt'
+    featured: '-isFeatured -isBestSeller -createdAt -_id',
+    price_asc: 'price _id',
+    price_desc: '-price -_id',
+    newest: '-createdAt -_id'
   };
   const sortOrder = sortMap[sort] || sort || sortMap.featured;
 

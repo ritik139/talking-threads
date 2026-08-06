@@ -38,14 +38,14 @@ You need a MongoDB instance — either:
 ## 2. Seed the database
 
 Populates the 9 products already referenced in `shop.html`/`product.html` (same names
-and prices), a sample journal post, and bootstraps one admin account from your `.env`.
+and prices), and bootstraps one admin account from your `.env`.
 
 ```bash
 npm run seed
 ```
 
 Re-running it is safe (it upserts by name/email, no duplicates). `npm run seed:destroy`
-wipes products/journal posts/admin users if you want to start over.
+wipes products/admin users if you want to start over.
 
 ## 3. Run it
 
@@ -124,10 +124,6 @@ JSON body as `token` if you'd rather use `Authorization: Bearer <token>` from a 
 | | `/api/contact/:id` | PUT | Admin |
 | Newsletter | `/api/newsletter` | POST / unsubscribe: `/api/newsletter/unsubscribe` POST | Public |
 | | `/api/newsletter` | GET | Admin |
-| Journal | `/api/journal` | GET | Public |
-| | `/api/journal/:slug` | GET | Public |
-| | `/api/journal` | POST | Admin |
-| | `/api/journal/:id` | PUT / DELETE | Admin |
 | Health | `/api/health` | GET | Public |
 
 ## Extra functionality beyond the original static demo
@@ -136,7 +132,7 @@ JSON body as `token` if you'd rather use `Authorization: Bearer <token>` from a 
 - Server-persisted cart, wishlist, and order history — no longer wiped when you clear your browser
 - A checkout flow that creates real orders with an auto-generated order number, subtotal/shipping/total
 - Product reviews & ratings (not in the original static UI, available via API for future use)
-- Admin-only product, journal, contact-message, and order-status management endpoints
+- Admin-only product, contact-message, and order-status management endpoints
 - Contact form submissions and newsletter sign-ups are saved (previously discarded)
 - Product search, category/price filtering, and pagination via query params
 - Centralized validation and error handling, security headers (helmet), and CORS/rate limiting

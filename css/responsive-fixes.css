@@ -46,31 +46,63 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .section-tight{ padding: 44px 0; }
   .section-head{ margin-bottom: 40px; }
 
-  /* ---------- 2. Announcement bar ---------- */
-  .announce{ font-size: 0.64rem; padding: 9px 14px; letter-spacing: 0.1em; line-height: 1.6; }
-  .announce span{ margin: 0 6px; }
+  /* ---------- 2. Announcement bar ----------
+     Now hidden entirely at mobile/tablet widths (see the ≤1024px
+     .announce{ display:none; } rule in style.css), so it no longer
+     needs its own mobile sizing here — nothing left to scope. */
 
   /* ---------- 3. Header / navbar ----------
-     Root-cause fix: on very narrow screens the logo wordmark +
-     account/wishlist/cart icons + hamburger no longer fit on one row
-     at the desktop sizing, which pushes the header past the viewport
-     edge and forces horizontal scroll on the whole page. Scaling the
-     logo and tightening the icon/nav gaps brings the row back under
-     the viewport width without hiding or reflowing anything. */
-  .nav{ padding: 14px 16px; gap: 10px; }
+     Root-cause fix: on very narrow screens the wordmark + icons +
+     hamburger no longer fit on one row at the desktop sizing, which
+     pushed the header past the viewport edge and forced horizontal
+     scroll on the whole page (and, separately, made the wordmark
+     truncate to "TALKI..." since .brand-name had no mobile font-size
+     of its own). Tightening the nav's own padding/gap and scaling the
+     wordmark + icons down brings the whole row back under the
+     viewport width without hiding or reflowing anything.
+     (NOTE: .logo / .logo-mark below style the FOOTER wordmark only —
+     the header wordmark markup is .brand / .brand-name, styled
+     separately right after.)
+
+     Pass 2 (pixel-match pass): the row previously mixed THREE different
+     spacing values on one line — .nav{gap:7px} for menu→floral→logo,
+     PLUS an extra .header-floral{margin-right:4px} stacked on top of
+     that same gap (so floral→logo was really 11px, not 7px), and a
+     totally separate .header-icons{gap:13px} for search/wishlist/cart.
+     That's the actual cause of the lopsided-looking row. Fixed by
+     giving .nav and .header-icons the SAME gap value and removing the
+     floral's extra margin, so menu→floral, floral→logo, and
+     icon→icon→icon are all identical, evenly-spaced steps. The left
+     cluster (menu+floral+logo) and the icon cluster stay visually
+     separated by .header-icons' margin-left:auto (inherited from the
+     ≤1024px rule) — that's the intentional "logo left, actions right"
+     layout — but every other gap on the row now matches. */
+  .nav{ padding: 14px 18px; gap: 10px; }
   .logo{ font-size: 1.05rem; gap: 6px; }
   .logo-mark{ width: 19px; height: 19px; }
-  /* Header action icons (search/wishlist/cart/profile) + hamburger:
-     bumped ~13-15% larger than the previous mobile size, with the
-     gap between them opened up by 10px, purely for easier touch
-     targeting/visibility on phones. Scoped inside this max-width:480px
-     block only, so tablet/desktop sizing in style.css is untouched.
-     menu-toggle's new 20px height matches style.css's base (unscoped)
-     span top:9px/18px positions exactly, so those overrides are no
-     longer needed and have been dropped instead of re-tuned. */
-  .header-icons{ gap: 22px; }
-  .icon-btn{ width: 23px; height: 23px; }
-  .menu-toggle{ width: 25px; height: 20px; }
+  /* Floral mark: sized up ~22% (27px → 33px) and its old standalone
+     margin-right removed — spacing to the wordmark now comes from the
+     shared .nav gap above, same as every other step on the row. */
+  .header-floral{ height: 33px; margin-right: 0; }
+  /* Header wordmark (.brand-name): +15% over the previous 1rem to read
+     as a confident, premium lockup next to the larger floral mark.
+     Letter-spacing trimmed slightly (0.045em → 0.04em) so the bigger
+     type still fits one line without forcing the ellipsis fallback. */
+  .brand-name{ font-size: 1.15rem; letter-spacing: 0.04em; }
+  /* Header action icons (search/wishlist/cart) + hamburger: bumped to
+     25px (within the 24–26px target) from the old 23px, with the
+     tappable hit-area still >=40px via .icon-btn::before's inset — a
+     visual change only, not a touch-target regression. Gap matches
+     .nav's gap above so search↔wishlist↔cart reads at the same rhythm
+     as menu↔floral↔logo. Scoped inside this max-width:480px block
+     only, so tablet/desktop sizing in style.css is untouched. */
+  .header-icons{ gap: 10px; }
+  .icon-btn{ width: 25px; height: 25px; }
+  .menu-toggle{ width: 22px; height: 18px; }
+  .menu-toggle span:nth-child(2){ top: 8px; }
+  .menu-toggle span:nth-child(3){ top: 16px; }
+  .menu-toggle.open span:nth-child(1){ transform: translateY(8px) rotate(45deg); }
+  .menu-toggle.open span:nth-child(3){ transform: translateY(-8px) rotate(-45deg); }
   .mobile-panel{ padding: 8px 16px 24px; }
 
   /* ---------- 4. Hero ---------- */
@@ -90,7 +122,7 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .btn-sm{ padding: 10px 16px; }
 
   /* ---------- 6. Collections / product grid & cards ---------- */
-  .collection-grid, .product-grid, .journal-grid{ gap: 16px; }
+  .collection-grid, .product-grid{ gap: 16px; }
   .toolbar{ gap: 14px; padding-bottom: 20px; margin-bottom: 28px; }
   .pc-title{ font-size: 1rem; }
   .pc-actions{ top: 10px; right: 10px; gap: 8px; }
@@ -210,6 +242,7 @@ img, video, iframe, table, svg{ max-width: 100%; }
    inherits everything from the 480px block above ---------- */
 @media (min-width: 391px) and (max-width: 480px){
   .logo{ font-size: 1.15rem; }
+  .brand-name{ font-size: 1.2rem; }
 }
 
 /* ---------- Small phones (≤374px, covers 320/360 test widths) ----------
@@ -217,14 +250,27 @@ img, video, iframe, table, svg{ max-width: 100%; }
    test matrix, where every extra pixel of chrome matters. */
 @media (max-width: 374px){
   .container{ padding: 0 14px; }
-  .nav{ padding: 12px 14px; gap: 8px; }
+  .nav{ padding: 12px 15px; gap: 8px; }
   .logo{ font-size: 0.94rem; gap: 5px; }
   .logo-mark{ width: 18px; height: 18px; }
-  /* Same touch/visibility improvement as the 480px block above, just
-     dialed back slightly (+8px vs. +10px there) since these are the
-     narrowest widths in the test matrix (320/360). Icon and
-     menu-toggle sizes are inherited unchanged from the 480px block. */
-  .header-icons{ gap: 18px; }
+  /* Floral mark: smallest size in the scale, sized up ~22% (23px → 28px)
+     to match the larger treatment above, still present (not hidden) so
+     the narrowest phones match the reference too. Own margin removed —
+     spacing now comes from the shared .nav gap, same as the 480px block. */
+  .header-floral{ height: 28px; margin-right: 0; }
+  /* Header wordmark: one notch smaller again for the narrowest phones
+     (320/360), but still +15% over its old size so it still reads as
+     one confident, premium line, not a squeeze. */
+  .brand-name{ font-size: 1.02rem; letter-spacing: 0.02em; }
+  /* Same equal-spacing approach as the 480px block above: .header-icons'
+     gap matches .nav's gap so every step on the row — menu→floral→logo
+     and search↔wishlist↔cart — is identical. Icons sized to the 24–26px
+     target even at the narrowest widths in the required test matrix
+     (320/360). Menu-toggle size/bar positions are inherited unchanged
+     from the 480px block. */
+  .header-icons{ gap: 8px; }
+  .icon-btn{ width: 24px; height: 24px; }
+  .icon-btn .count{ width: 15px; height: 15px; font-size: 0.56rem; top: -8px; right: -10px; }
   .hero-meta{ gap: 16px 22px; }
   .hero-meta div strong{ font-size: 1.25rem; }
   .btn{ padding: 13px 16px; font-size: 0.68rem; }
@@ -242,4 +288,84 @@ img, video, iframe, table, svg{ max-width: 100%; }
 @media (min-width: 481px) and (max-width: 768px){
   .footer-newsletter-form{ flex: 0 1 auto; width: 100%; }
   .admin-nav{ flex-wrap: wrap; }
+}
+
+/* ==========================================================================
+   Premium mobile polish — Home page, ≤480px only
+   Additive/override only, same rules as the rest of this file: nothing
+   here changes tablet/desktop, and every declaration lives inside this
+   max-width query. Reuses existing tokens only (--gold, --ink, --thread,
+   --shadow-card, --ease) — no new palette introduced. Approved reference:
+   mobile home demo, gold primary buttons + sage accent line-art.
+   Cards/buttons already animate via .reveal and main.js — this block is
+   pure visual refinement (shape, shadow, tap feedback), no new JS hooks.
+   ========================================================================== */
+@media (max-width: 480px){
+  /* Cleaner tap feedback everywhere on touch, no lingering grey flash */
+  a, button{ -webkit-tap-highlight-color: transparent; }
+
+  /* ---------- Buttons: pill shape + lift, gold primary ----------
+     Desktop keeps the sharp 2px-radius editorial look untouched;
+     mobile gets a softer, app-like pill better suited to thumbs.
+     Primary CTA swaps from --ink to --gold per the approved demo,
+     with --ink text for AA contrast on the gold fill. */
+  .btn{
+    border-radius: 999px;
+    box-shadow: 0 14px 30px -18px rgba(33,28,21,0.35);
+    transition: transform .3s var(--ease), box-shadow .3s var(--ease), background .3s var(--ease);
+  }
+  .btn:active{ transform: scale(.96); box-shadow: 0 6px 14px -8px rgba(33,28,21,0.3); }
+  .btn-primary{
+    background: var(--gold);
+    color: var(--ink);
+    border-color: var(--gold);
+    box-shadow: 0 16px 32px -16px rgba(176,139,69,0.55);
+  }
+  .btn-primary::before{ background: var(--gold-soft); }
+  .btn-primary:hover, .btn-primary:active{
+    background: var(--gold-soft); border-color: var(--gold-soft); color: var(--ink);
+    box-shadow: 0 10px 22px -12px rgba(176,139,69,0.5);
+  }
+  .btn-secondary:active{ background: var(--ivory); }
+
+  /* ---------- Collection & product cards: soft shadow + tap scale ----------
+     .cc-frame / .pc-media already clip their own image, so rounding
+     the outer card and letting the media inherit the radius is enough
+     — no change to the aspect-ratio/image markup itself. */
+  .collection-card{ border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-card); transition: transform .35s var(--ease); }
+  .collection-card:active{ transform: scale(.97); }
+  .collection-card .cc-caption{ background: var(--white); padding: 12px 14px 14px; }
+  .product-card{ border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-card); transition: transform .35s var(--ease); }
+  .product-card:active{ transform: scale(.98); }
+  .product-card .pc-info{ padding: 12px 12px 14px; }
+
+  /* Wishlist / quick-add icon buttons read as frosted chips on mobile
+     instead of flat squares — visual only, same tap target/position. */
+  .pc-icon-btn{
+    background: rgba(251,248,241,0.88);
+    backdrop-filter: blur(6px);
+    border-radius: 50%;
+    box-shadow: 0 8px 18px -10px rgba(33,28,21,0.4);
+  }
+  .pc-icon-btn:active{ transform: scale(.88); background: var(--thread); }
+  .pc-icon-btn:active svg{ stroke: var(--paper); }
+
+  /* Header icons get the same light tap feedback as buttons/cards */
+  .icon-btn:active svg{ transform: scale(.85); stroke: var(--thread); }
+  .icon-btn svg{ transition: stroke .25s, transform .2s var(--ease); }
+
+  /* ---------- Newsletter inputs: pill to match the new button shape ---------- */
+  .newsletter-form{ border-bottom: none; background: rgba(255,255,255,0.08); border-radius: 999px; padding: 5px; }
+  .newsletter-form input{ padding: 10px 14px; }
+  .newsletter-form button{ background: var(--gold-soft); color: var(--ink); border-radius: 999px; padding: 11px 18px; }
+  .newsletter-form button:hover{ color: var(--ink); transform: none; }
+  .footer-newsletter-form{
+    border: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    border-radius: 999px; padding: 4px 4px 4px 16px;
+  }
+  .footer-newsletter-form:focus-within{ border-color: var(--thread); }
+  .footer-newsletter-form button{
+    background: var(--thread); color: var(--white); border-radius: 999px; padding: 10px 16px;
+  }
+  .footer-newsletter-form button:hover{ color: var(--white); }
 }

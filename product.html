@@ -180,39 +180,63 @@
           </div>
         </div>
 
-        <div class="option-block">
-          <div class="option-label"><span>Thread Colour</span><span class="opt-value" data-color-value>Antique Gold</span></div>
-          <div class="color-options" role="radiogroup" aria-label="Select thread colour">
-            <div class="color-opt selected" role="radio" tabindex="0" aria-checked="true"><span class="color-swatch" style="--swatch:#C9A24B"></span><span>Antique Gold</span></div>
-            <div class="color-opt" role="radio" tabindex="0" aria-checked="false"><span class="color-swatch" style="--swatch:#7A2231"></span><span>Deep Maroon</span></div>
-            <div class="color-opt" role="radio" tabindex="0" aria-checked="false"><span class="color-swatch" style="--swatch:#6E7A5C"></span><span>Sage Green</span></div>
-            <div class="color-opt" role="radio" tabindex="0" aria-checked="false"><span class="color-swatch" style="--swatch:#262E45"></span><span>Midnight Blue</span></div>
-            <div class="color-opt" role="radio" tabindex="0" aria-checked="false"><span class="color-swatch" style="--swatch:#D9A9A2"></span><span>Blush Pink</span></div>
+        <div class="option-row">
+          <div class="option-block">
+            <div class="option-label"><span>Thread Colour</span><span class="opt-value" data-color-value>Antique Gold</span></div>
+            <div class="color-options" role="radiogroup" aria-label="Select thread colour">
+              <div class="color-opt selected" role="radio" tabindex="0" aria-checked="true"><span class="color-swatch" style="--swatch:#C9A24B"></span><span>Antique Gold</span></div>
+              <div class="color-opt" role="radio" tabindex="0" aria-checked="false"><span class="color-swatch" style="--swatch:#7A2231"></span><span>Deep Maroon</span></div>
+              <div class="color-opt" role="radio" tabindex="0" aria-checked="false"><span class="color-swatch" style="--swatch:#6E7A5C"></span><span>Sage Green</span></div>
+              <div class="color-opt" role="radio" tabindex="0" aria-checked="false"><span class="color-swatch" style="--swatch:#262E45"></span><span>Midnight Blue</span></div>
+              <div class="color-opt" role="radio" tabindex="0" aria-checked="false"><span class="color-swatch" style="--swatch:#D9A9A2"></span><span>Blush Pink</span></div>
+            </div>
+          </div>
+
+          <div class="option-block">
+            <div class="option-label"><label for="customText">Custom Embroidery Text</label></div>
+            <input type="text" id="customText" class="custom-text-field" placeholder="Add a name or word to stitch, e.g. Aanya" aria-describedby="charCount">
+            <div class="field-note"><span>Optional &mdash; stitched in your chosen thread colour</span><span id="charCount" aria-live="polite">0 / 20</span></div>
           </div>
         </div>
 
-        <div class="option-block">
-          <div class="option-label"><label for="customText">Custom Embroidery Text</label></div>
-          <input type="text" id="customText" class="custom-text-field" placeholder="Add a name or word to stitch, e.g. Aanya" aria-describedby="charCount">
-          <div class="field-note"><span>Optional &mdash; stitched in your chosen thread colour</span><span id="charCount" aria-live="polite">0 / 20</span></div>
-        </div>
-
-        <div class="qty-add-row">
+        <div class="option-block pd-qty-block">
+          <div class="option-label"><span>Quantity</span></div>
           <div class="qty-stepper">
             <button type="button" class="qty-minus" aria-label="Decrease quantity">&minus;</button>
             <input type="text" value="1" readonly aria-label="Quantity" aria-live="polite">
             <button type="button" class="qty-plus" aria-label="Increase quantity">+</button>
           </div>
-          <div class="pd-actions">
-            <button class="btn btn-primary" id="addToCartBtn" disabled>Loading&hellip;</button>
-            <button class="wish-toggle" id="pdWishBtn" disabled aria-label="Add to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
+        </div>
+
+        <div class="pd-summary">
+          <div class="pd-summary-row">
+            <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M8 7h6a3 3 0 010 6H9a3 3 0 000 6h7"/></svg>Unit Price</span>
+            <span class="pd-summary-unit">&nbsp;</span>
+          </div>
+          <div class="pd-summary-row">
+            <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7l8-4 8 4-8 4-8-4z"/><path d="M4 7v10l8 4 8-4V7"/></svg>Gift Wrap</span>
+            <span>Included</span>
+          </div>
+          <div class="pd-summary-row">
+            <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12l3-8h12l3 8"/><path d="M3 12v7a1 1 0 001 1h16a1 1 0 001-1v-7"/><path d="M3 12h18"/></svg>Shipping</span>
+            <span>Free</span>
+          </div>
+          <div class="pd-summary-total">
+            <span>Subtotal</span>
+            <span class="pd-summary-subtotal">&nbsp;</span>
           </div>
         </div>
 
+        <div class="pd-actions">
+          <button class="btn btn-primary" id="addToCartBtn" disabled>Loading&hellip;</button>
+          <button class="wish-toggle" id="pdWishBtn" disabled aria-label="Add to wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.4-4.6-10-9.2C.5 8 2.1 4.6 5.6 4.2c2-.2 3.8.8 5 2.4 1.2-1.6 3-2.6 5-2.4 3.5.4 5.1 3.8 3.6 7.6-2.6 4.6-10 9.2-10 9.2z"/></svg></button>
+        </div>
+
         <div class="pd-perks">
-          <div class="pd-perk"><svg viewBox="0 0 24 24"><path d="M3 12l3-8h12l3 8"/><path d="M3 12v7a1 1 0 001 1h16a1 1 0 001-1v-7"/><path d="M3 12h18"/></svg> Made to order &mdash; ships in 10&ndash;14 days</div>
-          <div class="pd-perk"><svg viewBox="0 0 24 24"><path d="M4 7l8-4 8 4-8 4-8-4z"/><path d="M4 7v10l8 4 8-4V7"/></svg> Hand-wrapped gift packaging included</div>
-          <div class="pd-perk"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Free exchanges within 14 days of delivery</div>
+          <div class="pd-perk"><svg viewBox="0 0 24 24"><path d="M3 12l3-8h12l3 8"/><path d="M3 12v7a1 1 0 001 1h16a1 1 0 001-1v-7"/><path d="M3 12h18"/></svg><span><span class="perk-title">Made to Order</span><span class="perk-sub">Ships in 10&ndash;14 Days</span></span></div>
+          <div class="pd-perk"><svg viewBox="0 0 24 24"><path d="M4 7l8-4 8 4-8 4-8-4z"/><path d="M4 7v10l8 4 8-4V7"/></svg><span><span class="perk-title">Hand-wrapped</span><span class="perk-sub">Gift Packaging</span></span></div>
+          <div class="pd-perk"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span><span class="perk-title">Free Exchanges</span><span class="perk-sub">Within 14 Days</span></span></div>
+          <div class="pd-perk"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6l7-3z"/><path d="M9.5 12l1.8 1.8L15 10"/></svg><span><span class="perk-title">Secure Checkout</span><span class="perk-sub">100% Protected</span></span></div>
         </div>
 
         <div class="accordion">
@@ -383,5 +407,6 @@
 </div>
 <script src="js/main.js?v=20260803b" defer></script>
 <script src="js/chatbot.js?v=20260731" defer></script>
+<script src="js/pd-summary.js?v=20260807" defer></script>
 </body>
 </html>

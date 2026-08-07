@@ -1,0 +1,546 @@
+/* ==========================================================================
+   Collections Page — premium/luxury UI polish
+   Scoped entirely under body.page-collections so nothing here can ever
+   touch .collection-card / .collection-grid as they appear on index.html
+   or shop.html, or any other page. Pure presentation: no HTML structure,
+   JS, routing, or data attributes are relied upon beyond the existing
+   markup, and every existing class/behaviour keeps working exactly as
+   before (same href, same click target, same DOM).
+   Loaded after style.css + responsive-fixes.css so it can refine, not
+   fight, the base rules.
+   ========================================================================== */
+
+/* ---------- Header intro: quiet entrance, no layout change ---------- */
+@keyframes cc-fade-up{
+  from{ opacity: 0; transform: translateY(14px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+.page-collections .section-head{ max-width: 700px; }
+.page-collections .section-head .eyebrow{ animation: cc-fade-up .6s var(--ease) both; }
+.page-collections .section-head h1{ animation: cc-fade-up .7s var(--ease) .08s both; line-height: 1.16; }
+.page-collections .section-head p{ animation: cc-fade-up .7s var(--ease) .16s both; }
+.page-collections .breadcrumb a{ transition: color .3s var(--ease); }
+
+/* ---------- Trim the oversized gap above the breadcrumb ----------
+   The base .section rule gives every section 108px of top padding,
+   which is meant for sections lower down the page — at the very top,
+   directly under the nav bar, it reads as a big dead gap before
+   "Our Collections" even appears. Scoped to just this page's first
+   section so no other page's spacing is touched. */
+.page-collections main > .section:first-of-type{
+  padding-top: 40px;
+}
+@media (min-width: 1025px){
+  .page-collections main > .section:first-of-type{ padding-top: 52px; }
+}
+
+/* ---------- Grid rhythm ---------- */
+.page-collections .collection-grid{
+  gap: 46px 38px;
+  counter-reset: cc-index;
+}
+
+/* ---------- Card shell ---------- */
+.page-collections .collection-card{
+  position: relative;
+  transition: transform .55s var(--ease);
+  counter-increment: cc-index;
+}
+
+/* Matted frame around each hoop photo — echoes the brand's embroidery-hoop
+   presentation instead of a plain edge-to-edge crop. */
+.page-collections .collection-card .cc-frame{
+  position: relative;
+  padding: 10px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  transition: border-color .5s var(--ease), box-shadow .5s var(--ease);
+  box-shadow: 0 1px 3px rgba(33,28,21,0.05);
+}
+.page-collections .collection-card .cc-frame .img-placeholder{
+  border-color: var(--line-soft);
+}
+
+/* Slow, refined zoom on the photo itself (not the frame), so the mat
+   stays put while the image breathes — replaces the site-wide 1.015
+   whole-box zoom for this page only. */
+.page-collections .collection-card .cc-frame .img-placeholder img{
+  transition: transform .9s var(--ease), filter .5s var(--ease);
+}
+
+/* ---------- Consistent photo tone ----------
+   Product photos on this page were shot in different rooms/lighting
+   (green wall, cream studio, wooden table, etc.), so side by side they
+   read as a mismatched set. One shared, subtle warm grade — plus the
+   bottom gradient already used for captions — pulls every photo on the
+   page (bento grid, sub-row circles, CTA panel) into one consistent
+   "shot for this catalog" look without touching the source files. */
+.page-collections .cc-frame .img-placeholder img,
+.page-collections .cc-subcard-media img,
+.page-collections .cc-cta-media img{
+  filter: sepia(0.12) saturate(1.08) contrast(1.03) brightness(1.02);
+}
+
+/* Small serif index mark + "View Collection" cue, both inert on touch:
+   gated behind hover-capable pointers so nothing gets stuck half-visible
+   on tap-only devices. Purely decorative ::before/::after — no new DOM. */
+@media (hover: hover) and (pointer: fine){
+  .page-collections .collection-card:hover{ transform: translateY(-6px); }
+  .page-collections .collection-card:hover .cc-frame{
+    border-color: var(--gold);
+    box-shadow: var(--shadow-card);
+  }
+  .page-collections .collection-card:hover .img-placeholder{ transform: none; }
+  .page-collections .collection-card:hover .cc-frame .img-placeholder img{
+    transform: scale(1.07);
+    filter: sepia(0.12) saturate(1.15) contrast(1.04) brightness(1.05);
+  }
+
+  .page-collections .collection-card .cc-frame::before{
+    content: counter(cc-index, decimal-leading-zero);
+    position: absolute; top: 14px; left: 14px; z-index: 2;
+    font-family: var(--font-display); font-style: italic;
+    font-size: 0.8rem; letter-spacing: 0.04em;
+    color: var(--paper);
+    background: rgba(33,28,21,0.55);
+    backdrop-filter: blur(4px);
+    padding: 5px 11px;
+    border: 1px solid rgba(251,248,241,0.35);
+    opacity: 0; transform: translateY(-6px);
+    transition: opacity .4s var(--ease), transform .4s var(--ease);
+    pointer-events: none;
+  }
+  .page-collections .collection-card:hover .cc-frame::before{
+    opacity: 1; transform: translateY(0);
+  }
+
+  .page-collections .collection-card .cc-frame::after{
+    content: "View Collection";
+    position: absolute; right: 14px; bottom: 14px; z-index: 2;
+    font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--paper);
+    padding: 9px 16px;
+    border: 1px solid var(--gold);
+    opacity: 0; transform: translateY(10px);
+    transition: opacity .4s var(--ease) .04s, transform .4s var(--ease) .04s;
+    pointer-events: none;
+  }
+  .page-collections .collection-card:hover .cc-frame::after{
+    opacity: 1; transform: translateY(0);
+  }
+}
+
+/* ---------- Caption ---------- */
+.page-collections .collection-card .cc-caption{
+  margin-top: 22px;
+  padding-top: 16px;
+}
+.page-collections .collection-card h3{
+  font-size: 1.32rem;
+  letter-spacing: 0.005em;
+}
+.page-collections .collection-card .cc-count{
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  padding: 4px 11px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.page-collections .collection-card .cc-desc{
+  line-height: 1.65;
+  margin-top: 12px;
+}
+
+/* ---------- Small screens ----------
+   Mobile already gets a rounded, shadowed card treatment from
+   responsive-fixes.css — keep this page's mat frame but drop its own
+   border/shadow there so the two don't double up, and tighten the
+   number/index rhythm slightly. */
+@media (max-width: 480px){
+  .page-collections .collection-grid{ gap: 22px; }
+  .page-collections .collection-card .cc-frame{
+    padding: 6px;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+  .page-collections .collection-card .cc-caption{ margin-top: 0; padding-top: 0; }
+}
+
+/* ==========================================================================
+   Desktop-only additions: hero portrait, four-feature trust row, and a
+   mixed bento layout for the six existing collection cards.
+   Everything in this block is gated behind min-width:1025px (the same
+   breakpoint style.css already switches the header/nav at), so tablet
+   and phone keep exactly the layout that shipped before this update —
+   the .cc-hero-media and .cc-features markup simply stays display:none
+   below that width, and the collection cards fall back to the existing
+   2-col / 1-col grid already defined in style.css's responsive rules
+   (no override needed there — grid-column/row below is desktop-only,
+   so the browser never sees it at narrower widths).
+   No card's href, alt text, image, or DOM order changes — only where
+   each one is placed on the desktop grid.
+   ========================================================================== */
+.page-collections .cc-hero-media,
+.page-collections .cc-features,
+.page-collections .cc-hero-rule{ display: none; }
+
+@media (min-width: 1025px){
+  /* ---------- Hero: copy + portrait image ---------- */
+  .page-collections .cc-hero{
+    display: grid;
+    grid-template-columns: minmax(0,0.72fr) minmax(0,1.15fr);
+    gap: 56px;
+    align-items: center;
+    margin-bottom: 76px;
+  }
+  .page-collections .cc-hero-copy{ margin-bottom: 0; max-width: 460px; }
+  .page-collections .cc-hero-rule{
+    display: block;
+    width: 64px;
+    height: 2px;
+    margin-top: 28px;
+    background-image: none;
+    background-color: var(--thread);
+    opacity: 1;
+  }
+  .page-collections .cc-hero-media{
+    display: block;
+    position: relative;
+  }
+  /* Reference photo for this layout is a wide lifestyle flat-lay. The hero
+     uses an existing local product photo (images/floral-tote-bag.jpg,
+     1200×655) instead of a stock substitute — no other image on this page
+     was touched. aspect-ratio is set to that photo's exact native ratio
+     (1200/655), so it fills the box edge-to-edge with no letterboxing, and
+     object-fit: contain guarantees the full photo stays visible — no
+     cropping — even if a differently-shaped photo is swapped in later. */
+  .page-collections .cc-hero-media .img-placeholder{
+    aspect-ratio: 1200/655;
+    border-radius: 20px;
+    box-shadow: var(--shadow-card);
+  }
+  .page-collections .cc-hero-media .img-placeholder img{
+    object-fit: cover;
+    object-position: center 45%;
+  }
+
+  /* ---------- Four-feature trust row ---------- */
+  .page-collections .cc-features{
+    display: flex;
+    justify-content: space-between;
+    gap: 28px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 32px 36px;
+    margin-bottom: 64px;
+  }
+  .page-collections .cc-feature-item{
+    flex: 1 1 0;
+    text-align: left;
+  }
+  .page-collections .cc-feature-icon{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    margin-bottom: 16px;
+  }
+  .page-collections .cc-feature-icon svg{
+    width: 19px; height: 19px;
+    color: var(--thread);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .page-collections .cc-feature-icon svg .dot{ fill: currentColor; stroke: none; }
+  .page-collections .cc-feature-item h4{
+    font-size: 0.86rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+  .page-collections .cc-feature-item p{
+    font-size: 0.82rem;
+    color: var(--ink-faint);
+    line-height: 1.55;
+    max-width: 22ch;
+  }
+
+  /* ---------- Bento grid: hero tile + 2 stacked + 3 even ----------
+     Same six <a class="collection-card"> in the same source order as
+     always (Floral Reverie … Little Ones) — only their grid placement
+     changes here. Every card fills its grid cell edge-to-edge and
+     shows its caption as a light-on-dark overlay at the foot of the
+     photo (title, piece count, "Explore" link over a gradient scrim),
+     matching the reference. The supporting .cc-desc sentence isn't
+     part of that reference layout, so it's hidden at this breakpoint
+     only — it still reads normally on tablet/phone.
+
+     Six-column base (not three): in the reference the hero tile and
+     the stacked-right column split the top block roughly half/half,
+     while only the bottom row divides into equal thirds. A plain
+     3-equal-column grid can't do both at once — six equal tracks let
+     the hero span 1–4 (half), the stacked pair span 4–7 (half), and
+     the bottom row span two tracks each (even thirds) on the same
+     column grid. Row heights (280/270/340) mirror the reference's
+     measured ~173:165:213 proportions so the hero tile lands near-
+     square and the wide tiles crop gently instead of the previous
+     380×670 sliver / 790×320 letterbox. */
+  .page-collections .collection-grid{
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0,1fr));
+    grid-template-rows: 280px 270px 340px;
+    gap: 30px;
+  }
+  .page-collections .collection-grid .collection-card{
+    height: 100%;
+  }
+  .page-collections .collection-grid .collection-card:nth-child(1){ grid-column: 1 / 4; grid-row: 1 / 3; }
+  .page-collections .collection-grid .collection-card:nth-child(2){ grid-column: 4 / 7; grid-row: 1 / 2; }
+  .page-collections .collection-grid .collection-card:nth-child(3){ grid-column: 4 / 7; grid-row: 2 / 3; }
+  .page-collections .collection-grid .collection-card:nth-child(4){ grid-column: 1 / 3; grid-row: 3 / 4; }
+  .page-collections .collection-grid .collection-card:nth-child(5){ grid-column: 3 / 5; grid-row: 3 / 4; }
+  .page-collections .collection-grid .collection-card:nth-child(6){ grid-column: 5 / 7; grid-row: 3 / 4; }
+
+  /* Card fills its cell; frame drops the earlier "mat" treatment in
+     favour of an edge-to-edge, rounded, gradient-scrimmed photo. */
+  .page-collections .collection-grid .collection-card .cc-frame{
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    border-radius: 14px;
+  }
+  .page-collections .collection-grid .collection-card .img-placeholder{
+    height: 100%;
+    aspect-ratio: auto;
+    border: none;
+  }
+  /* Per-card focal point — tune each independently once real photos are
+     in place; object-fit stays "cover" (set globally, never stretches)
+     so this only shifts which part of the frame is kept on crop.
+
+     The six cells aren't all the same shape, so the same object-position
+     doesn't work everywhere — each value below is chosen for that cell's
+     own crop ratio, not copy-pasted:
+       1 (hero, ~585×580, near-square)     — source is a wide landscape
+         shot; height-limited, so only the sides are trimmed. A slight
+         upward bias keeps the subject off the bottom mount board.
+       2 & 3 (~585×280 / ~585×270, wide letterbox) — width-limited, so
+         these lose the *most* height on crop. Tile 2's source is a tall
+         portrait shot, meaning well over half its height is cropped away;
+         centering (rather than the previous upward 30% bias) keeps the
+         crop window on the middle of the frame so the piece itself isn't
+         pushed toward one edge and cut off. Tile 3's source is closer in
+         ratio to its cell, so it only needs a gentle upward nudge.
+       4, 5 & 6 (~380×340, near-square leaning portrait) — all three
+         sources are tall portrait shots losing roughly a third of their
+         height; each gets the same modest upward bias so the hoop/subject
+         reads consistently across the row instead of being centered in
+         one tile and full-bleed in the next.
+     Adjust the percentage per photo once real photos are in place, or
+     back to "center" if a given shot is already centered on its subject. */
+  .page-collections .collection-grid .collection-card:nth-child(1) .img-placeholder img{ object-position: center 42%; }
+  .page-collections .collection-grid .collection-card:nth-child(2) .img-placeholder img{ object-position: center; }
+  .page-collections .collection-grid .collection-card:nth-child(3) .img-placeholder img{ object-position: center; }
+  .page-collections .collection-grid .collection-card:nth-child(4) .img-placeholder img{ object-position: center 30%; }
+  .page-collections .collection-grid .collection-card:nth-child(5) .img-placeholder img{ object-position: center 30%; }
+  .page-collections .collection-grid .collection-card:nth-child(6) .img-placeholder img{ object-position: center 28%; }
+  /* Neutralise the numbered-badge / "View Collection" pill from the
+     hover-only block above — this layout carries its own always-on
+     caption instead, so those pseudo-elements would double up. */
+  .page-collections .collection-grid .collection-card .cc-frame::before,
+  .page-collections .collection-grid .collection-card .cc-frame::after{
+    content: none;
+  }
+  .page-collections .collection-grid .collection-card .img-placeholder::after{
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(20,15,10,0.8) 0%, rgba(20,15,10,0.34) 34%, transparent 62%);
+    pointer-events: none;
+  }
+
+  /* Caption overlay: title + count stacked bottom-left, Explore link
+     bottom-right, both sitting on the gradient scrim. */
+  .page-collections .collection-grid .collection-card .cc-caption{
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+    margin: 0; border-top: none;
+    padding: 22px 96px 22px 24px;
+  }
+  /* Small gold rule above every title — a quiet, repeated mark that
+     ties the caption style together across all six cards. */
+  .page-collections .collection-grid .collection-card .cc-caption::before{
+    content: "";
+    display: block;
+    width: 22px; height: 1.5px;
+    background: var(--gold-soft);
+    margin-bottom: 2px;
+  }
+  .page-collections .collection-grid .collection-card h3{
+    color: var(--paper);
+    font-size: 1.3rem;
+  }
+  .page-collections .collection-grid .collection-card h3::after{ background: var(--gold-soft); }
+  .page-collections .collection-grid .collection-card .cc-count{
+    border: none; padding: 0; border-radius: 0; background: none;
+    color: rgba(251,248,241,0.8);
+  }
+  .page-collections .collection-grid .collection-card .cc-desc{ display: none; }
+  .page-collections .collection-grid .collection-card .cc-caption::after{
+    content: "Explore →";
+    position: absolute; right: 24px; bottom: 26px;
+    font-family: var(--font-display); font-style: italic;
+    font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500;
+    color: var(--gold-soft);
+    transition: transform .35s var(--ease);
+  }
+}
+
+@media (min-width: 1025px) and (hover: hover) and (pointer: fine){
+  .page-collections .collection-grid .collection-card:hover .cc-caption::after{
+    transform: translateX(4px);
+  }
+}
+
+/* ==========================================================================
+   Sub-collections row — five smaller, circular-thumbnail collections shown
+   below the main bento grid. Desktop-only, same as the hero/features/bento
+   additions above: hidden below 1025px so phone and tablet keep whatever
+   layout they already had (this markup is new, so there's no pre-existing
+   narrow-screen treatment to preserve — it simply doesn't render there).
+   ========================================================================== */
+.page-collections .cc-subrow{ display: none; }
+
+@media (min-width: 1025px){
+  .page-collections .cc-subrow{
+    display: flex;
+    justify-content: space-between;
+    gap: 28px;
+    margin-top: 72px;
+  }
+  .page-collections .cc-subcard{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .page-collections .cc-subcard-media{
+    width: 148px;
+    height: 148px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    box-shadow: 0 10px 24px -16px rgba(33,28,21,0.3);
+    transition: box-shadow .4s var(--ease), transform .4s var(--ease);
+  }
+  .page-collections .cc-subcard-media img{
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    display: block;
+    transition: transform .6s var(--ease);
+  }
+  .page-collections .cc-subcard h4{
+    margin-top: 16px;
+    font-size: 0.98rem;
+    font-weight: 500;
+  }
+  .page-collections .cc-subcard .cc-count{
+    display: block;
+    margin-top: 4px;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+  }
+  .page-collections .cc-subcard-explore{
+    display: inline-block;
+    margin-top: 8px;
+    font-family: var(--font-display); font-style: italic;
+    font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500;
+    color: var(--thread);
+    transition: transform .35s var(--ease);
+  }
+}
+@media (min-width: 1025px) and (hover: hover) and (pointer: fine){
+  .page-collections .cc-subcard:hover .cc-subcard-media{
+    box-shadow: 0 14px 30px -14px rgba(33,28,21,0.4);
+    transform: translateY(-3px);
+  }
+  .page-collections .cc-subcard:hover .cc-subcard-media img{ transform: scale(1.08); }
+  .page-collections .cc-subcard:hover .cc-subcard-explore{ transform: translateX(3px); }
+}
+
+/* ==========================================================================
+   CTA band — restyled from the site-wide dark, centered .newsletter-band
+   into a light, left-aligned split panel with a photo, matching this page's
+   reference. Everything below is scoped to body.page-collections so the
+   shared .newsletter-band on every other page (index, shop, product, etc.)
+   is completely untouched — same selector, same class, only reachable here.
+   Text/button stack full-width on tablet and phone; the photo half is
+   desktop-only, same gating pattern as the rest of this file.
+   ========================================================================== */
+.page-collections .newsletter-band{
+  background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+  padding: 0;
+  overflow: hidden;
+}
+.page-collections .newsletter-band .cc-cta-inner{
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 64px 0;
+}
+.page-collections .newsletter-band .eyebrow{ color: var(--thread); justify-content: flex-start; }
+.page-collections .newsletter-band .eyebrow::before{ background: var(--thread); }
+.page-collections .newsletter-band h2{ color: var(--ink); text-align: left; margin: 18px 0 28px; }
+.page-collections .newsletter-band .hero-ctas{ justify-content: flex-start; }
+.page-collections .cc-cta-media{ display: none; }
+
+@media (min-width: 1025px){
+  .page-collections .newsletter-band .cc-cta-inner{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 64px;
+    padding: 80px 0;
+  }
+  .page-collections .cc-cta-copy{ max-width: 440px; flex: 0 0 auto; }
+  .page-collections .cc-cta-media{
+    display: block;
+    flex: 1 1 0;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+  }
+  .page-collections .cc-cta-media img{
+    width: 100%; height: 100%;
+    aspect-ratio: 9/7;
+    object-fit: cover; object-position: center 50%;
+    display: block;
+  }
+}
+
+@media (min-width: 1025px){
+  /* ---------- Sub-row circle crop bias ----------
+     Tuned per photo now that real local images are in place, so each
+     circle centres on its subject instead of a generic middle crop. */
+  .page-collections .cc-subcard:nth-child(1) .cc-subcard-media img{ object-position: center 25%; }
+  .page-collections .cc-subcard:nth-child(2) .cc-subcard-media img{ object-position: center 35%; }
+  .page-collections .cc-subcard:nth-child(3) .cc-subcard-media img{ object-position: center 30%; }
+  .page-collections .cc-subcard:nth-child(4) .cc-subcard-media img{ object-position: center; }
+  .page-collections .cc-subcard:nth-child(5) .cc-subcard-media img{ object-position: center 30%; }
+}

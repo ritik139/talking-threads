@@ -149,12 +149,20 @@ img, video, iframe, table, svg{ max-width: 100%; }
   /* ---------- 7. Product detail page ---------- */
   .pd-info{ padding-left: 0; }
   .pd-info h1{ font-size: 1.6rem; }
-  .pd-gallery{ gap: 12px; }
+  .pd-price-row{ font-size: 1.1rem; margin: 12px 0 20px; padding-bottom: 20px; }
+  .pd-gallery{ gap: 10px; }
   .pd-thumb{ width: 60px; }
-  .qty-add-row{ flex-wrap: wrap; gap: 12px; margin: 24px 0 16px; }
-  .qty-add-row .pd-actions{ flex: 1 1 100%; }
-  .qty-add-row .qty-stepper{ flex: 1 1 100%; justify-content: center; }
+  .pd-main::after{ width: 34px; height: 34px; top: 12px; right: 12px; }
+  .option-row{ margin-bottom: 0; }
+  .option-row .option-block{ margin-bottom: 24px; }
   .size-pills, .color-options{ gap: 8px; }
+  .color-options{ column-gap: 16px; }
+  .qty-stepper{ width: 100%; justify-content: center; }
+  .pd-summary{ padding: 2px 16px; }
+  .pd-summary-row{ font-size: 0.8rem; padding: 12px 0; }
+  .pd-actions{ flex-wrap: wrap; }
+  .pd-perks{ grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-top: 24px; }
+  .pd-perk{ padding: 14px 12px; }
   .accordion-body-inner{ padding-right: 0; }
   .related-products{ margin-top: 72px; }
 
@@ -327,6 +335,18 @@ img, video, iframe, table, svg{ max-width: 100%; }
     box-shadow: 0 10px 22px -12px rgba(176,139,69,0.5);
   }
   .btn-secondary:active{ background: var(--ivory); }
+
+  /* Product page Add to Cart keeps the dark/ink treatment from the
+     approved PDP reference — scoped by #id so it doesn't affect the
+     gold .btn-primary treatment intentionally used elsewhere on mobile. */
+  #addToCartBtn.btn-primary{
+    background: var(--ink); color: var(--paper); border-color: var(--ink);
+    box-shadow: 0 14px 30px -18px rgba(33,28,21,0.35);
+  }
+  #addToCartBtn.btn-primary::before{ background: var(--thread); }
+  #addToCartBtn.btn-primary:hover, #addToCartBtn.btn-primary:active{
+    background: var(--thread); border-color: var(--thread); color: var(--paper);
+  }
 
   /* ---------- Collection & product cards: soft shadow + tap scale ----------
      .cc-frame / .pc-media already clip their own image, so rounding

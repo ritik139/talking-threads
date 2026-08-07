@@ -168,7 +168,7 @@ body.page-shop .mshop-intro{
   }
   body.page-shop .mshop-badge svg .dot{ fill: currentColor; stroke: none; }
   body.page-shop .mshop-badge .l1{ display: block; font-size: 0.66rem; font-weight: 700; color: var(--ink); }
-  body.page-shop .mshop-badge .l2{ display: block; font-size: 0.6rem; color: var(--ink-faint); }
+  body.page-shop .mshop-badge .l2{ display: block; font-size: 0.66rem; color: var(--ink-faint); }
 
   /* ---------- Page title section: tighten now the hero above says "Shop" ---------- */
   body.page-shop .section-flush-bottom .section-head{ display: none; }
@@ -200,9 +200,10 @@ body.page-shop .mshop-intro{
   body.page-shop .mshop-filter-btn{
     display: flex; align-items: center; justify-content: center; gap: 4px;
     order: 2; flex: 1.08 1 0; min-width: 0;
-    font-family: var(--font-body); font-size: 0.8rem; font-weight: 700; color: var(--ink);
+    font-family: var(--font-body); font-size: 0.84rem; font-weight: 700; color: var(--ink);
+    letter-spacing: 0.02em; text-transform: uppercase;
     background: var(--paper); border: 1px solid var(--line); border-radius: 7px;
-    padding: 9px 5px;
+    padding: 9px 4px;
     white-space: nowrap;
   }
   body.page-shop .mshop-filter-btn svg{
@@ -218,7 +219,7 @@ body.page-shop .mshop-intro{
      instead of being silently truncated by the browser. */
   body.page-shop .sort-select{
     order: 2; flex: 0.92 1 0; min-width: 0;
-    border-radius: 7px; font-family: var(--font-body); font-size: 0.76rem; font-weight: 700; color: var(--ink); letter-spacing: 0.01em; padding: 9px 18px 9px 7px;
+    border-radius: 7px; font-family: var(--font-body); font-size: 0.82rem; font-weight: 700; color: var(--ink); letter-spacing: 0.02em; padding: 9px 20px 9px 7px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     -webkit-appearance: none; appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23211C15' stroke-width='1.8'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
@@ -231,7 +232,7 @@ body.page-shop .mshop-intro{
     display: flex; align-items: center; justify-content: space-between;
     padding-top: 2px; border-top: none;
   }
-  body.page-shop .result-count{ font-size: 0.72rem; }
+  body.page-shop .result-count{ font-size: 0.76rem; }
   body.page-shop .view-toggle{ display: none; }
 
   /* ---------- Filters aside -> bottom sheet drawer ---------- */
@@ -317,7 +318,7 @@ body.page-shop .mshop-intro{
     border-radius: 4px; overflow: hidden;
   }
   body.page-shop .pc-info{ padding-top: 10px; }
-  body.page-shop .pc-cat{ font-size: 0.6rem; }
+  body.page-shop .pc-cat{ font-size: 0.66rem; }
   body.page-shop .pc-title{ font-size: 0.88rem; margin-top: 4px; }
   body.page-shop .pc-price{ font-size: 0.82rem; margin-top: 5px; }
 
@@ -332,7 +333,7 @@ body.page-shop .mshop-intro{
   body.page-shop .shop-trust-item{ gap: 8px; }
   body.page-shop .shop-trust-item svg{ width: 20px; height: 20px; }
   body.page-shop .shop-trust-item .l1{ font-size: 0.72rem; }
-  body.page-shop .shop-trust-item .l2{ font-size: 0.62rem; }
+  body.page-shop .shop-trust-item .l2{ font-size: 0.68rem; }
 
   /* ---------- Desktop-only intro (hero + featured collection + badges)
      is swapped out for .mshop-intro above, so hide it here. ---------- */

@@ -1071,52 +1071,6 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 .pd-main .img-placeholder{ --ar: 4/5; border: none; }
 .pd-main img{ transition: opacity .3s ease, transform .15s ease; }
 .pd-main img.is-swapping{ opacity: 0; transform: scale(1.02); }
-@media (hover: hover) and (pointer: fine){
-  .pd-main{ cursor: zoom-in; }
-}
-/* Decorative magnifier badge, top-right of the main photo — purely
-   visual cue for the existing hover-zoom/double-tap-zoom behaviour
-   already wired up in main.js, so it never intercepts pointer events. */
-.pd-main::after{
-  content: "";
-  position: absolute;
-  top: 16px; right: 16px;
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  background: var(--paper) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23211C15" stroke-width="1.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg>') center/18px no-repeat;
-  box-shadow: var(--shadow-card);
-  pointer-events: none;
-  z-index: 2;
-  transition: transform .3s var(--ease);
-}
-@media (hover: hover) and (pointer: fine){
-  .pd-main:hover::after{ transform: scale(1.08); }
-}
-
-/* Mobile/touch full-screen zoom viewer (pinch + drag to pan) — built by JS on
-   first use, so it costs nothing on pages/visits that never open it. */
-.pd-zoom-modal{
-  position: fixed; inset: 0; z-index: 300;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(33,28,21,0.94);
-  opacity: 0; visibility: hidden;
-  transition: opacity .25s var(--ease), visibility 0s linear .25s;
-  touch-action: none;
-}
-.pd-zoom-modal.open{ opacity: 1; visibility: visible; transition: opacity .25s var(--ease); }
-.pd-zoom-modal img{
-  max-width: 100%; max-height: 100%;
-  touch-action: none;
-  transition: transform .05s linear;
-  will-change: transform;
-}
-.pd-zoom-close{
-  position: absolute; top: 18px; right: 18px;
-  width: 40px; height: 40px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--paper); border-radius: 50%;
-}
-.pd-zoom-close svg{ width: 20px; height: 20px; stroke: var(--ink); fill: none; stroke-width: 1.6; }
 .pd-info{ padding-left: 20px; }
 .pd-info .pc-cat{ margin-bottom: 12px; }
 .pd-info h1{ font-size: 2.15rem; font-weight: 500; line-height: 1.16; }

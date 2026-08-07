@@ -1223,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fills in the product-specific parts of the page (breadcrumb, title/meta, images,
     // price, description, size & colour options, add-to-cart/wishlist data) using data
     // fetched from the API — this is what makes each product page show ITS OWN product.
-    function renderProductData(p) {
+    function renderProductData(p, relatedProducts) {
       const crumb = document.querySelector('.breadcrumb li[aria-current="page"]');
       if (crumb) crumb.textContent = p.name;
 
@@ -1241,18 +1241,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const priceStr = p.displayPrice || ('₹' + Number(p.price || 0).toLocaleString('en-IN'));
 
-      // Images: main photo + up to 4 thumbnails (reusing the same photo where the
-      // product only has one, same as the page's original static markup did),
-      // split alternately across the left/right thumb columns around the main image.
+      // Images: main photo + up to 4 thumbnails. The product's own photo(s) come
+      // first; when it only has one, the remaining thumb slots are filled with the
+      // first photo of other products in the same category (the "related products"
+      // list) instead of just repeating the main photo — so the thumbs strip shows
+      // other handkerchief designs (e.g. penguin-balloon, krishna-quote, hugging-bears)
+      // rather than 4 copies of the same image. Only falls back to repeating the main
+      // photo if there aren't enough related products with images to fill the strip.
       const photos = ((p.images && p.images.length) ? p.images : []).map(withImgVersion);
       const mainPhoto = photos[0] || '';
+      const relatedImages = (relatedProducts || [])
+        .map(rp => (rp.images && rp.images.length) ? withImgVersion(rp.images[0]) : null)
+        .filter(Boolean);
+      const gallery = [];
+      photos.concat(relatedImages).forEach(src => {
+        if (src && gallery.length < 4 && !gallery.includes(src)) gallery.push(src);
+      });
+      while (gallery.length < 4 && mainPhoto) gallery.push(mainPhoto);
       const thumbLabels = ['Front View', 'Detail — Stitch Close-up', 'Styled on Wall', 'Back & Packaging'];
       const thumbsLeft = document.querySelector('.pd-thumbs-left');
       const thumbsRight = document.querySelector('.pd-thumbs-right');
       if (thumbsLeft && thumbsRight) {
         const thumbHtml = (label, i) => `
           <div class="pd-thumb${i === 0 ? ' active' : ''}" data-label="${label}">
-            <div class="img-placeholder ar-square"><img src="${photos[i] || mainPhoto}" alt="${label}" loading="lazy" decoding="async"></div>
+            <div class="img-placeholder ar-square"><img src="${gallery[i] || mainPhoto}" alt="${label}" loading="lazy" decoding="async"></div>
           </div>`;
         thumbsLeft.innerHTML = thumbLabels.map(thumbHtml).filter((_, i) => i % 2 === 0).join('');
         thumbsRight.innerHTML = thumbLabels.map(thumbHtml).filter((_, i) => i % 2 === 1).join('');
@@ -1329,123 +1341,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
       });
-
-      /* ---------- Image zoom ----------
-         Desktop (hover-capable pointers): moving the mouse over the main photo
-         magnifies it, following the cursor as a lens would — the image itself
-         scales inside the already-`overflow:hidden` .pd-main box, so nothing
-         about the page layout moves.
-         Mobile (touch): the confined lens doesn't work well with a finger, so
-         double-tap or a two-finger pinch instead opens the same photo full-
-         screen, pannable and pinch-zoomable, in a small on-demand overlay. */
-      (function initImageZoom() {
-        const pdMain = document.querySelector('.pd-main');
-        if (!pdMain) return;
-        const ZOOM = 2.4;
-        const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-
-        if (canHover) {
-          pdMain.addEventListener('mousemove', (e) => {
-            const img = pdMain.querySelector('img');
-            if (!img) return;
-            const rect = pdMain.getBoundingClientRect();
-            const x = ((e.clientX - rect.left) / rect.width) * 100;
-            const y = ((e.clientY - rect.top) / rect.height) * 100;
-            img.style.transformOrigin = `${x}% ${y}%`;
-            img.style.transform = `scale(${ZOOM})`;
-          });
-          pdMain.addEventListener('mouseleave', () => {
-            const img = pdMain.querySelector('img');
-            if (img) { img.style.transform = ''; img.style.transformOrigin = ''; }
-          });
-        }
-
-        /* Full-screen pan/pinch viewer for touch devices, built once and reused
-           for whichever photo is currently showing (thumbnail swaps just update
-           .pd-main img's src, which this reads fresh each time it opens). */
-        let modal, modalImg, scale = 1, panX = 0, panY = 0;
-        function buildModal() {
-          if (modal) return modal;
-          modal = document.createElement('div');
-          modal.className = 'pd-zoom-modal';
-          modal.innerHTML = `<button type="button" class="pd-zoom-close" aria-label="Close zoomed image">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 5l14 14M19 5L5 19"/></svg>
-            </button>
-            <img alt="">`;
-          document.body.appendChild(modal);
-          modalImg = modal.querySelector('img');
-          modal.querySelector('.pd-zoom-close').addEventListener('click', closeModal);
-          modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-
-          // Pinch-to-zoom (two touches) + drag-to-pan once zoomed in.
-          let startDist = 0, startScale = 1, startX = 0, startY = 0, lastPanX = 0, lastPanY = 0, dragging = false;
-          function dist(touches) {
-            const [a, b] = touches;
-            return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
-          }
-          modal.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 2) {
-              startDist = dist(e.touches);
-              startScale = scale;
-            } else if (e.touches.length === 1) {
-              dragging = true;
-              startX = e.touches[0].clientX; startY = e.touches[0].clientY;
-              lastPanX = panX; lastPanY = panY;
-            }
-          }, { passive: true });
-          modal.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 2 && startDist) {
-              e.preventDefault();
-              scale = Math.min(4, Math.max(1, startScale * (dist(e.touches) / startDist)));
-              applyTransform();
-            } else if (e.touches.length === 1 && dragging && scale > 1) {
-              e.preventDefault();
-              panX = lastPanX + (e.touches[0].clientX - startX);
-              panY = lastPanY + (e.touches[0].clientY - startY);
-              applyTransform();
-            }
-          }, { passive: false });
-          modal.addEventListener('touchend', () => { dragging = false; startDist = 0; });
-
-          return modal;
-        }
-        function applyTransform() {
-          if (modalImg) modalImg.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
-        }
-        function openModal(src, alt, focusX, focusY) {
-          buildModal();
-          modalImg.src = src;
-          modalImg.alt = alt || '';
-          scale = ZOOM; panX = 0; panY = 0;
-          applyTransform();
-          modal.classList.add('open');
-          document.body.style.overflow = 'hidden';
-        }
-        function closeModal() {
-          if (!modal) return;
-          modal.classList.remove('open');
-          document.body.style.overflow = '';
-          scale = 1; panX = 0; panY = 0;
-        }
-
-        /* Double-tap detection on the inline photo (two touchend events inside
-           ~350ms and close together in position) opens the full-screen viewer. */
-        let lastTapTime = 0, lastTapX = 0, lastTapY = 0;
-        pdMain.addEventListener('touchend', (e) => {
-          const img = pdMain.querySelector('img');
-          if (!img || !e.changedTouches.length) return;
-          const t = e.changedTouches[0];
-          const now = Date.now();
-          const closeEnough = Math.hypot(t.clientX - lastTapX, t.clientY - lastTapY) < 40;
-          if (now - lastTapTime < 350 && closeEnough) {
-            e.preventDefault();
-            openModal(img.getAttribute('src'), img.getAttribute('alt'));
-            lastTapTime = 0;
-          } else {
-            lastTapTime = now; lastTapX = t.clientX; lastTapY = t.clientY;
-          }
-        });
-      })();
 
       /* size pills */
       let selectedSize = document.querySelector('.size-pill.selected')?.textContent.trim() || '';
@@ -1597,13 +1492,15 @@ document.addEventListener('DOMContentLoaded', () => {
       || new URLSearchParams(window.location.search).get('id');
 
     if (productKey) {
-      apiRequest('/products/' + encodeURIComponent(productKey))
-        .then(data => {
-          renderProductData(data.product);
+      Promise.all([
+        apiRequest('/products/' + encodeURIComponent(productKey)),
+        apiRequest('/products/' + encodeURIComponent(productKey) + '/related').catch(() => null)
+      ])
+        .then(([data, relData]) => {
+          renderProductData(data.product, relData && relData.products);
           bindProductInteractions();
-          return apiRequest('/products/' + encodeURIComponent(productKey) + '/related').catch(() => null);
+          if (relData) renderRelated(relData.products);
         })
-        .then(relData => { if (relData) renderRelated(relData.products); })
         .catch(err => {
           showToast(err.message || 'Could not load that product.');
           renderProductNotFound();

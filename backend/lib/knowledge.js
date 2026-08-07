@@ -76,7 +76,8 @@ function formatProductContext(products) {
     .map((p) => {
       const price = typeof p.price === 'number' ? `₹${p.price.toLocaleString('en-IN')}` : 'see product page';
       const url = `product.html?slug=${p.slug}`;
-      return `- ${p.name} | ${p.category} | ${price} | ${p.availability} | ${url}${p.isBestSeller ? ' | best seller' : ''}${p.isNewArrival ? ' | new arrival' : ''}`;
+      const categoryLabel = Array.isArray(p.category) ? p.category.join(', ') : p.category;
+      return `- ${p.name} | ${categoryLabel} | ${price} | ${p.availability} | ${url}${p.isBestSeller ? ' | best seller' : ''}${p.isNewArrival ? ' | new arrival' : ''}`;
     })
     .join('\n');
 }

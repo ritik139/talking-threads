@@ -24,7 +24,7 @@ const products = [
     name: 'Baby Birth Announcement Embroidery Hoop',
     images: ['images/baby-birth-hoop.jpg'],
     price: 2450,
-    category: 'Wall Art',
+    category: ['Wall Art', 'Kidswear'],
     collections: ['Wall Art Hoops', 'Little Ones'],
     isFeatured: true,
     isNewArrival: true,
@@ -42,7 +42,7 @@ const products = [
     name: 'Couple Love Quote Embroidery Hoop',
     images: ['images/couple-love-hoop.jpg'],
     price: 3200,
-    category: 'Wall Art',
+    category: ['Wall Art', 'Kidswear'],
     collections: ['Wall Art Hoops', 'Bridal Trousseau'],
     isFeatured: true,
     availability: 'Made to Order',
@@ -59,7 +59,7 @@ const products = [
     name: 'Hugging Bears Embroidered Handkerchief',
     images: ['images/hugging-bears-handkerchief.jpg'],
     price: 4100,
-    category: 'Accessories',
+    category: ['Kidswear'],
     collections: ['Everyday Carry', 'Little Ones'],
     availability: 'Made to Order',
     shortDescription: 'A soft cotton handkerchief hand-embroidered with two hugging bear cubs and hearts.',
@@ -77,7 +77,7 @@ const products = [
     name: 'Welcome Home Floral Heart Embroidery Hoop with Tassels',
     images: ['images/welcome-home-hoop.jpg'],
     price: 2750,
-    category: 'Wall Art',
+    category: ['Wall Art', 'Accessories'],
     collections: ['Wall Art Hoops', 'Floral Reverie'],
     isFeatured: true,
     availability: 'Made to Order',
@@ -94,7 +94,7 @@ const products = [
     name: 'Griha Pravesh Housewarming Embroidery Hoop',
     images: ['images/housewarming-hoop.jpg'],
     price: 2950,
-    category: 'Wall Art',
+    category: ['Wall Art'],
     collections: ['Wall Art Hoops', 'Floral Reverie'],
     isNewArrival: true,
     availability: 'Made to Order',
@@ -112,7 +112,7 @@ const products = [
     images: ['images/new-home-hoop.jpg'],
     price: 2200,
     compareAtPrice: 2650,
-    category: 'Wall Art',
+    category: ['Wall Art'],
     collections: ['Wall Art Hoops', 'Floral Reverie'],
     isBestSeller: true,
     availability: 'In Stock',
@@ -129,7 +129,7 @@ const products = [
     name: 'Baby Welcome Embroidery Hoop',
     images: ['images/baby-welcome-hoop.jpg'],
     price: 2950,
-    category: 'Wall Art',
+    category: ['Wall Art', 'Kidswear'],
     collections: ['Wall Art Hoops', 'Little Ones'],
     isNewArrival: true,
     availability: 'Made to Order',
@@ -146,7 +146,7 @@ const products = [
     name: 'Welcome Home Floral Heart Embroidery Hoop (Gold Tassels)',
     images: ['images/welcome-home-gold-hoop.jpg'],
     price: 2750,
-    category: 'Wall Art',
+    category: ['Wall Art'],
     collections: ['Wall Art Hoops', 'Floral Reverie'],
     isNewArrival: true,
     availability: 'Made to Order',
@@ -163,7 +163,7 @@ const products = [
     name: 'Krishna Quote Embroidered Handkerchief',
     images: ['images/krishna-quote-handkerchief.jpg'],
     price: 950,
-    category: 'Accessories',
+    category: ['Kidswear'],
     collections: ['Everyday Carry'],
     isNewArrival: true,
     availability: 'Made to Order',
@@ -172,6 +172,124 @@ const products = [
       'A soft cotton handkerchief hand-embroidered with a peacock feather and flute motif alongside a comforting devotional line about Krishna. A small, meaningful keepsake, made to order in our Jaipur atelier.',
     colors: ['white'],
     tags: ['krishna handkerchief', 'devotional embroidery', 'spiritual gift', 'embroidered handkerchief', 'peacock feather embroidery']
+  },
+  {
+    // Photo: cream hoodie with a hand-embroidered panda motif on the chest.
+    name: 'Panda Embroidered Hoodie',
+    images: ['images/panda-embroidered-hoodie.jpg'],
+    price: 2650,
+    category: ['Clothing'],
+    collections: ['Everyday Carry', 'Kids & Playful'],
+    isNewArrival: true,
+    availability: 'Made to Order',
+    shortDescription: 'A cotton hoodie finished with a hand-embroidered panda motif on the chest.',
+    description:
+      'A soft cotton hoodie finished with a hand-embroidered panda motif on the chest. A playful, cozy piece made to order in our Jaipur atelier — a fun gift for kids or panda lovers of any age.',
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['cream', 'grey'],
+    tags: ['embroidered hoodie', 'panda hoodie', 'custom hoodie', 'handmade clothing', 'cotton hoodie']
+  },
+  {
+    // Photo: hand holding a folded white cloth embroidered with a large monogram
+    // letter "A" surrounded by small flowers, and a name below it.
+    name: 'Personalized Monogram Letter Handkerchief',
+    images: ['images/monogram-letter-cloth.jpg'],
+    price: 850,
+    category: ['Kidswear', 'Accessories'],
+    collections: ['Everyday Carry', 'Personalised Keepsakes'],
+    isFeatured: true,
+    availability: 'Made to Order',
+    shortDescription: 'A cotton handkerchief hand-embroidered with a large monogram letter, flowers and a name.',
+    description:
+      'A soft cotton handkerchief hand-embroidered with a large monogram initial framed by a small floral spray, personalised with a name below. A simple, elegant keepsake made to order in our Jaipur atelier.',
+    sizes: ['Small — 8in'],
+    colors: ['ivory'],
+    tags: ['monogram handkerchief', 'personalized initial cloth', 'embroidered monogram', 'name embroidery', 'hand-embroidered gift']
+  },
+  {
+    // Photo: hand holding a folded white handkerchief embroidered with a penguin
+    // holding a red heart balloon, initials and a "Special" date.
+    name: 'Penguin Balloon Embroidered Handkerchief',
+    images: ['images/penguin-balloon-handkerchief.jpg'],
+    price: 950,
+    category: ['Kidswear'],
+    collections: ['Everyday Carry', 'Kids & Playful'],
+    isNewArrival: true,
+    availability: 'Made to Order',
+    shortDescription: 'A cotton handkerchief hand-embroidered with a penguin holding a heart balloon and a special date.',
+    description:
+      'A soft cotton handkerchief hand-embroidered with a cheerful penguin holding a red heart balloon, personalised with initials and a special date. A sweet, pocket-sized keepsake made to order in our Jaipur atelier.',
+    sizes: ['Small — 8in'],
+    colors: ['ivory'],
+    tags: ['penguin handkerchief', 'embroidered handkerchief', 'cute gift', 'personalized date embroidery', 'pocket cloth']
+  },
+  {
+    // Photo: round hoop with a couple's names, "together forever", a hand-embroidered
+    // May calendar, and a miniature bride-and-groom fabric figure in a red lehenga.
+    name: 'Wedding Save-the-Date Calendar Embroidery Hoop',
+    images: ['images/wedding-calendar-hoop.jpg'],
+    price: 3450,
+    category: ['Wall Art'],
+    collections: ['Wall Art Hoops', 'Bridal Trousseau'],
+    isFeatured: true,
+    availability: 'Made to Order',
+    shortDescription: 'A hoop hand-embroidered with a couple\'s names, a save-the-date calendar and a miniature bridal figure.',
+    description:
+      'A pearl-trimmed embroidery hoop hand-stitched with a couple\'s names, a floral wreath, a hand-embroidered save-the-date calendar with the wedding day marked, and a detailed miniature bride-and-groom fabric figure in festive attire. A statement keepsake for weddings and engagements.',
+    sizes: ['Large — 16in'],
+    colors: ['ivory', 'red', 'gold'],
+    tags: ['wedding hoop', 'save the date embroidery', 'bridal hoop', 'wedding calendar hoop', 'personalized wedding gift']
+  },
+  {
+    // Photo: round hoop on a stand reading "Welcome Home [name]" with a date and a
+    // rose-and-leaf vine wreath in red and green thread.
+    name: 'Welcome Home Rose Embroidery Hoop',
+    images: ['images/welcome-home-rose-hoop.jpg'],
+    price: 2600,
+    category: ['Wall Art'],
+    collections: ['Wall Art Hoops', 'Floral Reverie'],
+    availability: 'Made to Order',
+    shortDescription: 'A hoop hand-embroidered with a "Welcome Home" message, a name, a date and a rose vine wreath.',
+    description:
+      'A pearl-trimmed embroidery hoop hand-stitched with a "Welcome Home" message, a name and a date, framed by a hand-embroidered vine wreath of little rose blooms and leaves in red and green thread. A warm homecoming or housewarming keepsake, made to order in our Jaipur atelier.',
+    sizes: ['Medium — 12in', 'Large — 16in'],
+    colors: ['ivory', 'red', 'sage'],
+    tags: ['welcome home hoop', 'rose wreath hoop', 'housewarming gift', 'personalized hoop', 'homecoming gift']
+  },
+  {
+    // Photo: white button-down shirt hand-embroidered on the chest with a fine-line
+    // sketch of a father and daughter sharing a tender moment.
+    name: 'Father-Daughter Sketch Embroidered Shirt',
+    images: ['images/embroidered-shirt-sketch-sample.jpg'],
+    price: 2850,
+    category: ['Clothing', 'Accessories'],
+    collections: ['Everyday Carry', 'Personalised Keepsakes'],
+    isFeatured: true,
+    availability: 'Made to Order',
+    shortDescription: 'A cotton shirt hand-embroidered with a fine-line sketch of a father and daughter moment.',
+    description:
+      'A crisp white cotton shirt finished with a hand-embroidered fine-line sketch on the chest, capturing a tender father-daughter moment. A heartfelt, wearable keepsake made to order in our Jaipur atelier — a lovely gift for Father\'s Day or any occasion worth stitching into memory.',
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['white'],
+    tags: ['embroidered shirt', 'father daughter gift', 'sketch embroidery', 'custom shirt', 'handmade clothing']
+  },
+  {
+    // Photo: white shirt collar and placket hand-embroidered with "I Love You"
+    // down the button line and a "you (heart) me, forever & always" script quote
+    // on the pocket, with a name on the underside of the collar.
+    name: 'I Love You Script Embroidered Shirt',
+    images: ['images/embroidered-shirt-unbranded-sample.jpg'],
+    price: 2650,
+    category: ['Clothing'],
+    collections: ['Everyday Carry', 'Personalised Keepsakes'],
+    isNewArrival: true,
+    availability: 'Made to Order',
+    shortDescription: 'A cotton shirt hand-embroidered with an "I Love You" button placket and a script love quote.',
+    description:
+      'A soft white cotton shirt hand-embroidered with "I Love You" running down the button placket and a handwritten-style "you & me, forever & always" quote with a little heart on the pocket, personalised with a name on the inside collar. A sentimental, made-to-order gift for a partner.',
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['white'],
+    tags: ['embroidered shirt', 'love quote embroidery', 'personalized shirt', 'anniversary gift', 'handmade clothing']
   }
 ];
 

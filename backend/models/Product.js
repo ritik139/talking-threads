@@ -9,10 +9,15 @@ const productSchema = new mongoose.Schema(
     shortDescription: { type: String, default: '' },
     price: { type: Number, required: true, min: 0 }, // stored in rupees, e.g. 2450
     compareAtPrice: { type: Number, default: null },
+    // Array so a product can appear under more than one shop-page filter at once
+    // (e.g. a hoop that's both "Wall Art" and part of the "Accessories" showcase).
     category: {
-      type: String,
-      enum: ['Wall Art', 'Table Linen', 'Home', 'Kidswear', 'Accessories', 'Clothing'],
-      default: 'Wall Art'
+      type: [{ type: String, enum: ['Wall Art', 'Accessories', 'Clothing', 'Kidswear'] }],
+      default: ['Wall Art'],
+      validate: {
+        validator: (arr) => Array.isArray(arr) && arr.length > 0,
+        message: 'A product needs at least one category.'
+      }
     },
     // Marketing groupings shown on collections.html (a product can belong to more than one)
     collections: [

@@ -613,7 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
   </div>
   <a href="${href}" class="pc-info">
-    <div class="pc-cat">${p.category || ''}</div>
+    <div class="pc-cat">${Array.isArray(p.category) ? p.category.join(' • ') : (p.category || '')}</div>
     <div class="pc-title">${p.name}</div>
     <div class="pc-price"><span>${priceStr}</span>${wasStr ? `<span class="was">${wasStr}</span>` : ''}</div>
     <div class="pc-colors">${colorDots}</div>
@@ -730,7 +730,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="hs-result-thumb">${photo ? `<img src="${photo}" alt="" loading="lazy" width="48" height="48">` : ''}</span>
           <span class="hs-result-info">
             <span class="hs-result-name">${escapeHtml(p.name)}</span>
-            <span class="hs-result-cat">${escapeHtml(p.category || '')}</span>
+            <span class="hs-result-cat">${escapeHtml(Array.isArray(p.category) ? p.category.join(' • ') : (p.category || ''))}</span>
           </span>
           <span class="hs-result-price">${priceOf(p)}</span>
         </a>`;
@@ -939,6 +939,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadMoreWrap = document.getElementById('loadMoreWrap');
     const filterInputs = document.querySelectorAll('#shopFilters [data-filter]');
 
+    // Collection cards further down the Shop page ("Prefer to browse by
+    // collection?") link here as shop.html?collection=<name>. There's no
+    // checkbox UI for "collection" (only Category/Size/Colour/Price), so it
+    // can't flow through currentFilters() the way checked boxes do — it's
+    // captured once from the URL at load and folded into every query below
+    // until Reset Filters clears it.
+    let urlCollectionFilter = new URLSearchParams(window.location.search).get('collection') || '';
+
     const PRICE_RANGES = {
       'under-2000': { max: 1999 },
       '2000-3500': { min: 2000, max: 3500 },
@@ -973,6 +981,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (searchInput && searchInput.value.trim()) params.set('q', searchInput.value.trim());
       if (f.category.length) params.set('category', f.category.join(','));
       if (f.collection.length) params.set('collection', f.collection.join(','));
+      else if (urlCollectionFilter) params.set('collection', urlCollectionFilter);
       if (f.size.length) params.set('size', f.size.join(','));
       if (f.color.length) params.set('color', f.color.join(','));
       if (f.availability.length) params.set('availability', f.availability.join(','));
@@ -1054,7 +1063,25 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchAndRender(page, append, isAutoRetry) {
       const requestId = ++latestRequestId;
       try {
-        if (loadMoreBtn && append) { loadMoreBtn.textContent = 'Loading…'; loadMoreBtn.disabled = true; }
+        // ROOT CAUSE FIX (random product cards appearing duplicated on the Shop page):
+        // "Load More" computes its next page as `state.page + 1`, but state.page is only
+        // updated once a fetch actually *resolves*. Previously this button was only
+        // disabled while an append (Load More) fetch was in flight — it stayed clickable
+        // while a filter/search/sort change (append === false) was still loading. If
+        // someone clicked Load More in that window, it read the OLD state.page (left over
+        // from before the filter/search/sort change) but built its query with the NEW
+        // filters — so it asked for "old page + 1" of a completely different result set,
+        // which can overlap with whatever page 1 of the new filter turns out to be. The
+        // overlap depends on exactly which filter/search/sort was mid-flight and what the
+        // stale page number was, so different products would duplicate each time — matching
+        // what was reported ("random alag-alag products duplicate hote hain").
+        // Fix: disable Load More the instant ANY fetch starts (not just append ones), so a
+        // click during a filter/search/sort request can never register in the first place —
+        // this closes the stale-page window entirely instead of just narrowing it.
+        if (loadMoreBtn) {
+          loadMoreBtn.disabled = true;
+          if (append) loadMoreBtn.textContent = 'Loading…';
+        }
         const data = await apiRequest('/products?' + buildQuery(page));
         // A newer fetchAndRender() call has started since this one was sent — its own
         // response will land shortly and is what should end up on screen. Applying this
@@ -1157,6 +1184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (searchInput) searchInput.value = '';
         if (sortSelect) sortSelect.value = 'featured';
+        urlCollectionFilter = ''; // also clear whichever collection card was clicked to get here
         refresh();
       });
     }
@@ -1169,6 +1197,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Prefill from ?q= (header search's "View all results" links here with the query)
     const urlQ = new URLSearchParams(window.location.search).get('q');
     if (urlQ && searchInput) searchInput.value = urlQ;
+
+    // Prefill category checkboxes from ?category= (comma-separated), so the Filter
+    // panel visibly reflects the active filter, same as ?collection= above does silently.
+    const urlCategoryList = (new URLSearchParams(window.location.search).get('category') || '')
+      .split(',').map(s => s.trim()).filter(Boolean);
+    if (urlCategoryList.length) {
+      filterInputs.forEach(input => {
+        if (input.tagName === 'INPUT' && input.getAttribute('data-filter') === 'category' && urlCategoryList.includes(input.value)) {
+          input.checked = true;
+        }
+      });
+    }
 
     // Initial load from the API (replaces the server-rendered fallback cards above)
     refresh();
@@ -1220,7 +1260,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const pdMain = document.querySelector('.pd-main');
       if (pdMain) pdMain.innerHTML = `<div class="img-placeholder ar-portrait"><img src="${mainPhoto}" alt="${p.name}" loading="eager" fetchpriority="high" decoding="async"></div>`;
 
-      const catLabel = (p.category || '') + (p.collections && p.collections.length ? ' — ' + p.collections[0] : '');
+      const categoryText = Array.isArray(p.category) ? p.category.join(' • ') : (p.category || '');
+      const catLabel = categoryText + (p.collections && p.collections.length ? ' — ' + p.collections[0] : '');
       const pcCat = document.querySelector('.pd-info > .pc-cat');
       if (pcCat) pcCat.textContent = catLabel;
       const h1 = document.querySelector('.pd-info h1');

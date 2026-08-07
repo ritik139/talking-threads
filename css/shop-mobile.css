@@ -130,8 +130,8 @@ body.page-shop .mshop-intro{
   }
   body.page-shop .mshop-eyebrow{
     display: block; text-align: center;
-    font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--ink-faint); font-weight: 600; margin-bottom: 14px;
+    font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink); font-weight: 700; margin-bottom: 14px;
     white-space: normal;
     overflow: visible;
     max-width: 100%;
@@ -198,11 +198,11 @@ body.page-shop .mshop-intro{
      wrap/clip these labels had before — verified to fit with several
      pixels to spare at 320px and up. */
   body.page-shop .mshop-filter-btn{
-    display: flex; align-items: center; justify-content: center; gap: 5px;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
     order: 2; flex: 1.08 1 0; min-width: 0;
-    font-family: var(--font-body); font-size: 0.74rem; font-weight: 600; color: var(--ink-soft);
+    font-family: var(--font-body); font-size: 0.8rem; font-weight: 700; color: var(--ink);
     background: var(--paper); border: 1px solid var(--line); border-radius: 7px;
-    padding: 9px 8px;
+    padding: 9px 5px;
     white-space: nowrap;
   }
   body.page-shop .mshop-filter-btn svg{
@@ -218,7 +218,7 @@ body.page-shop .mshop-intro{
      instead of being silently truncated by the browser. */
   body.page-shop .sort-select{
     order: 2; flex: 0.92 1 0; min-width: 0;
-    border-radius: 7px; font-size: 0.68rem; letter-spacing: 0.02em; padding: 9px 20px 9px 9px;
+    border-radius: 7px; font-family: var(--font-body); font-size: 0.76rem; font-weight: 700; color: var(--ink); letter-spacing: 0.01em; padding: 9px 18px 9px 7px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     -webkit-appearance: none; appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23211C15' stroke-width='1.8'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");

@@ -118,9 +118,11 @@ exports.getRelatedProducts = asyncHandler(async (req, res) => {
   const product = await Product.findOne({ ...query, isActive: true });
   if (!product) throw new ApiError(404, 'Product not found.');
 
+  // category is now an array, so match products sharing ANY of the same categories
+  // rather than requiring an exact array match.
   const related = await Product.find({
     _id: { $ne: product._id },
-    category: product.category,
+    category: { $in: product.category },
     isActive: true
   }).limit(4);
 

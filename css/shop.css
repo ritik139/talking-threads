@@ -45,11 +45,11 @@ body.page-shop .shop-feat{ margin-bottom: 64px; }
 body.page-shop .shop-feat-eyebrow{
   display: block;
   text-align: center;
-  font-size: 0.72rem;
-  letter-spacing: 0.22em;
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--ink-faint);
-  font-weight: 600;
+  color: var(--ink);
+  font-weight: 700;
   margin-bottom: 28px;
 }
 body.page-shop .shop-feat-grid{
@@ -150,6 +150,21 @@ body.page-shop .shop-trust-item .l2{ display: block; font-size: 0.78rem; color: 
    removed now that .shop-hero-block replaces it visually on the shop page) ---------- */
 body.page-shop .shop-top .section-head{ display: none; }
 body.page-shop .shop-top{ padding-bottom: 0; }
+
+/* The real source of the big gap above "Home / Shop": base style.css sets
+   .section{ padding: 108px 0; } and .section-flush-bottom only zeroes out
+   the BOTTOM half, so the full 108px top padding still lands between the
+   header and the breadcrumb. Trimmed here for the shop page only — every
+   other page still using the plain .section class keeps its 108px top
+   padding untouched. */
+body.page-shop .shop-top{ padding-top: 48px; }
+
+/* Breadcrumb ("Home / Shop") sits directly above .shop-hero-block now, so
+   its default bottom margin (meant for a plain .section-head layout) leaves
+   a bit of unintentional gap before "The Full Edit" / "Shop" heading below.
+   Tightened here, scoped to the shop page only — breadcrumb spacing on
+   every other page (product.html, collections.html, etc.) is untouched. */
+body.page-shop .shop-top .breadcrumb{ margin-bottom: 0; }
 
 /* ---------- 5. Filters — off-canvas drawer (all sizes ≥ 769px) ----------
    Reference 1 (desktop) shows NO permanent sidebar: the product grid runs
@@ -351,25 +366,46 @@ body.page-shop .pc-info{ padding-top: 0; }
   body.page-shop .product-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
 }
 
-/* Reference shows only the wishlist heart on each card (no quick-add bag
-   icon, no dark tag pill), sitting flush on the photo with no circle
-   background, always visible rather than hover-only. The quick-add button
-   stays in the DOM/JS untouched — display:none here is presentation only,
-   it does not remove the element or its event binding. */
+/* Wishlist + quick-add icons: hidden at rest, fade + slide in together
+   (quick-add trailing slightly) whenever the card is hovered or a button
+   inside it gets keyboard focus — same reveal pattern used elsewhere on
+   the site (see .pc-actions in css/style.css), just re-declared here so it
+   wins over this file's own earlier, unconditional opacity:1 rule. Touch
+   devices (no real hover) keep both icons always visible so they stay
+   tappable. Icon markup/JS is untouched — this is presentation only. */
 body.page-shop .pc-actions{
-  opacity: 1; transform: none;
-  top: 12px; right: 12px; gap: 0;
+  top: 14px; right: 14px; gap: 10px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity .38s cubic-bezier(.22,.68,0,1.01), transform .38s cubic-bezier(.22,.68,0,1.01);
 }
-body.page-shop .pc-actions [data-quick-add]{ display: none; }
+@media (hover: hover) and (pointer: fine){
+  body.page-shop .product-card:hover .pc-actions,
+  body.page-shop .product-card:focus-within .pc-actions{
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (hover: none){
+  body.page-shop .pc-actions{ opacity: 1; transform: none; }
+}
+body.page-shop .pc-actions .pc-icon-btn:nth-child(2){ transition-delay: .06s; }
+/* Icons explicitly set to the same size/look as the rest of the site's
+   product cards (white circle, border, soft shadow, 36px) — spelled out
+   here rather than left to fall through the cascade, so the shop page
+   always renders them at full, clearly-visible size regardless of any
+   other stylesheet's breakpoint rules. */
 body.page-shop .pc-icon-btn{
-  width: 32px; height: 32px;
-  background: transparent; border: none; box-shadow: none;
+  width: 36px; height: 36px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-card);
 }
 body.page-shop .pc-icon-btn svg{
-  stroke: #fff; fill: none; stroke-width: 1.6;
-  filter: drop-shadow(0 1px 3px rgba(33,28,21,0.55));
+  width: 16px; height: 16px;
+  stroke: var(--ink); fill: none; stroke-width: 1.5;
 }
-body.page-shop .pc-icon-btn.active svg{ fill: var(--thread); stroke: var(--thread); filter: none; }
+body.page-shop .pc-icon-btn.active svg{ fill: var(--thread); stroke: var(--thread); }
 
 /* Reference product photos read close to square rather than the site-wide
    3/4 portrait crop — scoped to the shop grid's own cards only. */
@@ -390,3 +426,14 @@ body.page-shop .product-grid.is-list-view .pc-media{
   width: 160px; flex-shrink: 0;
 }
 body.page-shop .product-grid.is-list-view .pc-info{ padding-top: 4px; }
+
+/* ---------- 8. "Prefer to browse by collection?" cards ----------
+   Same treatment as the product grid above: the sitewide collection-card
+   zoom (scale 1.015, easy to miss) is brought up to the same crisper,
+   smoother zoom used on product photos (scale 1.06, .5s), scoped to the
+   shop page only so collections.html and any other page keeps its
+   existing subtle zoom untouched. */
+@media (hover: hover) and (pointer: fine){
+  body.page-shop .collection-card .img-placeholder{ transition: transform .5s var(--ease); }
+  body.page-shop .collection-card:hover .img-placeholder{ transform: scale(1.06); }
+}

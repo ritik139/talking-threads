@@ -351,6 +351,35 @@ h1,h2,h3,h4{
   white-space: nowrap;
 }
 
+/* ---------- Desktop header centering fix (≥1025px only) ----------
+   Root cause of the "empty" left side next to the floral mark: .brand
+   has flex:1 1 auto, so it stretches to fill ALL the leftover width
+   between the floral mark and the icon cluster, then centers its own
+   text INSIDE that (very wide) box. Because the icon cluster is wider
+   than the floral mark, that box's centered text ends up nowhere near
+   the floral mark — leaving a big empty gap between them, which is
+   exactly what shows up in the screenshot.
+   Fix: take .header-icons out of flex flow and pin it to the nav's
+   right edge with position:absolute, so it no longer eats into the
+   space .brand flexes into. Then let .brand size to its own content
+   (not stretch) and center the whole nav's remaining content
+   (floral + brand together, as one tight group) with justify-content.
+   Result: the floral mark sits directly beside the wordmark, and that
+   pair is truly centered in the header — icons stay exactly where they
+   already were, pinned to the right. Scoped to ≥1025px only, so the
+   mobile/tablet hamburger header (which already right-aligns icons via
+   its own order/margin-left:auto rules) is completely untouched. */
+@media (min-width: 1025px){
+  .nav{ position: relative; justify-content: center; }
+  .brand{ flex: 0 1 auto; }
+  .header-icons{
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
 .nav-links-row{
   border-top: 1px solid var(--line-soft);
 }
@@ -978,12 +1007,14 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 .product-card:hover .pc-actions{ opacity: 1; transform: translateX(0); }
 .product-card:focus-within .pc-actions{ opacity: 1; transform: translateX(0); }
 /* Slight stagger between the wishlist and quick-add icons as they enter,
-   instead of both appearing in perfect unison — icon count/order unchanged. */
+   instead of both appearing in perfect unison — icon count/order unchanged.
+   BUG FIX: these icons used to be forced permanently visible on touch/mobile
+   devices via `@media (hover: none){ .pc-actions{ opacity: 1 } }`, which made
+   them sit fixed on top of every product photo on mobile instead of only
+   appearing on interaction — that rule is removed so mobile now behaves the
+   same as desktop: hidden until the card is touched/focused (most mobile
+   browsers trigger :hover on tap), never permanently overlaid on the image. */
 .pc-actions .pc-icon-btn:nth-child(2){ transition-delay: .05s; }
-@media (hover: none){
-  .pc-actions{ opacity: 1; transform: translateX(0); }
-  .pc-actions .pc-icon-btn:nth-child(2){ transition-delay: 0s; }
-}
 .pc-icon-btn{
   position: relative;
   width: 36px; height: 36px; border-radius: 50%;
@@ -1035,20 +1066,28 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 /* Single stacked thumbnail column on the left, tall main photo on the
    right — achieved purely with grid-template-areas so .pd-thumbs-left,
    .pd-main and .pd-thumbs-right can stay exactly where they are in the
-   DOM (main.js queries them by class only, never by sibling order). */
+   DOM (main.js queries them by class only, never by sibling order).
+   BUG FIX: .pd-thumbs-left and .pd-thumbs-right used to sit in two
+   separate grid ROWS ("thumbsL main" / "thumbsR main") with .pd-main
+   spanning both rows. Because .pd-main's tall portrait photo is far
+   bigger than either thumb group's own content, the grid's auto row
+   sizing stretched BOTH thumb rows to share that extra height between
+   them — leaving a large empty gap between the top 2 thumbnails and
+   the bottom 2, instead of all 4 sitting together. Fix: put both thumb
+   groups in the SAME row/column (so row height is driven only by their
+   own content, not by .pd-main), and stack .pd-thumbs-right directly
+   under .pd-thumbs-left with a fixed offset — so all 4 thumbnails are
+   always flush together regardless of how tall the main photo is. */
 .pd-gallery{
   display: grid;
   grid-template-columns: 78px minmax(0,1fr);
-  grid-template-rows: auto auto;
-  grid-template-areas:
-    "thumbsL main"
-    "thumbsR main";
+  grid-template-rows: auto;
   align-items: start;
   gap: 14px 16px;
 }
-.pd-thumbs-left{ grid-area: thumbsL; }
-.pd-thumbs-right{ grid-area: thumbsR; }
-.pd-gallery .pd-main{ grid-area: main; }
+.pd-thumbs-left{ grid-column: 1; grid-row: 1; }
+.pd-thumbs-right{ grid-column: 1; grid-row: 1; margin-top: 180px; }
+.pd-gallery .pd-main{ grid-column: 2; grid-row: 1; }
 .pd-thumbs{ display: flex; flex-direction: column; gap: 12px; }
 .pd-thumb{
   cursor: pointer;
@@ -1463,6 +1502,13 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 /* ---------- Reveal on scroll ---------- */
 .reveal{ opacity: 0; transform: translateY(26px); transition: opacity .8s var(--ease), transform .8s var(--ease); }
 .reveal.in{ opacity: 1; transform: translateY(0); }
+/* If JavaScript is disabled/blocked, main.js never runs and .reveal
+   elements would never get the .in class that makes them visible —
+   this rule (and its <noscript> counterpart) forces full visibility
+   with no animation instead. */
+@media (prefers-reduced-motion: reduce){
+  .reveal{ opacity: 1; transform: none; transition: none; }
+}
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1024px){

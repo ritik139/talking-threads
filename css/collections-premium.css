@@ -212,12 +212,11 @@
     position: relative;
   }
   /* Reference photo for this layout is a wide lifestyle flat-lay. The hero
-     uses an existing local product photo (images/floral-tote-bag.jpg,
-     1200×655) instead of a stock substitute — no other image on this page
-     was touched. aspect-ratio is set to that photo's exact native ratio
-     (1200/655), so it fills the box edge-to-edge with no letterboxing, and
-     object-fit: contain guarantees the full photo stays visible — no
-     cropping — even if a differently-shaped photo is swapped in later. */
+     uses images/about-hero.jpg (1024×572) instead of a stock substitute —
+     no other image on this page was touched. aspect-ratio is set close to
+     that photo's native ratio so it fills the box edge-to-edge with minimal
+     letterboxing, and object-fit: cover keeps it edge-to-edge even if a
+     differently-shaped photo is swapped in later. */
   .page-collections .cc-hero-media .img-placeholder{
     aspect-ratio: 1200/655;
     border-radius: 20px;
@@ -262,7 +261,7 @@
     stroke-linejoin: round;
   }
   .page-collections .cc-feature-icon svg .dot{ fill: currentColor; stroke: none; }
-  .page-collections .cc-feature-item h4{
+  .page-collections .cc-feature-item h3{
     font-size: 0.86rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -452,7 +451,7 @@
     display: block;
     transition: transform .6s var(--ease);
   }
-  .page-collections .cc-subcard h4{
+  .page-collections .cc-subcard h3{
     margin-top: 16px;
     font-size: 0.98rem;
     font-weight: 500;

@@ -109,7 +109,33 @@ exports.getProduct = asyncHandler(async (req, res) => {
   res.json({ success: true, product });
 });
 
-// @desc   Related products (same category, excluding current)
+// Words used in product names to tell what KIND of item a product actually is
+// (hoop / handkerchief / hoodie / shirt, etc). "category" (Wall Art, Kidswear,
+// Accessories...) is a broad shop-filter grouping shared across very different
+// item types — e.g. a hoop and a handkerchief can both be "Kidswear", and a shirt
+// and a hoop can both be "Accessories" — so it's NOT a reliable signal for "same
+// type of product" and must not be used to pick related-product thumbnails.
+// Shirt and Hoodie are grouped as one "Clothing" family since they're both
+// wearable apparel and there are too few of either alone to fill the strip.
+const PRODUCT_TYPE_GROUPS = {
+  Handkerchief: ['Handkerchief'],
+  Hoop: ['Hoop'],
+  Clothing: ['Shirt', 'Hoodie']
+};
+
+function detectProductTypeWords(name) {
+  const groupKey = Object.keys(PRODUCT_TYPE_GROUPS).find(key =>
+    PRODUCT_TYPE_GROUPS[key].some(word => new RegExp(`\\b${word}\\b`, 'i').test(name || ''))
+  );
+  return groupKey ? PRODUCT_TYPE_GROUPS[groupKey] : null;
+}
+
+// @desc   Related products — strictly other products of the SAME kind of item
+//         (other handkerchiefs for a handkerchief, other hoops for a hoop, other
+//         shirts/hoodies for a shirt or hoodie). Never mixes in a different kind
+//         of item, even if it happens to share a shop-filter category. If there
+//         aren't 4 same-type products, the front end repeats the main photo to
+//         fill the remaining thumbnail slots rather than showing something else.
 // @route  GET /api/products/:idOrSlug/related
 // @access Public
 exports.getRelatedProducts = asyncHandler(async (req, res) => {
@@ -118,13 +144,27 @@ exports.getRelatedProducts = asyncHandler(async (req, res) => {
   const product = await Product.findOne({ ...query, isActive: true });
   if (!product) throw new ApiError(404, 'Product not found.');
 
-  // category is now an array, so match products sharing ANY of the same categories
-  // rather than requiring an exact array match.
-  const related = await Product.find({
-    _id: { $ne: product._id },
-    category: { $in: product.category },
-    isActive: true
-  }).limit(4);
+  const LIMIT = 4;
+  const typeWords = detectProductTypeWords(product.name);
+
+  const related = typeWords
+    ? await Product.find({
+        _id: { $ne: product._id },
+        name: new RegExp(`\\b(${typeWords.join('|')})\\b`, 'i'),
+        isActive: true
+      }).limit(LIMIT)
+    : [];
+
+  if (!typeWords) {
+    // No known type word matched this product's name (shouldn't normally happen) —
+    // fall back to same-category as a last resort rather than showing nothing.
+    const fillers = await Product.find({
+      _id: { $ne: product._id },
+      category: { $in: product.category },
+      isActive: true
+    }).limit(LIMIT);
+    related.push(...fillers);
+  }
 
   res.json({ success: true, products: related });
 });

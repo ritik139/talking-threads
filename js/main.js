@@ -84,7 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'Escape' && menuToggle.classList.contains('open')) closeMenu();
     });
     window.addEventListener('resize', () => {
-      if (window.innerWidth > 768 && menuToggle.classList.contains('open')) closeMenu();
+      // Must match the CSS breakpoint that hides the hamburger and shows
+      // .nav-links-row again (max-width: 1024px in style.css). Using a
+      // different threshold here left a 769–1024px gap where the panel
+      // force-closed while the header was still in hamburger mode.
+      if (window.innerWidth > 1024 && menuToggle.classList.contains('open')) closeMenu();
     });
   }
 
@@ -100,6 +104,17 @@ document.addEventListener('DOMContentLoaded', () => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
     }, { threshold: 0.12 });
     revealEls.forEach(el => io.observe(el));
+
+    // Fail-safe: .reveal elements start at opacity:0 and only reach opacity:1
+    // via the 'in' class above. If the observer never fires for an element
+    // (very long/short pages, an element that never crosses the 0.12
+    // threshold, a bfcache restore, or any other edge case) that content
+    // would stay permanently invisible with no way for the user to recover
+    // it. After a generous delay, force-reveal anything still hidden so a
+    // missed observation degrades to "no animation" instead of "no content".
+    window.setTimeout(() => {
+      revealEls.forEach(el => el.classList.add('in'));
+    }, 2500);
   } else {
     revealEls.forEach(el => el.classList.add('in'));
   }
@@ -554,10 +569,36 @@ document.addEventListener('DOMContentLoaded', () => {
   // a "?v=" query string bumped on every change (see the asset versioning fix); apply the
   // same convention to product photos so a stale cache can never be painted first.
   // Bump IMG_VERSION whenever image files are replaced in place (same filename, new bytes).
-  const IMG_VERSION = '20260801';
+  // Bumped 20260808: images/panda-embroidered-hoodie.jpg was resized/recompressed in
+  // place (1600x2133 810KB -> 768x1024 ~190KB) as part of a performance pass — without
+  // this bump, anyone with the old file already in their HTTP cache (which is exactly
+  // what happened to this image's own dynamically-rendered instances even after its
+  // last replacement, since only the two hardcoded static <img> tags for it in
+  // shop.html/collections.html had their ?v= bumped that time, not this shared
+  // constant that every API-rendered product card's image goes through) would keep
+  // being served the old, much heavier file indefinitely.
+  const IMG_VERSION = '20260808';
   function withImgVersion(src) {
     if (!src) return src;
     return src + (src.indexOf('?') === -1 ? '?' : '&') + 'v=' + IMG_VERSION;
+  }
+
+  // BUG FIX: the product-detail thumbnails were showing the full-size photo
+  // (768px+ wide) squeezed into a 78px box purely via CSS — a browser's generic
+  // downscale of a large photo to a tiny box looks noticeably soft/less crisp
+  // than the same photo shown at its intended (larger) size, which is exactly
+  // why the main image looked clear but the small thumbnails didn't. Fix: use a
+  // pre-cropped, pre-sharpened 240x240 thumbnail (images/thumbs/<file>) for the
+  // small thumbnail strip specifically, while the big .pd-main image continues
+  // to use the original full-size photo. Falls back to the original file if a
+  // dedicated thumb version doesn't exist for some image.
+  function thumbImgSrc(src) {
+    if (!src) return src;
+    const clean = src.split('?')[0];
+    const slashIdx = clean.lastIndexOf('/');
+    const dir = slashIdx === -1 ? '' : clean.slice(0, slashIdx + 1);
+    const file = slashIdx === -1 ? clean : clean.slice(slashIdx + 1);
+    return withImgVersion(dir + 'thumbs/' + file);
   }
 
   // Only allow http(s) (or protocol-relative/relative) URLs into src/href attributes.
@@ -947,12 +988,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // until Reset Filters clears it.
     let urlCollectionFilter = new URLSearchParams(window.location.search).get('collection') || '';
 
-    const PRICE_RANGES = {
-      'under-2000': { max: 1999 },
-      '2000-3500': { min: 2000, max: 3500 },
-      'above-3500': { min: 3501 }
-    };
-
     let state = { page: 1, limit: 9, products: [], pages: 1, total: 0 };
     let searchDebounce;
     // Bumped on every fetchAndRender call. Filter checkboxes/swatches and sort all call
@@ -985,18 +1020,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (f.size.length) params.set('size', f.size.join(','));
       if (f.color.length) params.set('color', f.color.join(','));
       if (f.availability.length) params.set('availability', f.availability.join(','));
-      if (f.price.length) {
-        // combine any checked price buckets into one overall min/max the API understands
-        let min = Infinity, max = -Infinity;
-        f.price.forEach(key => {
-          const r = PRICE_RANGES[key];
-          if (!r) return;
-          if (r.min !== undefined) min = Math.min(min, r.min);
-          if (r.max !== undefined) max = Math.max(max, r.max);
-        });
-        if (min !== Infinity) params.set('minPrice', min);
-        if (max !== -Infinity) params.set('maxPrice', max);
-      }
+      // BUG FIX (price filter returned 0 results when 2+ price checkboxes were
+      // checked together, e.g. "Under ₹2,000" + "Above ₹3,500"): this used to merge
+      // all checked buckets into a single overall min/max ("combine into one range").
+      // That collapsing is only correct for a contiguous range. For two disjoint
+      // buckets like the example above, the merged result was minPrice=3501 (from
+      // "Above ₹3,500") and maxPrice=1999 (from "Under ₹2,000") — min > max, an
+      // impossible range, so the API always returned an empty grid no matter what
+      // was in stock. The backend already exposes exactly the right tool for this:
+      // `priceBand`, which OR's the buckets together instead of intersecting them
+      // into one range (see productController.js). Send the checked bucket keys
+      // straight through to it instead of pre-merging them on the client.
+      if (f.price.length) params.set('priceBand', f.price.join(','));
       if (sortSelect) params.set('sort', sortSelect.value);
       params.set('page', page);
       params.set('limit', state.limit);
@@ -1241,6 +1276,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const priceStr = p.displayPrice || ('₹' + Number(p.price || 0).toLocaleString('en-IN'));
 
+      // SEO BUG FIX: product.html is one shared template that renders every product
+      // (via ?slug=), but the canonical link, og:url, og:image, twitter:image and both
+      // JSON-LD blocks (Product + BreadcrumbList) were left as static markup for a
+      // single hardcoded product ("Baby Birth Announcement Embroidery Hoop") and were
+      // never updated here — only title/description/og:title/og:description/
+      // twitter:title/twitter:description were. Effects of the gap:
+      //  - Every product's canonical/og:url pointed at the exact same bare
+      //    "/product.html", telling Google all 16 product pages are duplicates of one
+      //    page — the other 15 had effectively no chance of being indexed on their own.
+      //  - A shared WhatsApp/Facebook/Twitter link for any product except that one
+      //    showed the WRONG name, WRONG price and a MISMATCHED photo
+      //    (welcome-home-rose-hoop.jpg, not even that product's own image).
+      //  - Google's Product rich-result data (price/availability) was wrong for 15/16
+      //    products, and the breadcrumb rich result always said "Baby Birth
+      //    Announcement Embroidery Hoop" regardless of the page actually crawled.
+      // sitemap.xml has a matching fix (real per-product URLs added) — this is the
+      // runtime half of that fix, so the tags always match whichever product loaded.
+      const SITE_ORIGIN = 'https://talking-threads.onrender.com';
+      const canonicalUrl = SITE_ORIGIN + '/' + productHref(p);
+      const absImage = mainPhotoUrl => mainPhotoUrl ? (SITE_ORIGIN + '/' + mainPhotoUrl) : '';
+      setMeta('#canonicalLink', 'href', canonicalUrl);
+      setMeta('#ogUrl', 'content', canonicalUrl);
+      setMeta('#ogPriceAmount', 'content', String(p.price || ''));
+      const ogImg = absImage((p.images && p.images.length) ? withImgVersion(p.images[0]) : '');
+      if (ogImg) {
+        setMeta('#ogImage', 'content', ogImg);
+        setMeta('#twitterImage', 'content', ogImg);
+      }
+      const productJsonLdEl = document.getElementById('productJsonLd');
+      if (productJsonLdEl) {
+        productJsonLdEl.textContent = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: p.name,
+          description: blurb,
+          image: ogImg || undefined,
+          brand: { '@type': 'Brand', name: 'Talking-Thread' },
+          offers: {
+            '@type': 'Offer',
+            url: canonicalUrl,
+            priceCurrency: 'INR',
+            price: String(p.price || ''),
+            availability: (p.availability === 'Out of Stock') ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+            itemCondition: 'https://schema.org/NewCondition'
+          }
+        });
+      }
+      const breadcrumbJsonLdEl = document.getElementById('breadcrumbJsonLd');
+      if (breadcrumbJsonLdEl) {
+        breadcrumbJsonLdEl.textContent = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_ORIGIN + '/' },
+            { '@type': 'ListItem', position: 2, name: 'Shop', item: SITE_ORIGIN + '/shop.html' },
+            { '@type': 'ListItem', position: 3, name: p.name, item: canonicalUrl }
+          ]
+        });
+      }
+
       // Images: main photo + up to 4 thumbnails. The product's own photo(s) come
       // first; when it only has one, the remaining thumb slots are filled with the
       // first photo of other products in the same category (the "related products"
@@ -1262,9 +1357,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const thumbsLeft = document.querySelector('.pd-thumbs-left');
       const thumbsRight = document.querySelector('.pd-thumbs-right');
       if (thumbsLeft && thumbsRight) {
+        // data-full carries the full-size photo so clicking a thumb swaps .pd-main
+        // to the sharp original — not the small pre-sharpened thumbnail file, which
+        // is only meant for the tiny thumbnail strip itself.
         const thumbHtml = (label, i) => `
-          <div class="pd-thumb${i === 0 ? ' active' : ''}" data-label="${label}">
-            <div class="img-placeholder ar-square"><img src="${gallery[i] || mainPhoto}" alt="${label}" loading="lazy" decoding="async"></div>
+          <div class="pd-thumb${i === 0 ? ' active' : ''}" data-label="${label}" data-full="${gallery[i] || mainPhoto}">
+            <div class="img-placeholder ar-square"><img src="${thumbImgSrc(gallery[i] || mainPhoto)}" alt="${label}" loading="lazy" decoding="async"></div>
           </div>`;
         thumbsLeft.innerHTML = thumbLabels.map(thumbHtml).filter((_, i) => i % 2 === 0).join('');
         thumbsRight.innerHTML = thumbLabels.map(thumbHtml).filter((_, i) => i % 2 === 1).join('');
@@ -1331,10 +1429,11 @@ document.addEventListener('DOMContentLoaded', () => {
           thumb.classList.add('active');
           const thumbImg = thumb.querySelector('img');
           const mainImg = document.querySelector('.pd-main img');
+          const fullSrc = thumb.getAttribute('data-full');
           if (mainImg && thumbImg) {
             mainImg.classList.add('is-swapping');
             setTimeout(() => {
-              mainImg.setAttribute('src', thumbImg.getAttribute('src'));
+              mainImg.setAttribute('src', fullSrc || thumbImg.getAttribute('src'));
               mainImg.setAttribute('alt', thumb.getAttribute('data-label') || mainImg.getAttribute('alt'));
               mainImg.classList.remove('is-swapping');
             }, 220);

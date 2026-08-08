@@ -370,24 +370,24 @@ body.page-shop .pc-info{ padding-top: 0; }
    (quick-add trailing slightly) whenever the card is hovered or a button
    inside it gets keyboard focus — same reveal pattern used elsewhere on
    the site (see .pc-actions in css/style.css), just re-declared here so it
-   wins over this file's own earlier, unconditional opacity:1 rule. Touch
-   devices (no real hover) keep both icons always visible so they stay
-   tappable. Icon markup/JS is untouched — this is presentation only. */
+   wins over this file's cascade. Icon markup/JS is untouched — this is
+   presentation only.
+   BUG FIX: touch/mobile devices used to force these icons permanently
+   visible via `@media (hover: none){ opacity: 1 }`, which made them sit
+   fixed on top of every product photo on mobile instead of only appearing
+   on interaction. That override is removed — mobile now uses the same
+   hidden-until-touched/focused behaviour as desktop (most mobile browsers
+   trigger :hover on tap), so the icons never sit fixed on the image. */
 body.page-shop .pc-actions{
   top: 14px; right: 14px; gap: 10px;
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity .38s cubic-bezier(.22,.68,0,1.01), transform .38s cubic-bezier(.22,.68,0,1.01);
 }
-@media (hover: hover) and (pointer: fine){
-  body.page-shop .product-card:hover .pc-actions,
-  body.page-shop .product-card:focus-within .pc-actions{
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@media (hover: none){
-  body.page-shop .pc-actions{ opacity: 1; transform: none; }
+body.page-shop .product-card:hover .pc-actions,
+body.page-shop .product-card:focus-within .pc-actions{
+  opacity: 1;
+  transform: translateY(0);
 }
 body.page-shop .pc-actions .pc-icon-btn:nth-child(2){ transition-delay: .06s; }
 /* Icons explicitly set to the same size/look as the rest of the site's

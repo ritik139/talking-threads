@@ -1980,3 +1980,103 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   .rs-breakdown{ max-width: none; }
   .reviews-toolbar{ flex-direction: column; align-items: stretch; }
 }
+/* ==========================================================================
+   Mobile bottom tab bar (Home / Shop / Orders / Cart / Account)
+   Floating rounded pill, fixed above the safe area on phones/tablets —
+   matches the approved reference: cream pill, hairline gold-tinted
+   border, soft shadow, gold accent on the active tab, red count badges.
+   Search dropped, Wishlist swapped for Orders per request.
+   ========================================================================== */
+.mobile-tabbar{ display: none; }
+@media (max-width: 1024px){
+  body{ padding-bottom: 92px; }
+  .mobile-tabbar{
+    display: flex;
+    position: fixed; left: 14px; right: 14px; bottom: 14px;
+    z-index: 150;
+    background: var(--paper);
+    border: 1px solid var(--gold-soft);
+    border-radius: 24px;
+    box-shadow: 0 16px 32px -14px rgba(33,28,21,0.4), 0 2px 10px rgba(33,28,21,0.12);
+    padding: 9px 4px calc(9px + env(safe-area-inset-bottom, 0px));
+  }
+  .mtb-link{
+    flex: 1 1 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; padding: 4px 2px; position: relative;
+    color: var(--ink); font-family: var(--font-body);
+    font-size: 0.66rem; letter-spacing: 0.01em; font-weight: 500;
+    transition: color 0.2s;
+  }
+  .mtb-link svg{
+    width: 23px; height: 23px; fill: none; stroke: currentColor;
+    stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .mtb-link.active{ color: var(--gold); }
+  .mtb-link.active svg{ stroke-width: 1.9; }
+  .mtb-link .mtb-count{
+    position: absolute; top: -3px; right: calc(50% - 22px);
+    min-width: 16px; height: 16px; padding: 0 3px; border-radius: 999px;
+    background: var(--thread); color: var(--paper);
+    font-size: 0.6rem; font-weight: 700; line-height: 1;
+    display: none; align-items: center; justify-content: center;
+    border: 1.5px solid var(--paper);
+  }
+}
+@media (max-width: 360px){
+  .mobile-tabbar{ left: 8px; right: 8px; padding-left: 2px; padding-right: 2px; }
+  .mtb-link{ font-size: 0.6rem; }
+  .mtb-link svg{ width: 21px; height: 21px; }
+}
+
+/* ==========================================================================
+   Mobile-only footer panel
+   Replaces the full desktop footer (brand columns + newsletter strip +
+   legal/payment bar) with a compact centered panel on phones: logo, tagline,
+   3 contact icons, then Shop / Collections / Help link rows. Sits directly
+   above the mobile-tabbar. Desktop/tablet keep the original .site-footer;
+   this block is hidden above the 1024px breakpoint where .mobile-tabbar
+   also switches on, so the two always appear/disappear together.
+   ========================================================================== */
+.mobile-footer{ display: none; }
+@media (max-width: 1024px){
+  .site-footer{ display: none; }
+  .mobile-footer{
+    display: block;
+    background: var(--ivory-deep);
+    border-top: 1px solid var(--line);
+    padding: 44px 24px 28px;
+  }
+  .mf-brand{ text-align: center; }
+  .mf-brand .mf-logo{ display: inline-flex; color: var(--thread); margin-bottom: 10px; }
+  .mf-brand .mf-logo svg{ width: 46px; height: 46px; }
+  .mf-brand .mf-name{
+    font-family: var(--font-display); font-size: 1.5rem; color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .mf-brand .mf-name em{ color: var(--thread); font-style: italic; }
+  .mf-brand .mf-tagline{
+    color: var(--ink-soft); font-size: 0.92rem; max-width: 30ch;
+    margin: 0 auto 22px;
+  }
+  .mf-social{ display: flex; justify-content: center; gap: 16px; }
+  .mf-social a{
+    width: 52px; height: 52px; border: 1px solid var(--gold-soft); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .2s, background .2s;
+  }
+  .mf-social a:hover{ border-color: var(--thread); background: var(--thread); }
+  .mf-social a:hover svg{ stroke: var(--paper); }
+  .mf-social svg{ width: 20px; height: 20px; stroke: var(--ink); fill: none; stroke-width: 1.4; transition: stroke .2s; }
+  .mf-divider{
+    border: none; border-top: 1.5px dashed var(--gold-soft);
+    margin: 30px 0 6px;
+  }
+  .mf-links{ display: flex; flex-direction: column; }
+  .mf-links a{
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 2px; border-bottom: 1px solid var(--line);
+    font-family: var(--font-display); font-size: 1.15rem; color: var(--ink);
+  }
+  .mf-links svg{ width: 18px; height: 18px; stroke: var(--gold); fill: none; stroke-width: 1.6; flex-shrink: 0; }
+}

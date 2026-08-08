@@ -30,7 +30,55 @@ exports.getProducts = asyncHandler(async (req, res) => {
   } = req.query;
 
   const filter = { isActive: true };
-  if (q) filter.$text = { $search: q };
+
+  // `andConditions` collects every clause that itself needs an `$or` (free-text search,
+  // price bands) so multiple of them can be combined safely — a filter object can only
+  // have ONE top-level `$or` key, so a second `filter.$or = ...` would silently overwrite
+  // the first instead of combining with it (e.g. searching "hoop" AND checking a price
+  // band together used to drop the search entirely). Each `$or` clause is pushed into
+  // `$and` instead, where they combine correctly.
+  const andConditions = [];
+
+  // BUG FIX (search returning no results for perfectly valid, in-stock products):
+  // This used to run `$text: { $search: q }`, MongoDB's whole-word text index search.
+  // $text tokenizes the query into complete words (with stemming) and only matches
+  // complete words in the indexed fields — it does NOT do substring/prefix matching.
+  // That silently broke two real things this UI promises:
+  //   1. The header search fires live suggestions from just 2 typed characters
+  //      (see initHeaderSearch in js/main.js) — so almost every keystroke while
+  //      someone is still typing a word (e.g. "welcom", "grih", "hous") is a partial
+  //      word, which $text simply never matches, even though the finished word exists
+  //      on a real, active product. Results only appeared once the whole word was typed.
+  //   2. A plain typo or partial product name typed into the Shop search box (e.g.
+  //      "hankerchief") also matched nothing, since $text has no fuzzy/substring logic.
+  //   $text could also throw outright on certain inputs (e.g. a query that's only
+  //   punctuation/stopwords, or a lone leading "-") — chatController.js already had to
+  //   special-case that failure mode; this endpoint had no such handling and would
+  //   surface it as a hard 500 ("Could not load products right now").
+  // Fix: match with a case-insensitive substring regex across name/tags/description
+  // instead. This finds partial words as they're typed, tolerates the same edge-case
+  // input that used to throw (special regex characters are escaped, never interpreted),
+  // and never errors on any input.
+  //
+  // SECOND FIX (this pass — re-check found another real gap): the first version above
+  // matched the ENTIRE query as one literal phrase, so it still required the typed words
+  // to be adjacent in that exact order inside a single field. A shopper typing category +
+  // item together — e.g. "welcome hoop" for "Welcome Home Floral Heart Embroidery Hoop
+  // with Tassels", or "griha hoop" for "Griha Pravesh Housewarming Embroidery Hoop" —
+  // got zero results even though every word they typed is genuinely on that product,
+  // because "welcome" and "hoop" aren't next to each other in the name. Fix: split the
+  // query on whitespace and require EACH word to independently match somewhere across
+  // name/tags/description/shortDescription (AND across words, OR across fields per word
+  // and OR across which field each word lands in) — word order and adjacency no longer
+  // matter, matching how people actually type a product search.
+  if (q && q.trim()) {
+    const words = q.trim().split(/\s+/).filter(Boolean);
+    words.forEach((word) => {
+      const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(escaped, 'i');
+      andConditions.push({ $or: [{ name: re }, { tags: re }, { description: re }, { shortDescription: re }] });
+    });
+  }
 
   // category / collection / size / color / availability can each be a single value or comma-separated list
   if (category) filter.category = { $in: category.split(',') };
@@ -50,13 +98,15 @@ exports.getProducts = asyncHandler(async (req, res) => {
       .split(',')
       .map((key) => PRICE_BANDS[key])
       .filter(Boolean);
-    if (bands.length) filter.$or = bands;
+    if (bands.length) andConditions.push({ $or: bands });
   } else if (minPrice || maxPrice) {
     // Still supported directly for callers that want one explicit continuous range.
     filter.price = {};
     if (minPrice) filter.price.$gte = Number(minPrice);
     if (maxPrice) filter.price.$lte = Number(maxPrice);
   }
+
+  if (andConditions.length) filter.$and = andConditions;
 
   // ROOT CAUSE FIX (Shop page images/order changing between identical requests):
   // None of these sort keys are unique on their own — plenty of products can tie on

@@ -253,34 +253,54 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .tt-chat-launcher{ right: 16px; bottom: 16px; }
 }
 
-/* ---------- Slightly larger phones (390–480px): fine-tune only,
+/* ---------- Slightly larger phones (391–480px): fine-tune only,
    inherits everything from the 480px block above ---------- */
 @media (min-width: 391px) and (max-width: 480px){
   .logo{ font-size: 1.15rem; } /* footer wordmark only, not the header */
   .brand-name{ font-size: 1.2rem; }
 }
+/* A second wordmark-truncation gap, same root cause as the ≤390px block
+   below: at 1.2rem with the floral mark still showing, "TALKING-THREAD"
+   only actually fits from 424px up — measured via scrollWidth vs.
+   clientWidth across every width in this range. 391–423px (common
+   Android widths like 412/414 — Pixel, Galaxy, etc.) truncated. Hiding
+   the decorative floral mark reclaims exactly the room needed without
+   touching the 1.2rem size already confirmed to fit at 424px+. */
+@media (min-width: 391px) and (max-width: 423px){
+  .header-floral{ display: none; }
+}
 
-/* ---------- Small phones (≤374px, covers 320/360 test widths) ----------
-   A second, tighter pass for the narrowest devices in the required
-   test matrix, where every extra pixel of chrome matters. */
-@media (max-width: 374px){
+/* ---------- Small phones (≤390px, covers the 320/360/375/390 test
+   widths — widened from the old ≤374px cutoff) ----------
+   Root-cause fix: "TALKING-THREAD" was measured truncating with an
+   ellipsis (.brand-name's scrollWidth > its clientWidth) at BOTH 320px
+   and 375px, despite the comments below claiming it stayed on one line
+   down to 320px. The old cutoff was the actual bug — it stopped at
+   374px, so the very common 375–390px phone widths (iPhone SE/8/12
+   mini, etc.) fell through to the looser 480px-block sizing (1.22rem)
+   with no extra room freed up, and truncated there. Widening this
+   block to 390px, hiding the purely decorative floral mark (it was
+   eating ~42px that the wordmark needed more), and trimming the
+   wordmark by one more notch together give the wordmark enough room
+   to render in full at every width in the test matrix — verified via
+   scrollWidth vs. clientWidth at 320/360/375/390px. */
+@media (max-width: 390px){
   .container{ padding: 0 14px; }
-  .nav{ padding: 13px 15px; gap: 12px; }
+  .nav{ padding: 13px 15px; gap: 10px; }
   .logo{ font-size: 0.94rem; gap: 5px; } /* footer wordmark only, not the header */
   .logo-mark{ width: 18px; height: 18px; } /* footer wordmark only, not the header */
-  /* Floral mark: smallest size in the scale, sized up to 32px (kept in
-     step with the 480px block above) — still present (not hidden) so
-     the narrowest phones match the reference too. Left margin added on
-     top of the shared .nav gap so it stays clearly separated from the
-     hamburger, same reasoning as the 480px block. */
-  .header-floral{ height: 32px; margin: 0 0 0 3px; }
-  /* Header wordmark: one notch smaller again for the narrowest phones
-     (320/360), still bumped up from its old size so it reads as one
-     confident, premium line, not a squeeze. */
-  .brand-name{ font-size: 1.08rem; letter-spacing: 0.015em; }
+  /* Floral mark hidden (not just shrunk) at this width: it's aria-hidden
+     decoration, and reclaiming its ~30px + gap is what actually lets the
+     wordmark fit without truncating — shrinking it further already hit
+     visual diminishing returns at the old 32px minimum. */
+  .header-floral{ display: none; }
+  /* Header wordmark: trimmed one more notch than before (1.08rem → 1rem)
+     to leave a safety margin, not just exactly fit — confirmed via
+     scrollWidth/clientWidth measurement rather than eyeballing. */
+  .brand-name{ font-size: 1rem; letter-spacing: 0.01em; }
   /* Same equal-spacing approach as the 480px block above: .header-icons'
-     gap matches .nav's gap so every step on the row — menu→floral→logo
-     and search↔wishlist↔cart — is identical. Icons sized to the 24–26px
+     gap matches .nav's gap so every step on the row — menu→logo and
+     search↔wishlist↔cart — is identical. Icons sized to the 24–26px
      target even at the narrowest widths in the required test matrix
      (320/360). Menu-toggle size/bar positions are inherited unchanged
      from the 480px block. */
@@ -294,6 +314,21 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .stat-row div strong{ font-size: 1.7rem; }
   .modal{ padding: 24px 14px 20px; }
   .rs-average .rs-num{ font-size: 3.2rem; }
+}
+
+/* ---------- Ultra-narrow phones (≤319px — Galaxy Fold cover screen
+   280px, and similar 280–319px devices) ----------
+   Same wordmark-truncation root cause as the two blocks above, just one
+   more notch: even with the floral mark hidden and the wordmark at
+   1rem, "TALKING-THREAD" still didn't fit under ~320px. Tightens the
+   row's spacing and the wordmark size a little further, specifically
+   for this range only — 320px and up already fit via the ≤390px block
+   above and are untouched here. */
+@media (max-width: 319px){
+  .nav{ padding: 12px 12px; gap: 8px; }
+  .header-icons{ gap: 8px; }
+  .icon-btn{ width: 23px; height: 23px; }
+  .brand-name{ font-size: 0.9rem; letter-spacing: 0.005em; }
 }
 
 /* ---------- Tablet / small-desktop guard (481–768px) ----------
@@ -396,6 +431,32 @@ img, video, iframe, table, svg{ max-width: 100%; }
     background: var(--thread); color: var(--white); border-radius: 999px; padding: 10px 16px;
   }
   .footer-newsletter-form button:hover{ color: var(--white); }
+}
+
+/* ---------- Floating chat/WhatsApp buttons vs. the mobile tab bar ----------
+   Root-cause fix for the WhatsApp bubble and chat launcher sitting on
+   top of the "Account" tab, confirmed with real DOM measurements at
+   320/375/768/1024px: .mobile-tabbar is `position:fixed; bottom:14px`
+   with ~68–72px of height (icon + label + padding) at every width up
+   to 1024px (style.css), but .wa-float and .tt-chat-launcher keep the
+   same `bottom` offsets that were only ever correct for pages WITHOUT
+   the tab bar (desktop, and — before this fix — implicitly assumed
+   >1024px). Below 1024px both buttons' vertical range overlapped the
+   tab bar's, and their `right` offset put them directly over its last
+   (Account) tab specifically. Fix: raise both by the tab bar's real
+   footprint + a clear gap, and keep WhatsApp stacked above the chat
+   launcher by its own height + a gap so the two floating buttons never
+   touch each other either. One rule for the whole ≤1024px range (where
+   .mobile-tabbar exists at all) — deliberately not split per breakpoint,
+   since a slightly larger-than-needed gap on bigger phones is harmless
+   but a missed breakpoint (like the 375–390px gap that caused the
+   wordmark bug above) is not. Placed after every other .wa-float /
+   .tt-chat-launcher rule in the cascade (including the ≤480px one
+   earlier in this same file) so it wins at every width it applies to. */
+@media (max-width: 1024px){
+  .tt-chat-launcher{ bottom: 104px; }
+  .tt-chat-window{ bottom: 172px; }
+  .wa-float{ bottom: 174px; }
 }
 
 /* ---------- Contact page map — root-cause fix ----------

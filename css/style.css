@@ -1404,7 +1404,7 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 .process-grid{ display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 30px; }
 .process-step{ position: relative; padding-top: 30px; border-top: 1px solid var(--line); }
 .process-num{ font-family: var(--font-display); font-style: italic; font-size: 2rem; color: var(--gold-text); display: block; margin-bottom: 14px; }
-.process-step h4{ font-size: 1.1rem; margin-bottom: 10px; }
+.process-step h3{ font-size: 1.1rem; margin-bottom: 10px; }
 .process-step p{ font-size: 0.88rem; color: var(--ink-soft); }
 
 .stat-row{ display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 30px; text-align: center; }
@@ -1467,6 +1467,15 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 .newsletter-form input{
   flex: 1; background: transparent; border: none; color: var(--paper);
   font-size: 1rem; font-family: var(--font-display); font-style: italic;
+  /* Flex items default to min-width:auto, so this input refused to
+     shrink below its intrinsic content width (~228px in Chrome) no
+     matter how narrow the viewport got — on any screen under ~359px
+     wide that pushed the input + "Subscribe" button past the section's
+     edge and forced the whole page to scroll horizontally. min-width:0
+     is the standard fix: it lets the input shrink to fit like the rest
+     of the layout already does elsewhere (see the .nav comment above
+     for the same underlying flexbox behaviour). */
+  min-width: 0;
 }
 .newsletter-form input::placeholder{ color: rgba(251,248,241,0.5); }
 .newsletter-form button{ font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-soft); font-weight: 600; transition: color .3s var(--ease), transform .3s var(--ease); }

@@ -35,8 +35,22 @@
 <link rel="stylesheet" href="css/style.css?v=20260803b">
   <link rel="stylesheet" href="css/chatbot.css?v=20260731">
   <link rel="stylesheet" href="css/responsive-fixes.css?v=20260731">
-  <!-- Leaflet (map UI) — used only on this page, for the delivery-location picker in the checkout modal -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <!-- Leaflet (map UI) — used only on this page, for the delivery-location picker in the checkout modal.
+       BUG FIX ("wrong page flashes for ~1s before the real cart page shows"): a plain
+       <link rel="stylesheet"> here is render-blocking — the browser holds off painting
+       this page's first frame until it finishes loading. Since unpkg.com is a third-party
+       CDN (no local caching, its own DNS/TLS handshake) any slowness there stalled the
+       ENTIRE cart page's first paint, not just the map — and since nothing had painted
+       yet, the browser kept showing whatever page you navigated FROM until it resolved,
+       which is what looked like "a different page opens for a second." The map itself is
+       only needed once the checkout modal is opened, well after initial load, so there's
+       no reason for its CSS to block the page at all. Loading it with media="print" and
+       flipping to media="all" once it's actually loaded (a standard non-blocking-CSS
+       pattern) fixes this: the browser fetches it in the background without waiting, and
+       the <noscript> fallback keeps it working the normal (blocking) way if JS is off. -->
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""></noscript>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>

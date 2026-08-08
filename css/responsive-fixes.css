@@ -157,8 +157,8 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .pd-info{ padding-left: 0; }
   .pd-info h1{ font-size: 1.6rem; }
   .pd-price-row{ font-size: 1.1rem; margin: 12px 0 20px; padding-bottom: 20px; }
-  .pd-gallery{ gap: 10px; }
-  .pd-thumb{ width: 60px; }
+  .pd-gallery{ gap: 8px; }
+  .pd-thumb{ width: 54px; }
   .pd-main::after{ width: 34px; height: 34px; top: 12px; right: 12px; }
   .option-row{ margin-bottom: 0; }
   .option-row .option-block{ margin-bottom: 24px; }
@@ -290,7 +290,7 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .hero-meta{ gap: 16px 22px; }
   .hero-meta div strong{ font-size: 1.25rem; }
   .btn{ padding: 13px 16px; font-size: 0.68rem; }
-  .pd-thumb{ width: 52px; }
+  .pd-thumb{ width: 48px; }
   .stat-row div strong{ font-size: 1.7rem; }
   .modal{ padding: 24px 14px 20px; }
   .rs-average .rs-num{ font-size: 3.2rem; }

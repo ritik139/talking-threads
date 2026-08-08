@@ -726,6 +726,33 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 }
 .breadcrumb a:hover{ color: var(--thread); }
 
+/* Mobile: a long product name (the current-page crumb) wrapped the trail
+   across two cramped, all-caps lines right under the header — busy and
+   not premium-looking, especially since the same title already appears
+   as the H1 just below. Keep the trail to one slim, quiet line: parent
+   links stay small-caps as before, but the current page collapses to a
+   single truncated line so the breadcrumb reads as a light wayfinding
+   cue, not a second headline. */
+@media (max-width: 768px){
+  .breadcrumb{
+    margin-bottom: 18px;
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+  }
+  .breadcrumb ol{ flex-wrap: nowrap; }
+  .breadcrumb li{ flex-shrink: 0; }
+  .breadcrumb li[aria-current="page"]{
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ink-soft);
+    font-weight: 400;
+  }
+}
+
 /* ---------- Hero ---------- */
 .hero{
   padding: 64px 0 0;
@@ -1520,12 +1547,40 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   .filters .filter-group{ flex: 1 1 160px; min-width: 160px; }
   .process-grid, .stat-row{ grid-template-columns: repeat(2, minmax(0,1fr)); }
   .product-detail{ grid-template-columns: minmax(0,1fr); gap: 36px; }
+  /* BUG FIX HISTORY, read top to bottom:
+     1) Desktop pins .pd-thumbs-left/.pd-thumbs-right/.pd-main to explicit
+        grid-column/grid-row values. An earlier mobile rule tried to
+        restack them with grid-template-areas but never reset those, so
+        .pd-main was pushed into a hidden implicit column (invisible) while
+        both thumb groups overlapped — only a small thumbnail cluster showed.
+     2) Switching that attempt to `display:flex; flex-direction:column`
+        fixed the stacking order but introduced a new bug: this rule block
+        never overrode the base .pd-gallery rule's `align-items:start`
+        (written for the desktop grid). In a COLUMN flex layout, align-items
+        controls the CROSS axis, i.e. width — `start` tells children to
+        shrink to their own content width instead of stretching full width.
+        .pd-main has no explicit width of its own (it relies on filling its
+        grid column), so it collapsed to near-zero width and the photo
+        visually disappeared.
+     3) Fix: use `flex-direction: row` with wrap instead of column. Giving
+        .pd-main `flex: 1 1 100%` forces it onto its own full-width line
+        (so it can't collapse — width is explicit, not inherited from
+        align-items), and forces a wrap immediately after it. The two thumb
+        groups then become the next flex items and land on the same
+        wrapped line together — side by side, touching — instead of each
+        forcing its own row, which is what puts all 4 thumbnails on ONE
+        line beneath the main photo. */
   .pd-gallery{
-    grid-template-columns: minmax(0,1fr);
-    grid-template-areas: "main" "thumbsL" "thumbsR";
-    gap: 14px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px;
   }
-  .pd-thumbs{ flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .pd-gallery .pd-main{ order: 1; flex: 1 1 100%; width: 100%; grid-column: auto; grid-row: auto; }
+  .pd-thumbs-left{ order: 2; grid-column: auto; grid-row: auto; margin-top: 0; }
+  .pd-thumbs-right{ order: 3; grid-column: auto; grid-row: auto; margin-top: 0; }
+  .pd-thumbs{ flex-direction: row; flex-wrap: nowrap; justify-content: center; gap: 8px; }
   .pd-info{ padding-left: 0; }
   .option-row{ flex-direction: column; gap: 0; }
   .footer-grid{ grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); }

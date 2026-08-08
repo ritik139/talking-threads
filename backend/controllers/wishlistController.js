@@ -46,9 +46,21 @@ exports.mergeWishlist = asyncHandler(async (req, res) => {
   const { items } = req.body;
   const wishlist = await getOrCreateWishlist(req.user._id);
   (items || []).forEach((i) => {
-    if (!wishlist.items.some((existing) => existing.name === i.name)) {
+    const existing = wishlist.items.find((item) => item.name === i.name);
+    if (!existing) {
       wishlist.items.push({ id: i.id || undefined, product: i.product || undefined, name: i.name, price: i.price, img: i.img || '' });
+      return;
     }
+    // BUG FIX: previously, a name-matched item already on the server was left
+    // completely untouched — so an item that once got saved with a missing/blank
+    // img (e.g. added before this device's fix, or during any past client bug)
+    // stayed imageless FOREVER after that: every future login re-pulls this same
+    // stale DB copy (pullServerState always force-overwrites local on login), and
+    // this merge kept skipping the guest copy that actually had a good img. Heal it:
+    // if the server's copy is missing an img/product link that the guest copy has,
+    // fill it in instead of silently discarding the better data.
+    if (!existing.img && i.img) existing.img = i.img;
+    if (!existing.product && i.product) existing.product = i.product;
   });
   await wishlist.save();
   res.json({ success: true, wishlist: wishlist.items });

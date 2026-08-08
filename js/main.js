@@ -1633,12 +1633,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (layout) layout.style.display = 'grid';
       if (emptyState) emptyState.style.display = 'none';
 
-      cartList.innerHTML = cart.map(item => `
+      cartList.innerHTML = cart.map(item => {
+        const hasImg = item.img && item.img !== 'undefined' && item.img !== 'null';
+        // Same broken/retired-image fallback as the wishlist grid — see the comment there.
+        const placeholder = `<div class="ph-inner"${hasImg ? ' style="display:none"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span class="ph-label">${escapeHtml(item.name)}</span></div>`;
+        return `
         <div class="cart-item" data-id="${escapeHtml(item.id)}">
           <div class="img-placeholder ar-square">
-            ${item.img
-              ? `<img src="${safeUrl(item.img)}" alt="${escapeHtml(item.name)}">`
-              : `<div class="ph-inner"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span class="ph-label">${escapeHtml(item.name)}</span></div>`}
+            ${hasImg
+              ? `<img src="${safeUrl(item.img)}" alt="${escapeHtml(item.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">${placeholder}`
+              : placeholder}
           </div>
           <div>
             <div class="ci-title">${escapeHtml(item.name)}</div>
@@ -1658,7 +1662,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="ci-remove" data-act="remove">Remove</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
 
       cartList.querySelectorAll('.cart-item').forEach(el => {
         const id = el.getAttribute('data-id');
@@ -1997,13 +2002,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (emptyState) emptyState.style.display = 'none';
       wishGrid.innerHTML = wl.map((item, idx) => {
         const hasImg = item.img && item.img !== 'undefined' && item.img !== 'null';
+        // Same "no photo" placeholder used on shop/product cards — kept as markup here
+        // so a *broken* image (retired/renamed file, 404 on the server) falls back to it
+        // too, instead of leaving the browser's default broken-image icon showing, which
+        // is what a bare <img> with a dead src renders as. Starts hidden and is only
+        // revealed by the <img>'s onerror handler below — a successfully-loading photo
+        // never shows it. This is what fixed the "sometimes the photo shows, sometimes
+        // it doesn't" wishlist bug: items saved before a product's image was retired/
+        // renamed still had the old (now-dead) path in localStorage, and this page — unlike
+        // the shop grid — had no onerror fallback, so those items rendered a broken icon
+        // instead of the placeholder.
+        const placeholder = `<div class="ph-inner"${hasImg ? ' style="display:none"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span class="ph-label">${escapeHtml(item.name)}</span></div>`;
         return `
         <div class="product-card" data-idx="${idx}">
           <div class="pc-media">
             <div class="img-placeholder ar-portrait">
               ${hasImg
-                ? `<img src="${safeUrl(item.img)}" alt="${escapeHtml(item.name)}">`
-                : `<div class="ph-inner"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span class="ph-label">${escapeHtml(item.name)}</span></div>`}
+                ? `<img src="${safeUrl(item.img)}" alt="${escapeHtml(item.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">${placeholder}`
+                : placeholder}
             </div>
           </div>
           <div class="pc-info">

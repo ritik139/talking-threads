@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // NOTE: replace WHATSAPP_PHONE with the real business number in international
   // format, digits only, no "+", no spaces (e.g. 919876543210 for an Indian number).
   (function initWhatsAppFloat() {
-    const WHATSAPP_PHONE = '9024655202'; // <-- TODO: put the real WhatsApp number here
+    const WHATSAPP_PHONE = '919024655202'; // <-- TODO: put the real WhatsApp number here
     const WHATSAPP_MESSAGE = "Hi, I'm interested in your embroidery products.";
     const waUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 
@@ -148,12 +148,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
+    // Not a real fetch option — pulled out here so it never gets sent to fetch() itself.
+    const suppressAuthClear = options.suppressAuthClear;
+    const fetchOptions = { ...options };
+    delete fetchOptions.suppressAuthClear;
+
     let res;
     try {
       res = await fetch(API_BASE + path, {
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        ...options,
+        ...fetchOptions,
         signal: controller.signal
       });
     } catch (networkErr) {
@@ -187,7 +192,20 @@ document.addEventListener('DOMContentLoaded', () => {
       // Gated on Auth.getUser() so this never fires for an ordinary wrong-password 401 on
       // the login form itself (tt_user is never set at that point — the login/register pages
       // already redirect away before showing the form if someone is signed in).
-      if (res.status === 401 && Auth.getUser()) {
+      //
+      // SECOND FIX (this change) — a 401 on the very first request(s) right after a login/
+      // register/Google sign-in succeeded is a race, not a real invalidation: the server
+      // just handed back a fresh, valid session cookie a moment ago in the login/register
+      // response itself. If the browser's cookie write and this immediate follow-up request
+      // (the guest-cart merge, or the post-login cart/wishlist pull) happen to race, or the
+      // very first request after sign-in transiently 401s for any other reason, the old logic
+      // above would silently wipe the tt_user we *just* set — the login toast says "welcome
+      // back" but the header immediately loses the account/My Orders state with no visible
+      // error. Callers doing that specific post-auth sync pass `suppressAuthClear: true` so a
+      // transient failure there degrades to "local state didn't sync yet" instead of
+      // "log the person back out". Normal, later page-load syncs are unaffected and still
+      // self-correct a truly stale session as before.
+      if (res.status === 401 && Auth.getUser() && !suppressAuthClear) {
         Auth.clearUser();
       }
       const message = (data && data.message) || `Request failed (${res.status})`;
@@ -224,8 +242,30 @@ document.addEventListener('DOMContentLoaded', () => {
     requireLogin(message) {
       if (Auth.isLoggedIn()) return true;
       showToast(message || 'Please sign in to continue.');
+      // Remember exactly where the user was (e.g. product.html?id=... they were
+      // trying to add to cart from) so that once they finish signing in we can
+      // send them right back here instead of dumping them on the homepage.
+      Auth.saveRedirect();
       setTimeout(() => { window.location.href = 'login.html'; }, 700);
       return false;
+    },
+
+    // ---- post-login redirect helpers ----
+    // Stored in sessionStorage (not localStorage) so it's scoped to this tab/visit
+    // and never lingers around to hijack an unrelated future sign-in.
+    REDIRECT_KEY: 'tt_post_login_redirect',
+    saveRedirect(url) {
+      const target = url || (window.location.pathname + window.location.search);
+      // Never save the auth pages themselves as a "redirect back to" target.
+      if (/\/?(login|register)\.html$/i.test(target.split('?')[0])) return;
+      try { sessionStorage.setItem(Auth.REDIRECT_KEY, target); } catch (e) { /* ignore */ }
+    },
+    consumeRedirect() {
+      try {
+        const target = sessionStorage.getItem(Auth.REDIRECT_KEY);
+        sessionStorage.removeItem(Auth.REDIRECT_KEY);
+        return target || null;
+      } catch (e) { return null; }
     },
 
     async register(name, email, password, newsletterSubscribed) {
@@ -261,14 +301,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Pushes whatever is currently in the guest (localStorage) cart/wishlist up to the
     // account that was just signed into, then pulls back the merged, canonical version.
+    // Always called within moments of a successful login/register/Google sign-in, so every
+    // request here passes suppressAuthClear — see the note in apiRequest for why a 401 this
+    // soon after a fresh sign-in must not be treated as "actually logged out".
     async mergeGuestDataIntoAccount() {
       const guestCart = Store.getCart();
       const guestWishlist = Store.getWishlist();
       try {
-        if (guestCart.length) await apiRequest('/cart/merge', { method: 'POST', body: JSON.stringify({ items: guestCart }) });
-        if (guestWishlist.length) await apiRequest('/wishlist/merge', { method: 'POST', body: JSON.stringify({ items: guestWishlist }) });
+        if (guestCart.length) await apiRequest('/cart/merge', { method: 'POST', body: JSON.stringify({ items: guestCart }), suppressAuthClear: true });
+        if (guestWishlist.length) await apiRequest('/wishlist/merge', { method: 'POST', body: JSON.stringify({ items: guestWishlist }), suppressAuthClear: true });
       } catch (e) { /* best-effort merge */ }
-      await Auth.pullServerState(true);
+      await Auth.pullServerState(true, true);
     },
 
     // Pulls the server's cart/wishlist and uses them to FILL IN local state — used after
@@ -284,11 +327,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // item the person just added — which was exactly the "item added, but Cart page shows
     // empty" bug. Only pulling into an *empty* local cart avoids that race entirely, while
     // still doing real cross-device sync for a fresh session.
-    async pullServerState(forceOverwrite = false) {
+    async pullServerState(forceOverwrite = false, suppressAuthClear = false) {
       try {
         const [cartData, wishlistData] = await Promise.all([
-          apiRequest('/cart'),
-          apiRequest('/wishlist')
+          apiRequest('/cart', { suppressAuthClear }),
+          apiRequest('/wishlist', { suppressAuthClear })
         ]);
         if (forceOverwrite || Store.getCart().length === 0) Store.setCart(cartData.cart || []);
         if (forceOverwrite || Store.getWishlist().length === 0) Store.setWishlist(wishlistData.wishlist || []);
@@ -2180,10 +2223,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const loginForm = document.getElementById('li-email') ? document.getElementById('li-email').closest('form') : null;
   if (loginForm) {
-    // If already signed in, don't show the login form again — send them home
+    // If already signed in, don't show the login form again — send them back
+    // to wherever they were headed (if anywhere), otherwise home
     if (Auth.isLoggedIn()) {
       showToast("You're already signed in.");
-      window.location.href = 'index.html';
+      window.location.href = Auth.consumeRedirect() || 'index.html';
     }
 
     loginForm.addEventListener('submit', async (e) => {
@@ -2199,7 +2243,8 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         await Auth.login(email, password, rememberMe);
         showToast('Signed in — welcome back.');
-        setTimeout(() => { window.location.href = 'index.html'; }, 800);
+        const redirectTo = Auth.consumeRedirect() || 'index.html';
+        setTimeout(() => { window.location.href = redirectTo; }, 800);
       } catch (err) {
         showToast(err.message || 'Sign in failed.');
         setSubmitting(loginForm, false);
@@ -2218,10 +2263,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const registerForm = document.getElementById('re-email') ? document.getElementById('re-email').closest('form') : null;
   if (registerForm) {
-    // If already signed in, don't show the register form again — send them home
+    // If already signed in, don't show the register form again — send them back
+    // to wherever they were headed (if anywhere), otherwise home
     if (Auth.isLoggedIn()) {
       showToast("You're already signed in.");
-      window.location.href = 'index.html';
+      window.location.href = Auth.consumeRedirect() || 'index.html';
     }
 
     registerForm.addEventListener('submit', async (e) => {
@@ -2237,7 +2283,8 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         await Auth.register(name, email, pass, false);
         showToast('Account created — welcome to Talking-Thread.');
-        setTimeout(() => { window.location.href = 'index.html'; }, 800);
+        const redirectTo = Auth.consumeRedirect() || 'index.html';
+        setTimeout(() => { window.location.href = redirectTo; }, 800);
       } catch (err) {
         showToast(err.message || 'Could not create account.');
         setSubmitting(registerForm, false);
@@ -2250,6 +2297,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btn.textContent.trim().toLowerCase() !== 'google') return; // leave the Apple button as-is, not implemented
     btn.addEventListener('click', (e) => {
       e.preventDefault();
+      // sessionStorage survives the round trip to Google's consent screen and back
+      // (same tab, same origin on return), so whatever requireLogin() already
+      // stashed as the return target (e.g. the product page the add-to-cart
+      // attempt happened on) is still there when handleGoogleAuthRedirect() runs.
       window.location.href = '/api/auth/google';
     });
   });
@@ -2592,6 +2643,11 @@ document.addEventListener('DOMContentLoaded', () => {
         Auth.setUser(data.user);
         await Auth.mergeGuestDataIntoAccount();
         showToast(`Signed in with Google — welcome${data.user.name ? ', ' + data.user.name.split(' ')[0] : ''}.`);
+        // Google always lands us back on index.html?auth=google_success — if the
+        // user actually started this from an add-to-cart prompt on another page,
+        // send them back there now instead of leaving them on the homepage.
+        const redirectTo = Auth.consumeRedirect();
+        if (redirectTo) { window.location.href = redirectTo; return; }
       } catch (err) {
         showToast('Signed in with Google, but could not load your account details.');
       }
@@ -2615,9 +2671,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (headerIcons && !headerIcons.querySelector('a[href="my-orders.html"]')) {
       const link = document.createElement('a');
       link.href = 'my-orders.html';
-      link.className = 'icon-btn icon-btn-ext';
+      // NOT icon-btn-ext — that class is deliberately display:none in the header
+      // (see the "exactly 3 action icons" rule in style.css, which Contact also
+      // uses and is likewise hidden there). icon-btn-myorders instead mirrors
+      // icon-btn-account's desktop-only visibility, since mobile already has
+      // its own "My orders" link in the drawer.
+      link.className = 'icon-btn icon-btn-myorders';
       link.setAttribute('aria-label', 'My Orders');
-      link.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3h12v18l-2.5-1.6L13 21l-1-1.6-1 1.6-2.5-1.6L6 21V3z"/><path d="M9 8h6M9 12h4"/></svg>';
+      link.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.5 21 7v10L12 21.5 3 17V7l9-4.5Z"/><path d="M3 7l9 4.5L21 7"/><path d="M12 11.5V21.5"/></svg>';
       const cartIcon = headerIcons.querySelector('a[href="cart.html"]');
       if (cartIcon) headerIcons.insertBefore(link, cartIcon);
       else headerIcons.appendChild(link);

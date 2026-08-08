@@ -23,7 +23,7 @@ const products = [
     // and hand-embroidered elephant, monkey, giraffe and baby motifs with a pearl trim.
     name: 'Baby Birth Announcement Embroidery Hoop',
     images: ['images/baby-birth-hoop.jpg'],
-    price: 2450,
+    price: 1300,
     category: ['Wall Art', 'Kidswear'],
     collections: ['Wall Art Hoops', 'Little Ones'],
     isFeatured: true,
@@ -41,7 +41,7 @@ const products = [
     // quote "With my whole heart, for my whole life" above an embroidered infinity symbol.
     name: 'Couple Love Quote Embroidery Hoop',
     images: ['images/couple-love-hoop.jpg'],
-    price: 3200,
+    price: 599,
     category: ['Wall Art', 'Kidswear'],
     collections: ['Wall Art Hoops', 'Bridal Trousseau'],
     isFeatured: true,
@@ -58,7 +58,7 @@ const products = [
     // hugging bear cubs and hearts.
     name: 'Hugging Bears Embroidered Handkerchief',
     images: ['images/hugging-bears-handkerchief.jpg'],
-    price: 4100,
+    price: 299,
     category: ['Kidswear'],
     collections: ['Everyday Carry', 'Little Ones'],
     availability: 'Made to Order',
@@ -76,7 +76,7 @@ const products = [
     // from the catalog since it was the same piece/photo as this one.
     name: 'Welcome Home Floral Heart Embroidery Hoop with Tassels',
     images: ['images/welcome-home-hoop.jpg'],
-    price: 2750,
+    price: 1799,
     category: ['Wall Art', 'Accessories'],
     collections: ['Wall Art Hoops', 'Floral Reverie'],
     isFeatured: true,
@@ -93,7 +93,7 @@ const products = [
     // rose garland border in pink, coral and yellow, set against a housewarming backdrop.
     name: 'Griha Pravesh Housewarming Embroidery Hoop',
     images: ['images/housewarming-hoop.jpg'],
-    price: 2950,
+    price: 1350,
     category: ['Wall Art'],
     collections: ['Wall Art Hoops', 'Floral Reverie'],
     isNewArrival: true,
@@ -110,7 +110,7 @@ const products = [
     // two names ("Ishvik", "Shridha") and "A sweet new beginning".
     name: 'Griha Pravesh New Home Embroidery Hoop',
     images: ['images/new-home-hoop.jpg'],
-    price: 2200,
+    price: 1700,
     compareAtPrice: 2650,
     category: ['Wall Art'],
     collections: ['Wall Art Hoops', 'Floral Reverie'],
@@ -128,7 +128,7 @@ const products = [
     // parents' names, and hand-stitched elephant, monkey and baby-boy motifs.
     name: 'Baby Welcome Embroidery Hoop',
     images: ['images/baby-welcome-hoop.jpg'],
-    price: 2950,
+    price: 1250,
     category: ['Wall Art', 'Kidswear'],
     collections: ['Wall Art Hoops', 'Little Ones'],
     isNewArrival: true,
@@ -145,7 +145,7 @@ const products = [
     // reading "Welcome home aesha" with a hand-date, hung against a plain wall.
     name: 'Welcome Home Floral Heart Embroidery Hoop (Gold Tassels)',
     images: ['images/welcome-home-gold-hoop.jpg'],
-    price: 2750,
+    price: 1499,
     category: ['Wall Art'],
     collections: ['Wall Art Hoops', 'Floral Reverie'],
     isNewArrival: true,
@@ -162,7 +162,7 @@ const products = [
     // with a peacock-feather-and-flute motif and a devotional Krishna quote.
     name: 'Krishna Quote Embroidered Handkerchief',
     images: ['images/krishna-quote-handkerchief.jpg'],
-    price: 950,
+    price: 340,
     category: ['Kidswear'],
     collections: ['Everyday Carry'],
     isNewArrival: true,
@@ -177,7 +177,7 @@ const products = [
     // Photo: cream hoodie with a hand-embroidered panda motif on the chest.
     name: 'Panda Embroidered Hoodie',
     images: ['images/panda-embroidered-hoodie.jpg'],
-    price: 2650,
+    price: 1299,
     category: ['Clothing'],
     collections: ['Everyday Carry', 'Kids & Playful'],
     isNewArrival: true,
@@ -194,7 +194,7 @@ const products = [
     // letter "A" surrounded by small flowers, and a name below it.
     name: 'Personalized Monogram Letter Handkerchief',
     images: ['images/monogram-letter-cloth.jpg'],
-    price: 850,
+    price: 299,
     category: ['Kidswear', 'Accessories'],
     collections: ['Everyday Carry', 'Personalised Keepsakes'],
     isFeatured: true,
@@ -211,7 +211,7 @@ const products = [
     // holding a red heart balloon, initials and a "Special" date.
     name: 'Penguin Balloon Embroidered Handkerchief',
     images: ['images/penguin-balloon-handkerchief.jpg'],
-    price: 950,
+    price: 370,
     category: ['Kidswear'],
     collections: ['Everyday Carry', 'Kids & Playful'],
     isNewArrival: true,
@@ -228,7 +228,7 @@ const products = [
     // May calendar, and a miniature bride-and-groom fabric figure in a red lehenga.
     name: 'Wedding Save-the-Date Calendar Embroidery Hoop',
     images: ['images/wedding-calendar-hoop.jpg'],
-    price: 3450,
+    price: 1399,
     category: ['Wall Art'],
     collections: ['Wall Art Hoops', 'Bridal Trousseau'],
     isFeatured: true,
@@ -245,7 +245,7 @@ const products = [
     // rose-and-leaf vine wreath in red and green thread.
     name: 'Welcome Home Rose Embroidery Hoop',
     images: ['images/welcome-home-rose-hoop.jpg'],
-    price: 2600,
+    price: 800,
     category: ['Wall Art'],
     collections: ['Wall Art Hoops', 'Floral Reverie'],
     availability: 'Made to Order',
@@ -261,7 +261,7 @@ const products = [
     // sketch of a father and daughter sharing a tender moment.
     name: 'Father-Daughter Sketch Embroidered Shirt',
     images: ['images/embroidered-shirt-sketch-sample.jpg'],
-    price: 2850,
+    price: 1500,
     category: ['Clothing', 'Accessories'],
     collections: ['Everyday Carry', 'Personalised Keepsakes'],
     isFeatured: true,
@@ -279,7 +279,7 @@ const products = [
     // on the pocket, with a name on the underside of the collar.
     name: 'I Love You Script Embroidered Shirt',
     images: ['images/embroidered-shirt-unbranded-sample.jpg'],
-    price: 2650,
+    price: 1500,
     category: ['Clothing'],
     collections: ['Everyday Carry', 'Personalised Keepsakes'],
     isNewArrival: true,
@@ -290,6 +290,59 @@ const products = [
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['white'],
     tags: ['embroidered shirt', 'love quote embroidery', 'personalized shirt', 'anniversary gift', 'handmade clothing']
+  },
+  {
+    // Photo: hoop reading "Welcome Home Bhabhi" with a date, hand-embroidered rose and
+    // leaf vine border, pearl trim and red-and-white yarn tassels.
+    name: 'Welcome Home Bhabhi Embroidery Hoop',
+    images: ['images/welcome-home-bhabhi-hoop.jpg'],
+    price: 1300,
+    category: ['Wall Art'],
+    collections: ['Wall Art Hoops'],
+    isFeatured: true,
+    isNewArrival: true,
+    availability: 'Made to Order',
+    shortDescription: 'A pearl-trimmed hoop hand-embroidered with a "Welcome Home Bhabhi" message and rose vine border, finished with red-and-white tassels.',
+    description:
+      'A hand-embroidered hoop reading "Welcome Home Bhabhi" with a personalised date, framed by a hand-stitched rose and leaf vine border and a pearl trim, finished with a cascade of red-and-white yarn tassels. Made to order in our Jaipur atelier — a warm keepsake to welcome a new bhabhi home.',
+    sizes: ['Medium — 12in', 'Large — 16in'],
+    colors: ['maroon', 'ivory'],
+    tags: ['welcome home hoop', 'bhabhi gift', 'housewarming gift', 'tasseled hoop', 'personalized hoop']
+  },
+  {
+    // Photo: hoop reading "Welcome home [baby name]" with birth date and "blessed parents"
+    // message, hand-embroidered jungle animal appliques (giraffe, monkey, lion, elephant)
+    // and leaf vines, pearl trim, no tassels.
+    name: 'Welcome Home Baby Jungle Animals Embroidery Hoop',
+    images: ['images/welcome-home-radhya-hoop.jpg'],
+    price: 1299,
+    category: ['Wall Art', 'Kidswear'],
+    collections: ['Wall Art Hoops', 'Little Ones'],
+    isNewArrival: true,
+    availability: 'Made to Order',
+    shortDescription: 'A pearl-trimmed hoop hand-embroidered with a baby welcome message and cute jungle animal appliques.',
+    description:
+      'A hand-embroidered hoop reading "Welcome Home [baby\'s name]" with the birth date and parents\' names, framed by hand-appliqued jungle animals — a giraffe, monkey, lion and elephant — and leafy vines, finished with a pearl trim. Made to order in our Jaipur atelier and personalised with your baby\'s name and details.',
+    sizes: ['Medium — 12in', 'Large — 16in'],
+    colors: ['ivory', 'sage'],
+    tags: ['baby hoop', 'welcome home hoop', 'jungle animal embroidery', 'new baby gift', 'personalized hoop']
+  },
+  {
+    // Photo: hoop reading "गृह प्रवेश" (Griha Pravesh) with a small house motif, a rose and
+    // leaf vine border in maroon and gold, pearl trim and a cascade of maroon yarn tassels.
+    name: 'Griha Pravesh Tasseled Embroidery Hoop',
+    images: ['images/griha-pravesh-tassel-hoop.jpg'],
+    price: 1650,
+    category: ['Wall Art'],
+    collections: ['Wall Art Hoops', 'Floral Reverie'],
+    isNewArrival: true,
+    availability: 'Made to Order',
+    shortDescription: 'A pearl-trimmed hoop hand-embroidered with a "Griha Pravesh" house motif and rose vine border, finished with maroon tassels.',
+    description:
+      'A hand-embroidered hoop reading "गृह प्रवेश" (Griha Pravesh) with a hand-stitched house motif, personalised with a date, framed by a rose and leaf vine border in maroon and gold thread with a pearl trim, finished with a cascade of maroon yarn tassels. Made to order in our Jaipur atelier for a new home\'s housewarming.',
+    sizes: ['Medium — 12in', 'Large — 16in'],
+    colors: ['maroon', 'gold'],
+    tags: ['griha pravesh hoop', 'housewarming gift', 'tasseled hoop', 'personalized hoop', 'new home gift']
   }
 ];
 

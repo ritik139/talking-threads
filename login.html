@@ -32,8 +32,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&amp;family=Instrument+Sans:wght@400;500;600&amp;display=swap">
-<link rel="stylesheet" href="css/style.css?v=20260808d">
+<link rel="stylesheet" href="css/style.css?v=20260808e">
   <link rel="stylesheet" href="css/chatbot.css?v=20260731">
+  <link rel="stylesheet" href="css/auth-panel.css?v=20260808">
   <link rel="stylesheet" href="css/responsive-fixes.css?v=20260731">
 </head>
 <body>
@@ -104,8 +105,81 @@
 <main id="main-content">
 
 <section class="auth-layout">
-  <div class="auth-media"><div class="img-placeholder">
-</div>
+  <div class="auth-media">
+    <div class="auth-embroidery">
+      <span class="ae-eyebrow">Fine Hand Embroidery &middot; Since Jaipur</span>
+      <div class="ae-divider"><span></span><i></i><span></span></div>
+
+      <div class="ae-hoop" aria-hidden="true">
+        <svg viewBox="0 0 300 230" fill="none">
+          <g stroke="#B08B45" stroke-width="1.4" fill="none" opacity="0.9">
+            <path d="M20,150 C45,140 60,120 70,100 C78,84 82,68 78,52"/>
+            <path d="M40,138 C30,132 22,124 18,114"/>
+            <path d="M55,120 C45,116 36,110 30,102"/>
+            <path d="M68,100 C58,98 48,94 42,86"/>
+            <path d="M78,80 C68,80 58,76 52,68"/>
+          </g>
+          <g fill="#E9DFC9" stroke="#B08B45" stroke-width="1.2">
+            <ellipse cx="18" cy="112" rx="9" ry="5" transform="rotate(-30 18 112)"/>
+            <ellipse cx="30" cy="100" rx="9" ry="5" transform="rotate(-20 30 100)"/>
+            <ellipse cx="42" cy="84" rx="9" ry="5" transform="rotate(-15 42 84)"/>
+            <ellipse cx="52" cy="66" rx="9" ry="5" transform="rotate(-10 52 66)"/>
+          </g>
+          <g fill="#8B2E3A">
+            <circle cx="66" cy="96" r="3"/>
+            <circle cx="76" cy="66" r="3"/>
+            <circle cx="32" cy="128" r="3"/>
+          </g>
+          <g stroke="#B08B45" stroke-width="1.4" fill="none" opacity="0.9">
+            <path d="M280,150 C255,140 240,120 230,100 C222,84 218,68 222,52"/>
+            <path d="M260,138 C270,132 278,124 282,114"/>
+            <path d="M245,120 C255,116 264,110 270,102"/>
+            <path d="M232,100 C242,98 252,94 258,86"/>
+            <path d="M222,80 C232,80 242,76 248,68"/>
+          </g>
+          <g fill="#E9DFC9" stroke="#B08B45" stroke-width="1.2">
+            <ellipse cx="282" cy="112" rx="9" ry="5" transform="rotate(30 282 112)"/>
+            <ellipse cx="270" cy="100" rx="9" ry="5" transform="rotate(20 270 100)"/>
+            <ellipse cx="258" cy="84" rx="9" ry="5" transform="rotate(15 258 84)"/>
+            <ellipse cx="248" cy="66" rx="9" ry="5" transform="rotate(10 248 66)"/>
+          </g>
+          <g fill="#8B2E3A">
+            <circle cx="234" cy="96" r="3"/>
+            <circle cx="224" cy="66" r="3"/>
+            <circle cx="268" cy="128" r="3"/>
+          </g>
+          <circle cx="150" cy="105" r="72" fill="#FBF8F1" stroke="#B08B45" stroke-width="2"/>
+          <circle cx="150" cy="105" r="60" fill="none" stroke="#B08B45" stroke-width="1.2"/>
+          <rect x="140" y="26" width="20" height="10" rx="2" fill="none" stroke="#B08B45" stroke-width="1.6"/>
+          <line x1="150" y1="26" x2="150" y2="14" stroke="#B08B45" stroke-width="1.6"/>
+          <g stroke="#8B2E3A" stroke-width="1.3" fill="none">
+            <path d="M150,80 C150,95 150,115 150,140"/>
+            <path d="M150,95 C138,90 128,92 120,100"/>
+            <path d="M150,95 C162,90 172,92 180,100"/>
+            <path d="M150,112 C138,110 130,114 124,122"/>
+            <path d="M150,112 C162,110 170,114 176,122"/>
+          </g>
+          <g fill="#B08B45">
+            <circle cx="150" cy="78" r="3.5"/>
+            <circle cx="118" cy="101" r="2.4"/>
+            <circle cx="182" cy="101" r="2.4"/>
+            <circle cx="122" cy="124" r="2.4"/>
+            <circle cx="178" cy="124" r="2.4"/>
+          </g>
+        </svg>
+      </div>
+
+      <h2 class="ae-word">Talking<em>-Thread</em></h2>
+      <div class="ae-divider"><span></span><i></i><span></span></div>
+      <p class="ae-tag">Heirloom embroidery, hand-stitched<br>with love in Jaipur.</p>
+
+      <blockquote class="ae-quote">
+        <span class="cnr"></span>
+        <span class="ae-quote-mark">&ldquo;</span>
+        <p>Every piece leaves our hands only when <em>every stitch</em> is worth its story.&rdquo;</p>
+        <cite>&mdash; <b>Radha Kumari</b>, Master Karigar</cite>
+      </blockquote>
+    </div>
   </div>
   <div class="auth-form-side">
     <div class="auth-box">
@@ -123,8 +197,15 @@
       </form>
       <div class="auth-divider">Or</div>
       <div class="social-row">
-        <button type="button" class="btn btn-ghost">Google</button>
-        <button type="button" class="btn btn-ghost">Apple</button>
+        <button type="button" class="btn btn-google">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+            <path fill="#4285F4" d="M23.52 12.27c0-.85-.07-1.47-.22-2.12H12v3.85h6.6c-.13 1.09-.85 2.74-2.45 3.85l-.02.15 3.56 2.75.25.02c2.26-2.09 3.58-5.17 3.58-8.5z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.07 7.93-2.9l-3.78-2.93c-1.01.7-2.38 1.19-4.15 1.19-3.17 0-5.86-2.09-6.82-4.98l-.14.01-3.7 2.86-.05.13C3.28 21.3 7.31 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.18 14.38A7.4 7.4 0 014.78 12c0-.83.15-1.63.4-2.38l-.01-.16-3.75-2.9-.12.06A11.98 11.98 0 000 12c0 1.93.47 3.76 1.3 5.38l3.88-3z"/>
+            <path fill="#EA4335" d="M12 4.75c2.26 0 3.78.97 4.65 1.79l3.4-3.31C17.94 1.19 15.24 0 12 0 7.31 0 3.28 2.7 1.3 6.62l3.87 3C6.14 6.84 8.83 4.75 12 4.75z"/>
+          </svg>
+          <span>Continue with Google</span>
+        </button>
       </div>
       <p class="auth-switch">New to Talking-Thread? <a href="register.html">Create an account</a></p>
     </div>
@@ -262,7 +343,7 @@
       <span>Account</span>
     </a>
   </nav>
-<script src="js/main.js?v=20260803b" defer></script>
+<script src="js/main.js?v=20260808f" defer></script>
 <script src="js/chatbot.js?v=20260731" defer></script>
 </body>
 </html>

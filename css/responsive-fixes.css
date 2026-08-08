@@ -397,3 +397,15 @@ img, video, iframe, table, svg{ max-width: 100%; }
   }
   .footer-newsletter-form button:hover{ color: var(--white); }
 }
+
+/* ---------- Contact page map — root-cause fix ----------
+   style.css defines a 480px override (.map-embed{ aspect-ratio:4/3 })
+   meant to make the embedded map taller/easier to use on small phones.
+   contact.html never actually uses a .map-embed element though — the
+   map markup is `.contact-map .img-placeholder.ar-wide` (16:9), so
+   that rule was dead code and the map stayed at 16:9 on every phone
+   size. Scoped to .contact-map so no other .ar-wide banner elsewhere
+   on the site is affected. */
+@media (max-width: 480px){
+  .contact-map .img-placeholder{ aspect-ratio: 4/3; }
+}

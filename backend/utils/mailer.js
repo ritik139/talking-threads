@@ -304,4 +304,29 @@ async function sendOrderConfirmationEmail({ order, customerName, customerEmail }
   });
 }
 
-module.exports = { sendContactEmail, sendNewOrderEmail, sendOrderConfirmationEmail, verifyMailer };
+// Sends a "New Subscriber" notification to the studio's inbox (ADMIN_EMAIL, falling back to
+// CONTACT_TO_EMAIL) right after someone subscribes via any newsletter form on the site
+// (homepage newsletter band, footer newsletter-mini, etc — they all hit the same
+// POST /api/newsletter route). Mirrors sendNewOrderEmail's shape/fallback exactly.
+async function sendNewsletterSubscriberEmail({ email }) {
+  const to = process.env.ADMIN_EMAIL || process.env.CONTACT_TO_EMAIL;
+  if (!to) throw new Error('No recipient configured — set ADMIN_EMAIL in backend/.env.');
+
+  await sendViaResend({
+    to,
+    subject: `[Talking-Thread] New Newsletter Subscriber`,
+    text: [
+      'New newsletter subscriber on Talking-Thread',
+      '',
+      `Email: ${email}`
+    ].join('\n'),
+    html: `
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.6;">
+        <h2 style="margin:0 0 16px;">New Newsletter Subscriber</h2>
+        <p style="margin:0;"><strong>Email:</strong> ${escapeHtml(email)}</p>
+      </div>
+    `
+  });
+}
+
+module.exports = { sendContactEmail, sendNewOrderEmail, sendOrderConfirmationEmail, sendNewsletterSubscriberEmail, verifyMailer };

@@ -432,6 +432,15 @@ h1,h2,h3,h4{
 @media (min-width: 1025px){
   .header-icons .icon-btn.icon-btn-account{ display: inline-flex; }
 }
+/* My Orders header icon — same responsive behaviour as Account above (desktop
+   only; mobile already has its own "My orders" link in the drawer, so showing
+   this one there too would just duplicate it). Deliberately its own class,
+   NOT icon-btn-ext, since that class is unconditionally hidden by the rule
+   above and would swallow this icon the same way it swallows Contact. */
+.header-icons .icon-btn.icon-btn-myorders{ display: none; }
+@media (min-width: 1025px){
+  .header-icons .icon-btn.icon-btn-myorders{ display: inline-flex; }
+}
 .icon-btn{
   position: relative;
   display: inline-flex;

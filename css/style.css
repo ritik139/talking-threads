@@ -1029,10 +1029,23 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   position: absolute; top: 14px; right: 14px;
   display: flex; flex-direction: column; gap: 10px;
   opacity: 0; transform: translateX(6px);
+  /* ROOT CAUSE of "clicking the product image doesn't open the detail
+     page": .pc-actions sits absolutely positioned INSIDE .pc-media, on
+     top of the product photo's top-right corner (it needs to be, so its
+     buttons are reachable when shown). opacity:0 only makes it invisible
+     — it does NOT remove it from hit-testing, so even while hidden this
+     box (plus each button's own -4px expanded ::before hit area) kept
+     intercepting every tap/click that landed in that corner of the
+     photo, silently swallowing it instead of letting it reach the card
+     link underneath. pointer-events:none while hidden fixes this: taps
+     pass straight through to the image/card until the actions are
+     actually visible (hover or focus-within), when pointer-events is
+     switched back to auto so the buttons themselves stay fully usable. */
+  pointer-events: none;
   transition: opacity .3s var(--ease), transform .3s var(--ease);
 }
-.product-card:hover .pc-actions{ opacity: 1; transform: translateX(0); }
-.product-card:focus-within .pc-actions{ opacity: 1; transform: translateX(0); }
+.product-card:hover .pc-actions{ opacity: 1; transform: translateX(0); pointer-events: auto; }
+.product-card:focus-within .pc-actions{ opacity: 1; transform: translateX(0); pointer-events: auto; }
 /* Slight stagger between the wishlist and quick-add icons as they enter,
    instead of both appearing in perfect unison — icon count/order unchanged.
    BUG FIX: these icons used to be forced permanently visible on touch/mobile

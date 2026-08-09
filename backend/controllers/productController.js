@@ -71,12 +71,15 @@ exports.getProducts = asyncHandler(async (req, res) => {
   // name/tags/description/shortDescription (AND across words, OR across fields per word
   // and OR across which field each word lands in) — word order and adjacency no longer
   // matter, matching how people actually type a product search.
+  // Search matches the product NAME only (not tags/description) — so a typed word only
+  // surfaces products whose actual name contains it, e.g. "ba" won't pull in a product
+  // whose name has no "ba" in it just because it happens to be tagged "baby gift".
   if (q && q.trim()) {
     const words = q.trim().split(/\s+/).filter(Boolean);
     words.forEach((word) => {
       const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const re = new RegExp(escaped, 'i');
-      andConditions.push({ $or: [{ name: re }, { tags: re }, { description: re }, { shortDescription: re }] });
+      andConditions.push({ name: re });
     });
   }
 

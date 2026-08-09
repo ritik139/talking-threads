@@ -566,17 +566,16 @@ h1,h2,h3,h4{
    A full-width panel dropped from the header (not an inline bar in the nav
    row) so it never competes for space with the logo/nav-links/icons and can
    never cause the header to overflow or reflow at any viewport. The panel
-   itself carries the site's card shadow token, and the input is presented
-   as an enclosed premium "bar" (bordered field, not just an underline) so
-   it reads as a search bar at a glance, matching the rest of the site's
-   bordered-field inputs (.field input, .search-field input, etc). */
+   carries its own solid, opaque background + shadow so it reads as one
+   clean card sitting on top of the page — whatever is underneath (hero
+   text, images, product grids) never shows through the suggestion rows. */
 .header-search{
   position: absolute;
   top: 100%; left: 0; right: 0;
   z-index: 55;
   background: var(--paper);
-  border-bottom: 1px solid var(--line);
-  box-shadow: var(--shadow-card); /* reuse the site's one card-shadow token instead of a bespoke value */
+  box-shadow: var(--shadow-card);
+  border-bottom: 1px solid var(--line-soft);
   transform: translateY(-8px);
   opacity: 0;
   visibility: hidden;
@@ -597,7 +596,9 @@ h1,h2,h3,h4{
 
 /* The bar itself: bordered field on the site's paper/white surface, with
    the site's own radius token (kept sharp/editorial to match every other
-   input, button and card rather than introducing a new pill shape). */
+   input, button and card rather than introducing a new pill shape). This
+   is now the ONLY visible "box" in the search panel — it carries its own
+   shadow so it still lifts off the page behind it. */
 .header-search-form{
   display: flex;
   align-items: center;
@@ -607,6 +608,7 @@ h1,h2,h3,h4{
   border-radius: var(--radius);
   padding: 16px 20px;
   min-height: 56px;
+  box-shadow: var(--shadow-card);
   transition: border-color .22s var(--ease), box-shadow .22s var(--ease);
 }
 /* Visible focus state lives on the field itself (border + soft ring) rather
@@ -687,11 +689,12 @@ h1,h2,h3,h4{
 .hs-result-thumb img{ width: 100%; height: 100%; object-fit: cover; display: block; }
 .hs-result-info{ flex: 1; min-width: 0; }
 .hs-result-name{
+  display: block;
   font-family: var(--font-display);
   font-size: 0.98rem;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.hs-result-cat{ font-size: 0.72rem; color: var(--ink-faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hs-result-cat{ display: block; font-size: 0.72rem; color: var(--ink-faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hs-result-price{ font-size: 0.86rem; color: var(--gold-text); font-weight: 500; flex-shrink: 0; white-space: nowrap; }
 .hs-view-all{
   display: block;

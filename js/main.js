@@ -2294,7 +2294,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ---------- "Continue with Google" (login.html / register.html) ---------- */
   document.querySelectorAll('.social-row button').forEach(btn => {
-    if (!btn.classList.contains('btn-google')) return; // leave the Apple button as-is, not implemented
+    if (!btn.textContent.trim().toLowerCase().includes('google')) return; // leave the Apple button as-is, not implemented
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       // sessionStorage survives the round trip to Google's consent screen and back

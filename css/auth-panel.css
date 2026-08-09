@@ -6,6 +6,17 @@
    mobile or tablet — nothing here needs its own mobile rules.
    ========================================================================== */
 
+/* ROOT CAUSE FIX: these rules used to apply unconditionally (no media query), so their
+   plain `display: flex` on .auth-media was loading AFTER style.css's mobile
+   `.auth-media{ display: none }` (<=1024px) in the stylesheet order — and with equal
+   specificity, whichever rule loads last wins the cascade, regardless of which one sits
+   inside a media query. That silently re-showed this desktop-only decorative panel on
+   mobile/tablet, forcing anyone redirected to login.html (e.g. from "Add to Cart" while
+   signed out) to scroll past it before reaching the actual sign-in form. Scoping this
+   block to min-width:1025px (matching style.css's own <=1024px cutoff exactly) makes it
+   impossible for this file to affect anything at or below that breakpoint, so mobile users
+   now land directly on the form as intended. */
+@media (min-width: 1025px){
 .auth-media{
   display: flex;
   align-items: center;
@@ -21,6 +32,7 @@
   inset: 26px;
   border: 1px solid rgba(176,139,69,0.35);
   pointer-events: none;
+}
 }
 
 .auth-embroidery{ max-width: 380px; width: 100%; }

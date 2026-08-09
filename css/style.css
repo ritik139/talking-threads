@@ -1633,14 +1633,14 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
      .icon-btn.icon-btn-ext rule above; Account is hidden here too — the
      ≥1025px rule that reveals it doesn't apply below this breakpoint —
      so mobile keeps its original 3-icon set.) */
-  .nav{ padding: 14px 18px; gap: 8px; }
+  .nav{ padding: 14px 18px; gap: 12px; }
   /* Mobile/tablet keeps the exact same botanical sprig markup as desktop
      (same <svg>, so it's pixel-identical line-art) — just scaled down to
      fit the tighter header row, sitting close against the wordmark
      instead of desktop's wider 8px gap. Matches the reference mobile
      header, which pairs a small left-hand floral mark with the full
      wordmark rather than dropping the icon entirely. */
-  .header-floral{ display: inline-flex; height: 32px; margin: 0 4px 0 0; }
+  .header-floral{ display: inline-flex; height: 32px; margin: 0; }
   /* Announcement bar ("On every order..."/shipping strip) sits above the
      header and is desktop-only from here down — on phones/tablets it was
      competing with the wordmark + icons for very limited width and read
@@ -1661,7 +1661,7 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   /* Icons sized up to match the reference's bolder, more tappable mobile
      glyphs (was 22px) — gap trimmed slightly so the larger icons don't
      eat into the wordmark's space. */
-  .header-icons{ order: 2; margin-left: auto; gap: 14px; }
+  .header-icons{ order: 2; gap: 12px; }
   .icon-btn{ width: 25px; height: 25px; }
   .icon-btn svg{ stroke-width: 1.4; }
 }
@@ -2180,7 +2180,7 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
     padding: 44px 24px 28px;
   }
   .mf-brand{ text-align: center; }
-  .mf-brand .mf-logo{ display: inline-flex; color: var(--thread); margin-bottom: 10px; }
+  .mf-brand .mf-logo{ display: inline-flex; color: var(--sage); margin-bottom: 10px; }
   .mf-brand .mf-logo svg{ width: 46px; height: 46px; }
   .mf-brand .mf-name{
     font-family: var(--font-display); font-size: 1.5rem; color: var(--ink);

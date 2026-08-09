@@ -74,14 +74,14 @@ img, video, iframe, table, svg{ max-width: 100%; }
      separated by .header-icons' margin-left:auto (inherited from the
      ≤1024px rule) — that's the intentional "logo left, actions right"
      layout — but every other gap on the row now matches. */
-  .nav{ padding: 15px 18px; gap: 14px; }
+  .nav{ padding: 15px 16px; gap: 12px; }
   /* Floral mark: sized up further (33px → 37px) — was reading small next
      to the wordmark on phones. margin-left added on top of the shared
      .nav gap so the hamburger and the mark are clearly, visibly
      separated even though the artwork itself is thin line-art with a
      narrow visual footprint (a gap value alone reads as "touching" next
      to hairline strokes like this). */
-  .header-floral{ height: 37px; margin: 0 0 0 4px; }
+  .header-floral{ height: 37px; margin: 0; }
   /* Header wordmark (.brand-name): bumped again (1.15rem → 1.22rem) so
      the whole header reads a bit more substantial on phones, still one
      line at every tested width down to 320px. */
@@ -259,53 +259,45 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .logo{ font-size: 1.15rem; } /* footer wordmark only, not the header */
   .brand-name{ font-size: 1.2rem; }
 }
-/* A second wordmark-truncation gap, same root cause as the ≤390px block
-   below: at 1.2rem with the floral mark still showing, "TALKING-THREAD"
-   only actually fits from 424px up — measured via scrollWidth vs.
-   clientWidth across every width in this range. 391–423px (common
-   Android widths like 412/414 — Pixel, Galaxy, etc.) truncated. Hiding
-   the decorative floral mark reclaims exactly the room needed without
-   touching the 1.2rem size already confirmed to fit at 424px+. */
+/* 391–423px (common Android widths like 412/414 — Pixel, Galaxy, etc.):
+   the floral mark must stay visible here (it's the same header icon that
+   also appears in the footer), so instead of hiding it, it's shrunk
+   alongside the wordmark/icons, with .nav and .header-icons kept at the
+   same 10px gap so the whole row reads as evenly spaced. */
 @media (min-width: 391px) and (max-width: 423px){
-  .header-floral{ display: none; }
+  .header-floral{ height: 26px; margin: 0; }
+  .brand-name{ font-size: 1.08rem; letter-spacing: 0.02em; }
+  .nav{ gap: 10px; }
+  .header-icons{ gap: 10px; }
+  .icon-btn{ width: 24px; height: 24px; }
 }
 
 /* ---------- Small phones (≤390px, covers the 320/360/375/390 test
-   widths — widened from the old ≤374px cutoff) ----------
-   Root-cause fix: "TALKING-THREAD" was measured truncating with an
-   ellipsis (.brand-name's scrollWidth > its clientWidth) at BOTH 320px
-   and 375px, despite the comments below claiming it stayed on one line
-   down to 320px. The old cutoff was the actual bug — it stopped at
-   374px, so the very common 375–390px phone widths (iPhone SE/8/12
-   mini, etc.) fell through to the looser 480px-block sizing (1.22rem)
-   with no extra room freed up, and truncated there. Widening this
-   block to 390px, hiding the purely decorative floral mark (it was
-   eating ~42px that the wordmark needed more), and trimming the
-   wordmark by one more notch together give the wordmark enough room
-   to render in full at every width in the test matrix — verified via
-   scrollWidth vs. clientWidth at 320/360/375/390px. */
+   widths) ----------
+   The floral mark stays visible at this width too (shrunk to 22px
+   instead of hidden), so the header icon shows on every phone, not
+   just tablets. Wordmark and icons are trimmed to make room instead. */
 @media (max-width: 390px){
   .container{ padding: 0 14px; }
-  .nav{ padding: 13px 15px; gap: 10px; }
+  .nav{ padding: 13px 13px; gap: 8px; }
   .logo{ font-size: 0.94rem; gap: 5px; } /* footer wordmark only, not the header */
   .logo-mark{ width: 18px; height: 18px; } /* footer wordmark only, not the header */
-  /* Floral mark hidden (not just shrunk) at this width: it's aria-hidden
-     decoration, and reclaiming its ~30px + gap is what actually lets the
-     wordmark fit without truncating — shrinking it further already hit
-     visual diminishing returns at the old 32px minimum. */
-  .header-floral{ display: none; }
-  /* Header wordmark: trimmed one more notch than before (1.08rem → 1rem)
-     to leave a safety margin, not just exactly fit — confirmed via
-     scrollWidth/clientWidth measurement rather than eyeballing. */
-  .brand-name{ font-size: 1rem; letter-spacing: 0.01em; }
-  /* Same equal-spacing approach as the 480px block above: .header-icons'
-     gap matches .nav's gap so every step on the row — menu→logo and
-     search↔wishlist↔cart — is identical. Icons sized to the 24–26px
-     target even at the narrowest widths in the required test matrix
-     (320/360). Menu-toggle size/bar positions are inherited unchanged
-     from the 480px block. */
-  .header-icons{ gap: 12px; }
-  .icon-btn{ width: 25px; height: 25px; }
+  /* Floral mark: bumped up a notch (22px → 27px) and given its own
+     left margin so there's visible breathing room between it and the
+     hamburger, on top of the shared .nav gap. */
+  .header-floral{ height: 27px; margin: 0 0 0 5px; }
+  /* Header wordmark: sized back up now that removing header-icons'
+     margin-left:auto (below) reclaims the row's dead right-hand gap —
+     a bigger wordmark plus icons sitting right after it (instead of
+     pinned to the far edge) closes up the empty space next to
+     "Talking-Thread" that was reported. */
+  .brand-name{ font-size: 1.02rem; letter-spacing: 0.01em; }
+  /* Equal-spacing: .header-icons' gap matches .nav's gap (8px) so every
+     step on the row — menu→floral→logo and search↔wishlist↔cart — is
+     identical. Icons trimmed slightly to keep the row inside the
+     narrowest tested widths (320/360) now that the floral mark is back. */
+  .header-icons{ gap: 8px; }
+  .icon-btn{ width: 23px; height: 23px; }
   .icon-btn .count{ width: 15px; height: 15px; font-size: 0.56rem; top: -8px; right: -10px; }
   .hero-meta{ gap: 16px 22px; }
   .hero-meta div strong{ font-size: 1.25rem; }
@@ -313,6 +305,15 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .pd-thumb{ width: 48px; }
   .stat-row div strong{ font-size: 1.7rem; }
   .modal{ padding: 24px 14px 20px; }
+}
+
+/* Narrowest phones only (320-340px, e.g. iPhone SE / older small Android):
+   the bigger wordmark + floral mark from the ≤390px block above is a
+   couple px too wide here specifically, so pull both back down just
+   for this sliver — 341-390px keeps the fuller size above untouched. */
+@media (max-width: 340px){
+  .brand-name{ font-size: 0.92rem; letter-spacing: 0; }
+  .header-floral{ height: 23px; }
   .rs-average .rs-num{ font-size: 3.2rem; }
 }
 

@@ -71,9 +71,11 @@ img, video, iframe, table, svg{ max-width: 100%; }
      floral's extra margin, so menu→floral, floral→logo, and
      icon→icon→icon are all identical, evenly-spaced steps. The left
      cluster (menu+floral+logo) and the icon cluster stay visually
-     separated by .header-icons' margin-left:auto (inherited from the
-     ≤1024px rule) — that's the intentional "logo left, actions right"
-     layout — but every other gap on the row now matches. */
+     separated by .header-icons' margin-left:auto (added in the
+     ≤1024px rule in style.css) — that pins the icons to the far right
+     edge instead of leaving them trailing right after the logo with a
+     dead gap in the corner, giving the intentional "logo left, actions
+     right" layout — but every other gap on the row now matches. */
   .nav{ padding: 15px 16px; gap: 12px; }
   /* Floral mark: sized up further (33px → 37px) — was reading small next
      to the wordmark on phones. margin-left added on top of the shared
@@ -86,15 +88,16 @@ img, video, iframe, table, svg{ max-width: 100%; }
      the whole header reads a bit more substantial on phones, still one
      line at every tested width down to 320px. */
   .brand-name{ font-size: 1.22rem; letter-spacing: 0.035em; }
-  /* Header action icons (search/wishlist/cart) + hamburger: bumped to
-     27px so the row feels less cramped, with the tappable hit-area
-     still >=40px via .icon-btn::before's inset — a visual change only,
-     not a touch-target regression. Gap matches .nav's gap above so
+  /* Header action icons (search/wishlist/cart) + hamburger: bumped up
+     again (27px → 29px) — icons were reading a little small next to the
+     bumped-up wordmark. Tappable hit-area still >=40px via
+     .icon-btn::before's inset — a visual change only, not a
+     touch-target regression. Gap matches .nav's gap above so
      search↔wishlist↔cart reads at the same rhythm as menu↔floral↔logo.
      Scoped inside this max-width:480px block only, so tablet/desktop
      sizing in style.css is untouched. */
-  .header-icons{ gap: 12px; }
-  .icon-btn{ width: 27px; height: 27px; }
+  .header-icons{ gap: 13px; }
+  .icon-btn{ width: 31px; height: 31px; }
 
   /* ---------- 3b. Footer wordmark (NOT the header) ----------
      .logo / .logo-mark style the FOOTER wordmark only — the header
@@ -269,7 +272,7 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .brand-name{ font-size: 1.08rem; letter-spacing: 0.02em; }
   .nav{ gap: 10px; }
   .header-icons{ gap: 10px; }
-  .icon-btn{ width: 24px; height: 24px; }
+  .icon-btn{ width: 26px; height: 26px; }
 }
 
 /* ---------- Small phones (≤390px, covers the 320/360/375/390 test
@@ -286,18 +289,21 @@ img, video, iframe, table, svg{ max-width: 100%; }
      left margin so there's visible breathing room between it and the
      hamburger, on top of the shared .nav gap. */
   .header-floral{ height: 27px; margin: 0 0 0 5px; }
-  /* Header wordmark: sized back up now that removing header-icons'
-     margin-left:auto (below) reclaims the row's dead right-hand gap —
-     a bigger wordmark plus icons sitting right after it (instead of
-     pinned to the far edge) closes up the empty space next to
-     "Talking-Thread" that was reported. */
+  /* Header wordmark stays modest at this width so there's still room
+     for the icon cluster, which now sits pinned to the far right edge
+     (via .header-icons' margin-left:auto, set once in the ≤1024px
+     rule in style.css and inherited down through every mobile
+     breakpoint) instead of trailing right after the logo with dead
+     space left over in the corner. */
   .brand-name{ font-size: 1.02rem; letter-spacing: 0.01em; }
   /* Equal-spacing: .header-icons' gap matches .nav's gap (8px) so every
      step on the row — menu→floral→logo and search↔wishlist↔cart — is
-     identical. Icons trimmed slightly to keep the row inside the
-     narrowest tested widths (320/360) now that the floral mark is back. */
+     identical. Icons bumped a touch (23px → 25px) for a bolder, more
+     tappable feel while still fitting the narrowest tested widths
+     (320/360). */
   .header-icons{ gap: 8px; }
-  .icon-btn{ width: 23px; height: 23px; }
+  .icon-btn{ width: 26px; height: 26px; }
+  .brand{ margin-right: 6px; }
   .icon-btn .count{ width: 15px; height: 15px; font-size: 0.56rem; top: -8px; right: -10px; }
   .hero-meta{ gap: 16px 22px; }
   .hero-meta div strong{ font-size: 1.25rem; }
@@ -314,6 +320,8 @@ img, video, iframe, table, svg{ max-width: 100%; }
 @media (max-width: 340px){
   .brand-name{ font-size: 0.92rem; letter-spacing: 0; }
   .header-floral{ height: 23px; }
+  .icon-btn{ width: 23px; height: 23px; }
+  .brand{ margin-right: 2px; }
   .rs-average .rs-num{ font-size: 3.2rem; }
 }
 
@@ -329,6 +337,7 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .nav{ padding: 12px 12px; gap: 8px; }
   .header-icons{ gap: 8px; }
   .icon-btn{ width: 23px; height: 23px; }
+  .brand{ margin-right: 0; }
   .brand-name{ font-size: 0.9rem; letter-spacing: 0.005em; }
 }
 

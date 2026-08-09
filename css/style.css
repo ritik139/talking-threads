@@ -1648,7 +1648,7 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
      is scoped to this exact ≤1024px mobile-header breakpoint, so the
      desktop header (>1024px) keeps it exactly as before. */
   .announce{ display: none; }
-  .brand{ order: 0; flex: 0 1 auto; align-items: flex-start; text-align: left; }
+  .brand{ order: 0; flex: 0 1 auto; align-items: flex-start; text-align: left; margin-right: 10px; }
   /* Header wordmark: desktop's 1.7rem/0.16em tracking has no room to
      shrink to at mobile/tablet widths once icons + hamburger are also
      on the row, which is what forced ellipsis ("TALKI…") in the
@@ -1661,8 +1661,8 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   /* Icons sized up to match the reference's bolder, more tappable mobile
      glyphs (was 22px) — gap trimmed slightly so the larger icons don't
      eat into the wordmark's space. */
-  .header-icons{ order: 2; gap: 12px; }
-  .icon-btn{ width: 25px; height: 25px; }
+  .header-icons{ order: 2; gap: 15px; margin-left: auto; }
+  .icon-btn{ width: 30px; height: 30px; }
   .icon-btn svg{ stroke-width: 1.4; }
 }
 @media (max-width: 768px){

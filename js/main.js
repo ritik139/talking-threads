@@ -1621,6 +1621,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const colorOptions = document.querySelector('.color-options');
       if (colorOptions) colorOptions.innerHTML = '';
 
+      // BUG FIX: clearing .size-pills/.color-options above only removes the selectable
+      // pills/swatches — it left every other buy-box element (the "Size: Medium — 12in
+      // Hoop" / "Thread Colour: Antique Gold" summary labels, the custom-text input, the
+      // quantity stepper, and the price summary rows) fully visible with their static
+      // placeholder values, so a "Product Not Found" page still looked like a real,
+      // purchasable product underneath the message. Hide the whole option/qty/summary
+      // block instead so nothing but the not-found message and the "back to shop" link
+      // is shown.
+      const optionBlocks = document.querySelectorAll('.pd-info .option-block, .pd-info .option-row');
+      optionBlocks.forEach(el => { el.style.display = 'none'; });
+      const pdSummary = document.querySelector('.pd-summary');
+      if (pdSummary) pdSummary.style.display = 'none';
+
       const addBtn = document.getElementById('addToCartBtn');
       if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Unavailable'; }
       const pdWish = document.getElementById('pdWishBtn');

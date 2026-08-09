@@ -281,7 +281,7 @@ async function sendOrderConfirmationEmail({ order, customerName, customerEmail }
     html: `
       <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.6;">
         <h2 style="margin:0 0 16px;">Thank you for your order, ${escapeHtml(customerName || 'there')}!</h2>
-        <p style="margin:0 0 16px;">Your order <strong>${escapeHtml(order.orderNumber)}</strong> has been received and is being prepared by our artisans in Jaipur. We hand-stitch every piece to order, so please allow 10&ndash;14 days before it ships.</p>
+        <p style="margin:0 0 16px;">Your order <strong>${escapeHtml(order.orderNumber)}</strong> has been received and is being prepared by our artisans in Mumbai. We hand-stitch every piece to order, so please allow 10&ndash;14 days before it ships.</p>
         <table style="border-collapse:collapse;width:100%;max-width:480px;">
           <thead>
             <tr>

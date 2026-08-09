@@ -40,7 +40,7 @@ const ALLOWED_PAGES = [
 ];
 
 const POLICIES = `
-- Products: every piece is hand-embroidered and made to order in Jaipur. Categories: ${CATEGORY_ENUM.join(', ')}. Marketing collections: ${COLLECTION_ENUM.join(', ')}. Available sizes: ${SIZE_ENUM.join(', ')}. Thread colours: ${COLOR_ENUM.join(', ')}. Browse via Shop (shop.html) or Collections (collections.html); a single product's page is product.html.
+- Products: every piece is hand-embroidered and made to order in Mumbai. Categories: ${CATEGORY_ENUM.join(', ')}. Marketing collections: ${COLLECTION_ENUM.join(', ')}. Available sizes: ${SIZE_ENUM.join(', ')}. Thread colours: ${COLOR_ENUM.join(', ')}. Browse via Shop (shop.html) or Collections (collections.html); a single product's page is product.html.
 - Customization: many products are customizable (e.g. monogram/custom text) — max custom text length varies per product and is shown on that product's page. Never state a specific max length unless it's given to you in PRODUCT CONTEXT below.
 - Ordering: orders are placed through the cart (cart.html) at checkout, which requires being signed in (login.html / register.html for guests).
 - Shipping: made-to-order pieces need extra time before dispatch — exact timeline is shown per product; exact shipping cost/delivery estimate is calculated at checkout based on address. Never invent a number of days or a shipping cost.
@@ -48,12 +48,12 @@ const POLICIES = `
 - Order status/cancel: a signed-in customer can cancel from My Orders (my-orders.html) while an order is still pending/early in processing. If ORDER CONTEXT below lists the customer's real orders, use that data (order number, status) directly instead of asking them to look it up. If they're not signed in or have no matching order, direct them to sign in and check My Orders, or Contact (contact.html) with their order number.
 - Returns/refunds/exchanges: for damaged or defective items only. Customer should email photos within 48 hours of delivery via Contact (contact.html).
 - Wishlist: signed-in customers can save items via the heart icon, viewable at wishlist.html.
-- About: Talking-Thread is a hand-embroidery house founded by Ritik Parihar, stitching heirloom pieces to order in Jaipur (about.html). There's also customer Reviews (reviews.html).
+- About: Talking-Thread is a hand-embroidery house founded by Ravina Deora, stitching heirloom pieces to order in Mumbai (about.html). There's also customer Reviews (reviews.html).
 - Human support: Contact page (contact.html), typical reply time 1–2 business days. Always ask for the order number on order-specific queries.
 `.trim();
 
 const SYSTEM_PROMPT_INSTRUCTIONS = `
-You are the support chat assistant embedded on the Talking-Thread website — a hand-embroidery, made-to-order shop based in Jaipur, India.
+You are the support chat assistant embedded on the Talking-Thread website — a hand-embroidery, made-to-order shop based in Mumbai, India.
 
 Ground rules:
 1. Only state facts that are in SHOP POLICIES, PRODUCT CONTEXT, or ORDER CONTEXT below, or that the customer already told you. Never invent prices, stock, exact shipping days, order status, or availability.

@@ -20,7 +20,7 @@
   if (!mapEl || typeof L === 'undefined') return; // Not on this page, or Leaflet failed to load.
 
   // Studio origin — used as the route start point. Kept in sync with the address shown on
-  // contact.html / the footer (C-12 Malviya Nagar, Jaipur, Rajasthan 302017, India).
+  // contact.html / the footer (C-12 Malviya Nagar, Mumbai, Maharashtra 400001, India).
   const STUDIO = { lat: 26.8506, lng: 75.8046 };
 
   const searchInput = document.getElementById('co-map-search');

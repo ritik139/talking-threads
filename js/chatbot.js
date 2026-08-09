@@ -30,7 +30,7 @@
     {
       id: "products",
       patterns: ["product", "collection", "item", "design", "embroidery", "custom", "personalis", "personaliz", "made to order", "fabric", "material", "size"],
-      reply: "All our pieces are hand-embroidered and made to order in Jaipur. You can browse everything in our <a href=\"shop.html\">Shop</a> or see curated sets in <a href=\"collections.html\">Collections</a>. Want custom embroidery? Mention it on the product page or message us via Contact."
+      reply: "All our pieces are hand-embroidered and made to order in Mumbai. You can browse everything in our <a href=\"shop.html\">Shop</a> or see curated sets in <a href=\"collections.html\">Collections</a>. Want custom embroidery? Mention it on the product page or message us via Contact."
     },
     {
       id: "order_status",
@@ -64,8 +64,8 @@
     },
     {
       id: "about",
-      patterns: ["about", "who are you", "founder", "story", "jaipur", "handmade", "artisan"],
-      reply: "Talking-Thread is a hand-embroidery house founded by Ritik Parihar, stitching heirloom pieces to order in Jaipur. Read more on our <a href=\"about.html\">About page</a>."
+      patterns: ["about", "who are you", "founder", "story", "mumbai", "handmade", "artisan"],
+      reply: "Talking-Thread is a hand-embroidery house founded by Ravina Deora, stitching heirloom pieces to order in Mumbai. Read more on our <a href=\"about.html\">About page</a>."
     },
     {
       id: "thanks",

@@ -349,6 +349,50 @@ img, video, iframe, table, svg{ max-width: 100%; }
 @media (min-width: 481px) and (max-width: 768px){
   .footer-newsletter-form{ flex: 0 1 auto; width: 100%; }
   .admin-nav{ flex-wrap: wrap; }
+
+  /* ---------- Hero "Est. Talking-Thread, 2019" badge — edge-bleed fix ----------
+     .hero-tag uses a -22px bottom/left offset in style.css so the badge
+     overlaps the hero photo's corner elegantly on desktop. But .container's
+     padding drops from 40px to 22px at this breakpoint, which exactly
+     cancels that -22px offset — the badge ends up flush against the
+     viewport edge (0px clearance) at 481-768px widths. Pulling the offset
+     in to -10px here restores a clean 12-18px gap without touching the
+     desktop rule. */
+  .hero-tag{ bottom: -10px; left: -10px; }
+}
+
+/* ---------- Header row balance — 481–1024px ----------
+   At ≤1024px style.css switches to the hamburger layout: menu-toggle +
+   header-floral + brand sit as one left-hugging cluster, while
+   .header-icons gets margin-left:auto and pins itself to the far right
+   edge. At narrow phone widths (≤480px) that reads fine because there's
+   almost no leftover width. But from ~500px up to 1024px the two
+   clusters stay pinned to their edges while the leftover width (which
+   grows with the viewport) all collects as one lopsided gap in the
+   middle — logo cluster fully left, icons fully right, nothing in
+   between. Switching .nav to a 4-column grid for this range and
+   centering .brand in the middle track turns that one big gap into two
+   even ones, so the row reads balanced at every width in between
+   instead of just at the two extremes. Scoped to this range only —
+   ≤480px keeps its existing left-cluster/right-cluster layout untouched,
+   and >1024px is unaffected since .menu-toggle isn't shown there. */
+@media (min-width: 481px) and (max-width: 1024px){
+  .nav{
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    align-items: center;
+    gap: 14px;
+  }
+  .menu-toggle{ grid-column: 1; margin-right: 16px; }
+  .header-floral{ grid-column: 2; }
+  .brand{
+    grid-column: 3;
+    justify-self: center;
+    align-items: center;
+    text-align: center;
+    margin-right: 0;
+  }
+  .header-icons{ grid-column: 4; margin-left: 0; }
 }
 
 /* ==========================================================================
@@ -467,6 +511,21 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .tt-chat-launcher{ bottom: 104px; }
   .tt-chat-window{ bottom: 172px; }
   .wa-float{ bottom: 174px; }
+}
+
+/* ---------- WhatsApp / chat launcher — horizontal alignment fix ----------
+   Sizes already match (both 48px at ≤768px, 44px at ≤480px), but only
+   .wa-float's `right` offset gets tightened at those breakpoints (18px,
+   then 14px) — .tt-chat-launcher's `right` is never touched below 1024px
+   and stays at its base 26px. That 8px / 12px mismatch means the two
+   buttons don't sit in the same vertical line even though they're
+   stacked directly above one another. Matching .tt-chat-launcher's
+   `right` to .wa-float's at each breakpoint aligns them properly. */
+@media (max-width: 768px){
+  .tt-chat-launcher{ right: 18px; }
+}
+@media (max-width: 480px){
+  .tt-chat-launcher{ right: 14px; }
 }
 
 /* ---------- Contact page map — root-cause fix ----------

@@ -1058,14 +1058,30 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
 }
 .product-card:hover .pc-actions{ opacity: 1; transform: translateX(0); pointer-events: auto; }
 .product-card:focus-within .pc-actions{ opacity: 1; transform: translateX(0); pointer-events: auto; }
+/* ROOT CAUSE FIX ("Add to Cart opens a blank product page for a second
+   instead of adding the item"): the hover-to-reveal reasoning above only
+   holds on devices that actually HAVE a hover concept. On touch devices
+   there is no hover — a tap only SIMULATES :hover/:focus-within, and the
+   simulation timing is inconsistent across mobile browsers. The touch's
+   own `touchstart` can land while pointer-events is still `none` (button
+   not yet "revealed"), which lets it pass straight through to the photo
+   underneath and get picked up as a generic tap on the card — triggering
+   the document-level "open this product's page" navigation instead of the
+   quick-add/wishlist action the person actually tapped. The button's own
+   opacity can also still read 0 at the exact moment the click resolves
+   (the reveal transition hasn't finished), so even on the rare tap that
+   DOES land on the button, it does so invisibly — no visual confirmation
+   the tap even registered, which is what made a successful add look
+   exactly like a failed/blank one. A previous pass removed the
+   `@media (hover: none)` override that kept these icons permanently
+   visible+tappable on touch devices, trading this correctness problem for
+   a purely aesthetic one (icons sitting fixed on the photo). Restoring it
+   fixes the functional bug; the tradeoff is intentional. */
+@media (hover: none){
+  .pc-actions{ opacity: 1; transform: none; pointer-events: auto; }
+}
 /* Slight stagger between the wishlist and quick-add icons as they enter,
-   instead of both appearing in perfect unison — icon count/order unchanged.
-   BUG FIX: these icons used to be forced permanently visible on touch/mobile
-   devices via `@media (hover: none){ .pc-actions{ opacity: 1 } }`, which made
-   them sit fixed on top of every product photo on mobile instead of only
-   appearing on interaction — that rule is removed so mobile now behaves the
-   same as desktop: hidden until the card is touched/focused (most mobile
-   browsers trigger :hover on tap), never permanently overlaid on the image. */
+   instead of both appearing in perfect unison — icon count/order unchanged. */
 .pc-actions .pc-icon-btn:nth-child(2){ transition-delay: .05s; }
 .pc-icon-btn{
   position: relative;
@@ -1490,6 +1506,7 @@ body.mobile-menu-open{ overflow: hidden; } /* temporary scroll lock while the
   display: grid; grid-template-columns: 1.3fr 0.8fr 0.8fr 0.8fr 1.1fr; gap: 40px; padding-bottom: 46px;
 }
 .footer-brand .logo{ margin-bottom: 18px; }
+.footer-brand .logo-mark{ color: var(--sage); }
 .footer-brand p{ color: var(--ink-soft); font-size: 0.9rem; max-width: 32ch; margin-bottom: 22px; }
 .social-icons{ display: flex; gap: 14px; }
 .social-icons a{ position: relative; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: border-color .2s, background .2s, transform .35s var(--ease); }

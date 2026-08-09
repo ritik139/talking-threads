@@ -31,7 +31,7 @@ const products = [
     availability: 'Made to Order',
     shortDescription: 'A pearl-trimmed hoop hand-embroidered with baby birth details and cute animal motifs.',
     description:
-      'A hand-embroidered baby birth announcement hoop finished with a pearl trim, featuring space for the baby\'s name, birth date, time and weight alongside a hand-stitched elephant, monkey, giraffe and baby motif. Made to order in our Jaipur atelier and personalised with your own birth details.',
+      'A hand-embroidered baby birth announcement hoop finished with a pearl trim, featuring space for the baby\'s name, birth date, time and weight alongside a hand-stitched elephant, monkey, giraffe and baby motif. Made to order in our Mumbai atelier and personalised with your own birth details.',
     sizes: ['Small — 8in', 'Medium — 12in', 'Large — 16in'],
     colors: ['gold', 'sage', 'ivory'],
     tags: ['baby hoop', 'birth announcement hoop', 'baby milestone embroidery hoop', 'nursery hoop', 'new baby gift', 'personalized hoop']
@@ -135,7 +135,7 @@ const products = [
     availability: 'Made to Order',
     shortDescription: 'A hand-embroidered hoop announcing a new arrival, personalised with name, date and birth details.',
     description:
-      'A wooden embroidery hoop hand-stitched to welcome a new baby boy, personalised with his name, birth time, date and weight, alongside hand-embroidered elephant, monkey and baby motifs. A keepsake gift for new parents, made to order in our Jaipur atelier.',
+      'A wooden embroidery hoop hand-stitched to welcome a new baby boy, personalised with his name, birth time, date and weight, alongside hand-embroidered elephant, monkey and baby motifs. A keepsake gift for new parents, made to order in our Mumbai atelier.',
     sizes: ['Small — 8in', 'Medium — 12in'],
     colors: ['ivory', 'multicolour'],
     tags: ['baby birth hoop', 'newborn announcement hoop', 'welcome baby hoop', 'personalized baby gift', 'new baby embroidery hoop']
@@ -152,7 +152,7 @@ const products = [
     availability: 'Made to Order',
     shortDescription: 'A heart-shaped floral wreath hoop with gold tassels, personalised with a name and date.',
     description:
-      'A wooden embroidery hoop hand-stitched into a heart-shaped floral wreath, personalised with a name and date, finished with gold-and-white tasseled trim. A warm housewarming or homecoming gift, made to order in our Jaipur atelier.',
+      'A wooden embroidery hoop hand-stitched into a heart-shaped floral wreath, personalised with a name and date, finished with gold-and-white tasseled trim. A warm housewarming or homecoming gift, made to order in our Mumbai atelier.',
     sizes: ['Medium — 10in'],
     colors: ['ivory', 'gold', 'blush'],
     tags: ['welcome home hoop', 'floral heart hoop', 'housewarming gift hoop', 'personalized hoop', 'tasseled embroidery hoop']
@@ -169,7 +169,7 @@ const products = [
     availability: 'Made to Order',
     shortDescription: 'A cotton handkerchief hand-embroidered with a peacock feather and a devotional Krishna quote.',
     description:
-      'A soft cotton handkerchief hand-embroidered with a peacock feather and flute motif alongside a comforting devotional line about Krishna. A small, meaningful keepsake, made to order in our Jaipur atelier.',
+      'A soft cotton handkerchief hand-embroidered with a peacock feather and flute motif alongside a comforting devotional line about Krishna. A small, meaningful keepsake, made to order in our Mumbai atelier.',
     colors: ['white'],
     tags: ['krishna handkerchief', 'devotional embroidery', 'spiritual gift', 'embroidered handkerchief', 'peacock feather embroidery']
   },
@@ -184,7 +184,7 @@ const products = [
     availability: 'Made to Order',
     shortDescription: 'A cotton hoodie finished with a hand-embroidered panda motif on the chest.',
     description:
-      'A soft cotton hoodie finished with a hand-embroidered panda motif on the chest. A playful, cozy piece made to order in our Jaipur atelier — a fun gift for kids or panda lovers of any age.',
+      'A soft cotton hoodie finished with a hand-embroidered panda motif on the chest. A playful, cozy piece made to order in our Mumbai atelier — a fun gift for kids or panda lovers of any age.',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['cream', 'grey'],
     tags: ['embroidered hoodie', 'panda hoodie', 'custom hoodie', 'handmade clothing', 'cotton hoodie']
@@ -201,7 +201,7 @@ const products = [
     availability: 'Made to Order',
     shortDescription: 'A cotton handkerchief hand-embroidered with a large monogram letter, flowers and a name.',
     description:
-      'A soft cotton handkerchief hand-embroidered with a large monogram initial framed by a small floral spray, personalised with a name below. A simple, elegant keepsake made to order in our Jaipur atelier.',
+      'A soft cotton handkerchief hand-embroidered with a large monogram initial framed by a small floral spray, personalised with a name below. A simple, elegant keepsake made to order in our Mumbai atelier.',
     sizes: ['Small — 8in'],
     colors: ['ivory'],
     tags: ['monogram handkerchief', 'personalized initial cloth', 'embroidered monogram', 'name embroidery', 'hand-embroidered gift']
@@ -218,7 +218,7 @@ const products = [
     availability: 'Made to Order',
     shortDescription: 'A cotton handkerchief hand-embroidered with a penguin holding a heart balloon and a special date.',
     description:
-      'A soft cotton handkerchief hand-embroidered with a cheerful penguin holding a red heart balloon, personalised with initials and a special date. A sweet, pocket-sized keepsake made to order in our Jaipur atelier.',
+      'A soft cotton handkerchief hand-embroidered with a cheerful penguin holding a red heart balloon, personalised with initials and a special date. A sweet, pocket-sized keepsake made to order in our Mumbai atelier.',
     sizes: ['Small — 8in'],
     colors: ['ivory'],
     tags: ['penguin handkerchief', 'embroidered handkerchief', 'cute gift', 'personalized date embroidery', 'pocket cloth']
@@ -251,7 +251,7 @@ const products = [
     availability: 'Made to Order',
     shortDescription: 'A hoop hand-embroidered with a "Welcome Home" message, a name, a date and a rose vine wreath.',
     description:
-      'A pearl-trimmed embroidery hoop hand-stitched with a "Welcome Home" message, a name and a date, framed by a hand-embroidered vine wreath of little rose blooms and leaves in red and green thread. A warm homecoming or housewarming keepsake, made to order in our Jaipur atelier.',
+      'A pearl-trimmed embroidery hoop hand-stitched with a "Welcome Home" message, a name and a date, framed by a hand-embroidered vine wreath of little rose blooms and leaves in red and green thread. A warm homecoming or housewarming keepsake, made to order in our Mumbai atelier.',
     sizes: ['Medium — 12in', 'Large — 16in'],
     colors: ['ivory', 'red', 'sage'],
     tags: ['welcome home hoop', 'rose wreath hoop', 'housewarming gift', 'personalized hoop', 'homecoming gift']
@@ -268,7 +268,7 @@ const products = [
     availability: 'Made to Order',
     shortDescription: 'A cotton shirt hand-embroidered with a fine-line sketch of a father and daughter moment.',
     description:
-      'A crisp white cotton shirt finished with a hand-embroidered fine-line sketch on the chest, capturing a tender father-daughter moment. A heartfelt, wearable keepsake made to order in our Jaipur atelier — a lovely gift for Father\'s Day or any occasion worth stitching into memory.',
+      'A crisp white cotton shirt finished with a hand-embroidered fine-line sketch on the chest, capturing a tender father-daughter moment. A heartfelt, wearable keepsake made to order in our Mumbai atelier — a lovely gift for Father\'s Day or any occasion worth stitching into memory.',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['white'],
     tags: ['embroidered shirt', 'father daughter gift', 'sketch embroidery', 'custom shirt', 'handmade clothing']
@@ -304,7 +304,7 @@ const products = [
     availability: 'Made to Order',
     shortDescription: 'A pearl-trimmed hoop hand-embroidered with a "Welcome Home Bhabhi" message and rose vine border, finished with red-and-white tassels.',
     description:
-      'A hand-embroidered hoop reading "Welcome Home Bhabhi" with a personalised date, framed by a hand-stitched rose and leaf vine border and a pearl trim, finished with a cascade of red-and-white yarn tassels. Made to order in our Jaipur atelier — a warm keepsake to welcome a new bhabhi home.',
+      'A hand-embroidered hoop reading "Welcome Home Bhabhi" with a personalised date, framed by a hand-stitched rose and leaf vine border and a pearl trim, finished with a cascade of red-and-white yarn tassels. Made to order in our Mumbai atelier — a warm keepsake to welcome a new bhabhi home.',
     sizes: ['Medium — 12in', 'Large — 16in'],
     colors: ['maroon', 'ivory'],
     tags: ['welcome home hoop', 'bhabhi gift', 'housewarming gift', 'tasseled hoop', 'personalized hoop']
@@ -322,7 +322,7 @@ const products = [
     availability: 'Made to Order',
     shortDescription: 'A pearl-trimmed hoop hand-embroidered with a baby welcome message and cute jungle animal appliques.',
     description:
-      'A hand-embroidered hoop reading "Welcome Home [baby\'s name]" with the birth date and parents\' names, framed by hand-appliqued jungle animals — a giraffe, monkey, lion and elephant — and leafy vines, finished with a pearl trim. Made to order in our Jaipur atelier and personalised with your baby\'s name and details.',
+      'A hand-embroidered hoop reading "Welcome Home [baby\'s name]" with the birth date and parents\' names, framed by hand-appliqued jungle animals — a giraffe, monkey, lion and elephant — and leafy vines, finished with a pearl trim. Made to order in our Mumbai atelier and personalised with your baby\'s name and details.',
     sizes: ['Medium — 12in', 'Large — 16in'],
     colors: ['ivory', 'sage'],
     tags: ['baby hoop', 'welcome home hoop', 'jungle animal embroidery', 'new baby gift', 'personalized hoop']
@@ -339,7 +339,7 @@ const products = [
     availability: 'Made to Order',
     shortDescription: 'A pearl-trimmed hoop hand-embroidered with a "Griha Pravesh" house motif and rose vine border, finished with maroon tassels.',
     description:
-      'A hand-embroidered hoop reading "गृह प्रवेश" (Griha Pravesh) with a hand-stitched house motif, personalised with a date, framed by a rose and leaf vine border in maroon and gold thread with a pearl trim, finished with a cascade of maroon yarn tassels. Made to order in our Jaipur atelier for a new home\'s housewarming.',
+      'A hand-embroidered hoop reading "गृह प्रवेश" (Griha Pravesh) with a hand-stitched house motif, personalised with a date, framed by a rose and leaf vine border in maroon and gold thread with a pearl trim, finished with a cascade of maroon yarn tassels. Made to order in our Mumbai atelier for a new home\'s housewarming.',
     sizes: ['Medium — 12in', 'Large — 16in'],
     colors: ['maroon', 'gold'],
     tags: ['griha pravesh hoop', 'housewarming gift', 'tasseled hoop', 'personalized hoop', 'new home gift']

@@ -160,6 +160,14 @@ body.page-shop .mshop-intro{
     border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);
     background: rgba(233,223,201,0.35);
   }
+  /* Same container-padding mismatch as .toolbar above: -20px assumes 20px of
+     .container padding, but that shrinks to 16px/14px on narrower phones. */
+  @media (max-width: 480px){
+    body.page-shop .mshop-badges{ margin: 0 -16px; }
+  }
+  @media (max-width: 390px){
+    body.page-shop .mshop-badges{ margin: 0 -14px; }
+  }
   body.page-shop .mshop-badge{ text-align: center; }
   body.page-shop .mshop-badge svg{
     width: 22px; height: 22px; color: var(--ink-soft); margin-bottom: 6px;
@@ -186,6 +194,19 @@ body.page-shop .mshop-intro{
   body.page-shop .toolbar{
     display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
     padding: 16px 16px; margin: 0 -20px 18px; border-bottom: 1px solid var(--line-soft);
+  }
+  /* The -20px bleed above assumes .container has 20px of side padding, but
+     responsive-fixes.css shrinks .container padding further down at narrower
+     widths (16px at ≤480px, 14px at ≤390px) without the toolbar's margin
+     following suit — that mismatch was pushing the toolbar 4-6px past the
+     viewport edge and causing horizontal scroll on real phones. Matching the
+     margin to each breakpoint's actual container padding keeps the bleed
+     exactly edge-to-edge instead of overflowing it. */
+  @media (max-width: 480px){
+    body.page-shop .toolbar{ margin: 0 -16px 18px; }
+  }
+  @media (max-width: 390px){
+    body.page-shop .toolbar{ margin: 0 -14px 18px; }
   }
   body.page-shop .search-field{
     flex: 1 1 100%; min-width: 0; order: 1;

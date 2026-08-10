@@ -45,7 +45,7 @@ body.page-shop .mshop-intro{
      intact for any page that still shows them. Scoped to body.page-shop +
      this media query only, so no other page and no desktop width is
      touched. */
-  body.page-shop .site-header .logo-icon{
+  body.page-shop .site-header .header-floral{
     display: none;
   }
   body.page-shop .site-header .icon-btn[data-search-toggle]{
@@ -359,4 +359,32 @@ body.page-shop .mshop-intro{
   /* ---------- Desktop-only intro (hero + featured collection + badges)
      is swapped out for .mshop-intro above, so hide it here. ---------- */
   body.page-shop .shop-intro-desktop{ display: none; }
+}
+
+/* ---------- Wishlist / quick-add icons — tap-to-reveal on touch (shop page only) ----------
+   style.css makes .pc-actions permanently visible on any `@media (hover: none)` device
+   (see the ROOT CAUSE FIX comment there): on touch there's no real hover, and reusing the
+   desktop opacity:0 + pointer-events:none reveal caused taps to fall through to the photo
+   underneath instead of registering on the button. That fix is correct and stays in place
+   sitewide (Home, Collections, Wishlist, Product page "You may also like" all keep the
+   always-visible behaviour).
+
+   For the shop page specifically, the icons instead start hidden (like desktop) and reveal
+   with the same smooth fade/slide on the FIRST tap anywhere on the product photo — see
+   the matching tap handler in js/shop-mobile.js, which reveals by adding .pc-touch-revealed
+   to the card and only lets a tap navigate to the product page once the icons are already
+   showing. pointer-events only switches to auto once revealed, so an unrevealed icon can
+   never silently swallow a tap — the original bug this sitewide fix exists for. */
+@media (hover: none){
+  body.page-shop .pc-actions{
+    opacity: 0;
+    transform: translateX(6px);
+    pointer-events: none;
+    transition: opacity .3s var(--ease), transform .3s var(--ease);
+  }
+  body.page-shop .product-card.pc-touch-revealed .pc-actions{
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
 }

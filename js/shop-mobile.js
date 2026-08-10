@@ -53,3 +53,45 @@
     }
   });
 })();
+
+/* ---------- Product card wishlist/quick-add icons — tap-to-reveal (touch only) ----------
+   Desktop keeps the existing hover-to-reveal in style.css untouched — a real mouse can
+   hover without clicking, so :hover alone already does this. Touchscreens have no hover
+   input at all, so this is the closest equivalent: the FIRST tap on a card's photo reveals
+   the icons (matching shop-mobile.css's `@media (hover: none) .pc-actions` override above)
+   instead of navigating. Only a further tap on an already-revealed card's photo navigates.
+   Runs in the capture phase so it decides the outcome before main.js's own bubble-phase
+   "click anywhere on the card navigates" listener ever sees the event — so a button tap
+   can never silently fall through to the photo underneath. */
+(function () {
+  if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    return; // real mouse available — desktop hover behaviour in style.css applies as-is
+  }
+
+  function collapseAllExcept(exceptCard) {
+    document.querySelectorAll('body.page-shop .product-card.pc-touch-revealed').forEach(function (c) {
+      if (c !== exceptCard) c.classList.remove('pc-touch-revealed');
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var media = e.target.closest('body.page-shop .pc-media');
+    if (!media) return;
+    if (e.target.closest('[data-wish-toggle], [data-quick-add]')) return; // icon taps work normally
+    var card = media.closest('.product-card');
+    if (!card) return;
+
+    if (!card.classList.contains('pc-touch-revealed')) {
+      e.preventDefault();
+      e.stopPropagation();
+      collapseAllExcept(card);
+      card.classList.add('pc-touch-revealed');
+    }
+  }, true);
+
+  // Tapping anywhere outside a revealed card's photo collapses it again.
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('body.page-shop .pc-media')) return; // handled above
+    collapseAllExcept(null);
+  });
+})();

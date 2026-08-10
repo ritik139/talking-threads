@@ -262,12 +262,19 @@ img, video, iframe, table, svg{ max-width: 100%; }
   .logo{ font-size: 1.15rem; } /* footer wordmark only, not the header */
   .brand-name{ font-size: 1.2rem; }
 }
-/* 391–423px (common Android widths like 412/414 — Pixel, Galaxy, etc.):
+/* 391–480px (common Android widths like 412/414/425 — Pixel, Galaxy, etc.):
    the floral mark must stay visible here (it's the same header icon that
    also appears in the footer), so instead of hiding it, it's shrunk
    alongside the wordmark/icons, with .nav and .header-icons kept at the
-   same 10px gap so the whole row reads as evenly spaced. */
-@media (min-width: 391px) and (max-width: 423px){
+   same 10px gap so the whole row reads as evenly spaced.
+   BUG FIX: this range used to stop at 423px, leaving 424-480px on the
+   larger 1.2rem font-size from the block above with no icon/floral
+   shrink — at that exact width the header row no longer had room for
+   the full "TALKING-THREAD" wordmark, so it silently ellipsis-truncated
+   to "TALKING-THRE...". Extending the range to 480px reuses these
+   already-fitting values for the whole 391-480px window instead of
+   leaving a gap. */
+@media (min-width: 391px) and (max-width: 480px){
   .header-floral{ height: 26px; margin: 0; }
   .brand-name{ font-size: 1.08rem; letter-spacing: 0.02em; }
   .nav{ gap: 10px; }

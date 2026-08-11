@@ -13,7 +13,7 @@
   window.__ttBotInit = true;
 
   var WHATSAPP_URL =
-    "https://wa.me/919024655202?text=" +
+    "https://wa.me/917021312553?text=" +
     encodeURIComponent("Hi, I'm looking for some help on the Talking-Thread website.");
 
   /* ---------------------------------------------------------------------

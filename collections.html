@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+  <script>(function(){try{var t=localStorage.getItem('tt-theme');if(!t){t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shop by Pattern — Talking-Thread</title>
 <meta name="description" content="Browse Talking-Thread's embroidery collections, from Floral Reverie to Bridal Trousseau.">
@@ -45,6 +46,7 @@
           <span class="brand-tag">Fine hand embroidery, since Mumbai</span>
         </a>
         <div class="header-icons">
+          <button type="button" class="icon-btn icon-btn-theme" data-theme-toggle aria-label="Toggle dark mode" aria-pressed="false" title="Toggle dark mode"><svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.2 14.7A8.4 8.4 0 1 1 9.3 3.8a7 7 0 0 0 10.9 10.9z" /></svg><svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.3" /><path d="M12 2.5v2.6M12 18.9v2.6M4.2 4.2l1.9 1.9M17.9 17.9l1.9 1.9M2.5 12h2.6M18.9 12h2.6M4.2 19.8l1.9-1.9M17.9 6.1l1.9-1.9" /></svg></button>
           <button type="button" class="icon-btn" data-search-toggle aria-label="Search" aria-haspopup="true" aria-expanded="false" aria-controls="headerSearch"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <circle cx="10.5" cy="10.5" r="6.5" />
               <path d="M20 20l-4.6-4.6" />
@@ -71,6 +73,7 @@
       <a href="login.html" class="mp-link"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.8-4 5-5.6 7-5.6s5.2 1.6 7 5.6"/></svg><span>My account</span></a>
       <a href="my-orders.html" class="mp-link"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3h12v18l-2.5-1.6L13 21l-1-1.6-1 1.6-2.5-1.6L6 21V3z"/><path d="M9 8h6M9 12h4"/></svg><span>My orders</span></a>
       <a href="wishlist.html" class="mp-link"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-9.3-8.8C1.3 8 2.7 5 6 5c2 0 3.4 1.1 6 3.6C14.6 6.1 16 5 18 5c3.3 0 4.7 3 3.3 6.2C19 15.6 12 20 12 20z"/></svg><span>Wishlist</span></a>
+          <button type="button" class="mp-link theme-toggle-row" data-theme-toggle aria-pressed="false"><svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.2 14.7A8.4 8.4 0 1 1 9.3 3.8a7 7 0 0 0 10.9 10.9z" /></svg><svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.3" /><path d="M12 2.5v2.6M12 18.9v2.6M4.2 4.2l1.9 1.9M17.9 17.9l1.9 1.9M2.5 12h2.6M18.9 12h2.6M4.2 19.8l1.9-1.9M17.9 6.1l1.9-1.9" /></svg><span>Dark Mode</span><span class="theme-toggle-switch" aria-hidden="true"><span class="theme-toggle-knob"></span></span></button>
     </div>
     <nav class="mobile-panel-links" aria-label="Mobile primary">
       <a href="index.html">Home</a>
@@ -382,5 +385,6 @@
     </a>
   </nav>
 <script src="js/main.js?v=20260810" defer></script>
+<script src="js/theme-toggle.js?v=20260811" defer></script>
 </body>
 </html>

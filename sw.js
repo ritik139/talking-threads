@@ -1,29 +1,65 @@
 /**
- * Talking-Thread — notification service worker
+ * Talking-Thread — service worker
  * ---------------------------------------------
- * This worker exists for ONE reason: mobile Chrome/Firefox (Android) refuse to run
- * `new Notification(...)` from a plain page script — calling it throws
- * "Failed to construct 'Notification': Illegal constructor. Use
- * ServiceWorkerRegistration.showNotification() instead." A service worker is required
- * before `registration.showNotification()` can be used, so this file registers one.
- *
- * It intentionally does NOT intercept fetches or cache anything — the site's normal
- * networking behaviour is untouched. It only supports notification display and lets a
- * tap on a notification focus (or open) the admin dashboard.
+ * Two jobs:
+ * 1. Notifications: mobile Chrome/Firefox (Android) refuse to run
+ *    `new Notification(...)` from a plain page script — calling it throws
+ *    "Failed to construct 'Notification': Illegal constructor. Use
+ *    ServiceWorkerRegistration.showNotification() instead." A service worker is
+ *    required before `registration.showNotification()` can be used.
+ * 2. PWA installability + basic offline support: caches the app shell (static
+ *    pages, CSS, JS, icons) so the site can be "Added to Home Screen" and still
+ *    load previously-visited pages when offline. API calls (/api/*) and any
+ *    non-GET request are always passed straight to the network — never cached —
+ *    so cart/orders/auth data stays live and correct.
  */
 
-self.addEventListener('install', () => {
+const CACHE_NAME = 'tt-shell-v1';
+const APP_SHELL = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/favicon.svg',
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .catch(() => {}) // don't block install if a shell asset 404s
+  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    // Safety net: this worker never creates a Cache Storage entry itself, but
-    // clear out any caches left behind by a previous worker version (or a
-    // future change) so stale assets can never be served from here.
+    // Drop any caches from a previous worker version before claiming clients.
     caches.keys()
-      .then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+      .then((keys) => Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      ))
       .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+
+  // Only ever handle simple GET navigations/assets. Everything else (API
+  // calls, POST/PUT/DELETE, cross-origin requests) goes straight to the network.
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/api/')) return;
+
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
+        return response;
+      })
+      .catch(() => caches.match(request).then((cached) => cached || caches.match('/index.html')))
   );
 });
 

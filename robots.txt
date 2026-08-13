@@ -10,4 +10,4 @@ Disallow: /my-orders.html
 Disallow: /admin-dashboard.html
 Disallow: /admin-login.html
 
-Sitemap: https://talking-threads.onrender.com/sitemap.xml
+Sitemap: https://talkingthread.in/sitemap.xml

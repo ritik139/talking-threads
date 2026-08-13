@@ -34,6 +34,22 @@ const app = express();
 
 connectDB();
 
+// SEO: the site is reachable at two hosts — the Render-assigned onrender.com
+// domain and the custom talkingthread.in domain (both resolve to this same
+// service). Search engines treat those as two separate sites serving
+// identical content ("duplicate content"), which splits ranking signals
+// between them instead of consolidating on one. Permanently (301) redirect
+// every request on the onrender.com host to the same path on
+// talkingthread.in, so there is exactly one canonical, indexable address.
+const CANONICAL_HOST = 'talkingthread.in';
+app.use((req, res, next) => {
+  const host = (req.headers.host || '').split(':')[0].toLowerCase();
+  if (host.endsWith('onrender.com')) {
+    return res.redirect(301, `https://${CANONICAL_HOST}${req.originalUrl}`);
+  }
+  next();
+});
+
 // ---- Security & parsing middleware ----
 app.use(
   helmet({

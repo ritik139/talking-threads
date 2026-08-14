@@ -1,0 +1,106 @@
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>https://talkingthread.in/</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/shop.html</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/collections.html</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/about.html</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/contact.html</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/reviews.html</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/terms.html</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/privacy.html</loc>
+  </url>
+
+
+  <!-- Products -->
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=baby-birth-announcement-embroidery-hoop</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=couple-love-quote-embroidery-hoop</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=hugging-bears-embroidered-handkerchief</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=welcome-home-floral-heart-embroidery-hoop-with-tassels</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=griha-pravesh-housewarming-embroidery-hoop</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=griha-pravesh-new-home-embroidery-hoop</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=baby-welcome-embroidery-hoop</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=welcome-home-floral-heart-embroidery-hoop-gold-tassels</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=krishna-quote-embroidered-handkerchief</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=panda-embroidered-hoodie</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=personalized-monogram-letter-handkerchief</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=penguin-balloon-embroidered-handkerchief</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=wedding-save-the-date-calendar-embroidery-hoop</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=welcome-home-rose-embroidery-hoop</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=father-daughter-sketch-embroidered-shirt</loc>
+  </url>
+
+  <url>
+    <loc>https://talkingthread.in/product.html?slug=i-love-you-script-embroidered-shirt</loc>
+  </url>
+
+</urlset>
+```

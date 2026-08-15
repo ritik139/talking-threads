@@ -15,6 +15,7 @@ const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 const { verifyMailer } = require('./utils/mailer');
+const { initWhatsApp } = require('./utils/whatsapp');
 const { adminPageGuard } = require('./middleware/auth');
 const User = require('./models/User');
 
@@ -277,6 +278,7 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Talking-Thread server running on http://localhost:${PORT} [${process.env.NODE_ENV || 'development'}]`);
   verifyMailer();
+  initWhatsApp();
 });
 
 module.exports = app;

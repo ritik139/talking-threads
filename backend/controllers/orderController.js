@@ -5,6 +5,7 @@ const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 const Notification = require('../models/Notification');
 const { sendNewOrderEmail, sendOrderConfirmationEmail } = require('../utils/mailer');
+const { sendNewOrderWhatsApp, sendOrderConfirmationWhatsApp } = require('../utils/whatsapp');
 
 function generateOrderNumber() {
   const rand = Math.random().toString(36).slice(2, 7).toUpperCase();
@@ -95,6 +96,27 @@ function notifyNewOrder(io, order, customer) {
     customerEmail: customer.email
   }).catch((err) => {
     console.error(`Order confirmation email failed for ${order.orderNumber}:`, err.message);
+  });
+
+  // WhatsApp notifications — mirror the two emails above, over WhatsApp instead.
+  // Same fire-and-forget pattern: a failed/slow send (or WhatsApp not yet
+  // connected/QR not scanned) must never block or fail checkout.
+  const customerPhone = order.shippingAddress && order.shippingAddress.phone;
+
+  sendNewOrderWhatsApp({
+    order,
+    customerName: customer.name,
+    customerPhone
+  }).catch((err) => {
+    console.error(`New order WhatsApp message failed for ${order.orderNumber}:`, err.message);
+  });
+
+  sendOrderConfirmationWhatsApp({
+    order,
+    customerName: customer.name,
+    customerPhone
+  }).catch((err) => {
+    console.error(`Order confirmation WhatsApp message failed for ${order.orderNumber}:`, err.message);
   });
 
   // ROOT CAUSE FIX: the admin dashboard's notification bell used to exist only as an

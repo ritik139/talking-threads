@@ -2,3 +2,4 @@ node_modules/
 backend/.env
 *.log
 .DS_Store
+backend/whatsapp-session/ 

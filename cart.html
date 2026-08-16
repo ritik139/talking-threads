@@ -10,7 +10,8 @@
 <meta name="robots" content="noindex, follow">
 <meta name="author" content="Talking-Thread">
 <meta name="theme-color" content="#8B2E3A">
-<link rel="icon" type="image/png" href="icons/favicon-64.png">
+<link rel="shortcut icon" href="favicon.ico">
+  <link rel="icon" type="image/png" href="icons/favicon-64.png">
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -229,7 +230,12 @@
       </div>
       <div class="field"><label for="co-country">Country</label><input id="co-country" name="country" type="text" value="India" required autocomplete="country-name"></div>
 
-      <p class="field-optional payment-note">Once you place the order, we'll send you a QR code to complete the payment.</p>
+      <h4 class="checkout-section-title">Payment Method</h4>
+      <div class="payment-methods" role="radiogroup" aria-label="Payment method">
+        <label class="payment-option"><input type="radio" name="paymentMethod" value="cod" checked> Cash on Delivery</label>
+        <label class="payment-option"><input type="radio" name="paymentMethod" value="razorpay"> Pay Online — Card / UPI / Netbanking (Razorpay)</label>
+      </div>
+      <p class="field-optional" id="pf-razorpay-note" style="display:none">You'll enter your card, UPI, or netbanking details on Razorpay's secure payment screen — we never see or store them.</p>
 
       <div class="field"><label for="co-notes">Order Notes <span class="field-optional">(optional)</span></label><textarea id="co-notes" name="notes" placeholder="Delivery instructions, gift note, etc."></textarea></div>
 
@@ -346,6 +352,8 @@
       </nav>
     </div>
 </div>
+<!-- Razorpay Checkout widget — only needed on this page (where "Pay Online" is offered) -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <!-- Leaflet + delivery-location picker (map, search, current location, OSRM route) — only needed on this page -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="js/delivery-map.js?v=20260810" defer></script>

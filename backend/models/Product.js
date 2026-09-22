@@ -11,34 +11,30 @@ const productSchema = new mongoose.Schema(
     compareAtPrice: { type: Number, default: null },
     // Array so a product can appear under more than one shop-page filter at once
     // (e.g. a hoop that's both "Wall Art" and part of the "Accessories" showcase).
+    // NOT an enum any more. The category list is now owned by the admin (see
+    // models/Category.js and the Categories tab in the dashboard), so a fixed
+    // enum here would reject every product filed under a category the admin
+    // added after this file was written — the create would fail validation with
+    // "is not a valid enum value" and the new category could never hold stock.
+    // Validity is enforced at the controller instead, against the live Category
+    // collection, which is the only place that knows the current list.
     category: {
-      type: [{ type: String, enum: ['Wall Art', 'Accessories', 'Clothing', 'Kidswear'] }],
+      type: [{ type: String, trim: true }],
       default: ['Wall Art'],
       validate: {
-        validator: (arr) => Array.isArray(arr) && arr.length > 0,
+        validator: (arr) => Array.isArray(arr) && arr.length > 0 && arr.every((c) => c && c.trim()),
         message: 'A product needs at least one category.'
       }
     },
-    // Marketing groupings shown on collections.html (a product can belong to more than one)
-    collections: [
-      {
-        type: String,
-        enum: [
-          'Floral Reverie',
-          'Monogram Edit',
-          'Table & Linen',
-          'Wall Art Hoops',
-          'Bridal Trousseau',
-          'Little Ones',
-          'Festive Table',
-          'Everyday Carry'
-        ]
-      }
-    ],
+    // Marketing groupings shown on collections.html (a product can belong to more
+    // than one). Free-form for the same reason as `category` above.
+    collections: [{ type: String, trim: true }],
     tags: [{ type: String, trim: true }],
     images: [{ type: String }],
     // Matches the exact thread-colour swatches in shop.html's filter sidebar (.swatch[data-color])
-    sizes: [{ type: String, enum: ['Small — 8in', 'Medium — 12in', 'Large — 16in', 'S', 'M', 'L', 'XL'] }],
+    // Free-form so the admin can add a size the shop didn't ship with (e.g. "XXL",
+    // "Extra Large — 20in") without this model rejecting the product.
+    sizes: [{ type: String, trim: true }],
     colors: [{ type: String, enum: ['maroon', 'gold', 'sage', 'ivory', 'midnight', 'blush'] }],
     availability: { type: String, enum: ['In Stock', 'Made to Order'], default: 'Made to Order' },
     isNewArrival: { type: Boolean, default: false },

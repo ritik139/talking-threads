@@ -38,10 +38,20 @@
   <aside class="admin-sidebar">
     <div class="admin-logo">Talking<em>-Thread</em><small>Admin Dashboard</small></div>
     <nav class="admin-nav">
-      <a href="admin-dashboard.html" class="active">
+      <!-- These switch panels in-page (see js/admin-catalog.js) rather than navigating,
+           so the live order socket and the loaded order list survive a tab change. -->
+      <button type="button" class="active" data-admin-view="orders">
         <svg viewBox="0 0 24 24"><path d="M6.5 8h11l-1 12h-9l-1-12z"/><path d="M9.2 8V6.2a2.8 2.8 0 015.6 0V8"/></svg>
         Orders
-      </a>
+      </button>
+      <button type="button" data-admin-view="products">
+        <svg viewBox="0 0 24 24"><path d="M21 15V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h10"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        Products
+      </button>
+      <button type="button" data-admin-view="categories">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        Categories
+      </button>
     </nav>
     <div class="admin-sidebar-foot">Signed in as<br><strong id="adminWhoName" style="color:var(--ivory)">—</strong></div>
   </aside>
@@ -49,8 +59,8 @@
   <main class="admin-main">
     <div class="admin-topbar">
       <div>
-        <h1>Orders</h1>
-        <p>View every customer order, and update fulfilment or payment status.</p>
+        <h1 id="adminViewTitle">Orders</h1>
+        <p id="adminViewSubtitle">View every customer order, and update fulfilment or payment status.</p>
       </div>
       <div class="admin-who">
         <div class="admin-notif" id="adminNotifWrap">
@@ -74,22 +84,175 @@
 
     <div class="admin-toast-stack" id="adminToastStack"></div>
 
-    <div class="admin-filters">
-      <input type="search" id="adminSearch" placeholder="Search order #, name, email, phone…">
-      <select id="adminStatusFilter">
-        <option value="">All statuses</option>
-        <option value="pending">Pending</option>
-        <option value="confirmed">Confirmed</option>
-        <option value="processing">Processing</option>
-        <option value="shipped">Shipped</option>
-        <option value="delivered">Delivered</option>
-        <option value="cancelled">Cancelled</option>
-      </select>
-      <span class="admin-count" id="adminOrderCount"></span>
+    <!-- ORDERS -------------------------------------------------------------- -->
+    <section data-view-panel="orders">
+      <div class="admin-filters">
+        <input type="search" id="adminSearch" placeholder="Search order #, name, email, phone…">
+        <select id="adminStatusFilter">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="processing">Processing</option>
+          <option value="shipped">Shipped</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <span class="admin-count" id="adminOrderCount"></span>
+      </div>
+
+      <div class="admin-orders" id="adminOrdersList">
+        <div class="admin-loading">Loading orders…</div>
+      </div>
+    </section>
+
+    <!-- PRODUCTS ------------------------------------------------------------ -->
+    <section data-view-panel="products" hidden>
+      <div class="admin-filters">
+        <input type="search" id="pmSearch" placeholder="Search products by name…">
+        <select id="pmCategoryFilter"><option value="">All categories</option></select>
+        <span class="admin-count" id="pmCount"></span>
+        <button type="button" class="admin-btn admin-btn-primary" id="pmAddBtn">+ Add Product</button>
+      </div>
+      <div class="admin-cards" id="pmList">
+        <div class="admin-loading">Loading products…</div>
+      </div>
+    </section>
+
+    <!-- CATEGORIES ---------------------------------------------------------- -->
+    <section data-view-panel="categories" hidden>
+      <div class="admin-filters">
+        <span class="admin-hint">Anything added here shows up in the Shop page filter straight away, with its own live product count.</span>
+        <button type="button" class="admin-btn admin-btn-primary" id="cmAddBtn">+ Add Category</button>
+      </div>
+      <div class="admin-cards" id="cmList">
+        <div class="admin-loading">Loading categories…</div>
+      </div>
+    </section>
+
+    <!-- CATEGORY MODAL ------------------------------------------------------ -->
+    <div class="admin-modal" id="cmModal" hidden>
+      <div class="admin-modal-box" role="dialog" aria-modal="true" aria-labelledby="cmModalTitle">
+        <div class="admin-modal-head">
+          <h3 id="cmModalTitle">Add Category</h3>
+          <button type="button" class="admin-modal-close" data-close-modal aria-label="Close">&times;</button>
+        </div>
+        <form class="admin-form" id="cmForm">
+          <input type="hidden" id="cmId">
+          <label class="admin-field">
+            <span>Category name <em>*</em></span>
+            <input type="text" id="cmName" required placeholder="e.g. Home Decor" maxlength="60">
+            <small>Stored on each product. Renaming it updates every product automatically.</small>
+          </label>
+          <label class="admin-field">
+            <span>Display label</span>
+            <input type="text" id="cmLabel" placeholder="Leave blank to use the name" maxlength="60">
+            <small>What shoppers see in the filter — e.g. name "Kidswear", label "Kids Wear".</small>
+          </label>
+          <label class="admin-field">
+            <span>Sort order</span>
+            <input type="number" id="cmOrder" value="100" min="0" step="1">
+            <small>Lower numbers appear higher up in the sidebar.</small>
+          </label>
+          <label class="admin-field admin-field-inline">
+            <input type="checkbox" id="cmActive" checked>
+            <span>Show this category on the Shop page</span>
+          </label>
+          <div class="admin-form-error" id="cmError" hidden></div>
+          <div class="admin-form-actions">
+            <button type="button" class="admin-btn" data-close-modal>Cancel</button>
+            <button type="submit" class="admin-btn admin-btn-primary" id="cmSave">Save Category</button>
+          </div>
+        </form>
+      </div>
     </div>
 
-    <div class="admin-orders" id="adminOrdersList">
-      <div class="admin-loading">Loading orders…</div>
+    <!-- PRODUCT MODAL ------------------------------------------------------- -->
+    <div class="admin-modal" id="pmModal" hidden>
+      <div class="admin-modal-box admin-modal-box-wide" role="dialog" aria-modal="true" aria-labelledby="pmModalTitle">
+        <div class="admin-modal-head">
+          <h3 id="pmModalTitle">Add Product</h3>
+          <button type="button" class="admin-modal-close" data-close-modal aria-label="Close">&times;</button>
+        </div>
+        <form class="admin-form" id="pmForm">
+          <input type="hidden" id="pmId">
+
+          <label class="admin-field">
+            <span>Product name <em>*</em></span>
+            <input type="text" id="pmName" required maxlength="140" placeholder="e.g. Welcome Home Floral Hoop">
+          </label>
+
+          <div class="admin-field-row">
+            <label class="admin-field">
+              <span>Price (&#8377;) <em>*</em></span>
+              <input type="number" id="pmPrice" required min="0" step="1" placeholder="2450">
+            </label>
+            <label class="admin-field">
+              <span>Compare-at price (&#8377;)</span>
+              <input type="number" id="pmCompare" min="0" step="1" placeholder="optional">
+            </label>
+          </div>
+
+          <div class="admin-field">
+            <span>Categories <em>*</em></span>
+            <div class="admin-checkbox-grid" id="pmCategories"></div>
+            <small>Tick every category this piece belongs in — it appears under each.</small>
+          </div>
+
+          <div class="admin-field">
+            <span>Photos</span>
+            <div class="admin-uploader">
+              <input type="file" id="pmPhotoInput" accept="image/jpeg,image/png,image/webp" multiple hidden>
+              <button type="button" class="admin-btn" id="pmPhotoBtn">Choose Photos…</button>
+              <span class="admin-upload-status" id="pmUploadStatus"></span>
+            </div>
+            <div class="admin-thumbs" id="pmThumbs"></div>
+            <small>JPG, PNG or WebP, up to 8&nbsp;MB each. The first photo is the one shown on the shop grid.</small>
+          </div>
+
+          <label class="admin-field">
+            <span>Short description</span>
+            <input type="text" id="pmShortDesc" maxlength="200" placeholder="One line shown in search and previews">
+          </label>
+
+          <label class="admin-field">
+            <span>Full description</span>
+            <textarea id="pmDesc" rows="4" placeholder="What it is, how it's stitched, what it's for…"></textarea>
+          </label>
+
+          <div class="admin-field-row">
+            <label class="admin-field">
+              <span>Sizes</span>
+              <input type="text" id="pmSizes" placeholder="Small &mdash; 8in, Medium &mdash; 12in">
+              <small>Comma separated.</small>
+            </label>
+            <label class="admin-field">
+              <span>Availability</span>
+              <select id="pmAvailability">
+                <option value="Made to Order">Made to Order</option>
+                <option value="In Stock">In Stock</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="admin-field">
+            <span>Thread colours</span>
+            <div class="admin-checkbox-grid" id="pmColors"></div>
+          </div>
+
+          <div class="admin-field-row">
+            <label class="admin-field admin-field-inline"><input type="checkbox" id="pmNew"><span>Mark as New</span></label>
+            <label class="admin-field admin-field-inline"><input type="checkbox" id="pmFeatured"><span>Featured</span></label>
+            <label class="admin-field admin-field-inline"><input type="checkbox" id="pmBest"><span>Bestseller</span></label>
+            <label class="admin-field admin-field-inline"><input type="checkbox" id="pmActive" checked><span>Visible in shop</span></label>
+          </div>
+
+          <div class="admin-form-error" id="pmError" hidden></div>
+          <div class="admin-form-actions">
+            <button type="button" class="admin-btn" data-close-modal>Cancel</button>
+            <button type="submit" class="admin-btn admin-btn-primary" id="pmSave">Save Product</button>
+          </div>
+        </form>
+      </div>
     </div>
   </main>
 </div>
@@ -97,5 +260,6 @@
 <!-- Served automatically by our own backend's socket.io server — no external CDN, works locally and in production alike -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="js/admin.js?v=20260810" defer></script>
+<script src="js/admin-catalog.js?v=20260921" defer></script>
 </body>
 </html>

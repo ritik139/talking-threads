@@ -1,6 +1,8 @@
+const slugify = require('slugify');
 const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const Product = require('../models/Product');
+const Category = require('../models/Category');
 
 const PRICE_BANDS = {
   'under-2000': { price: { $lte: 1999 } },
@@ -222,11 +224,133 @@ exports.getRelatedProducts = asyncHandler(async (req, res) => {
   res.json({ success: true, products: related });
 });
 
+// @desc   Counts per filter value, so the shop sidebar can render the category
+//         list (and its "12", "3", "8" badges) from real data instead of numbers
+//         typed into shop.html by hand, which silently went stale the moment a
+//         product was added, removed or recategorised.
+// @route  GET /api/products/facets
+// @access Public
+exports.getFacets = asyncHandler(async (req, res) => {
+  const [categoryRows, sizeRows, colorRows, categories] = await Promise.all([
+    // category is an array field, so unwind first: a product in two categories
+    // has to count once under each, not once in total.
+    Product.aggregate([
+      { $match: { isActive: true } },
+      { $unwind: '$category' },
+      { $group: { _id: '$category', count: { $sum: 1 } } }
+    ]),
+    Product.aggregate([
+      { $match: { isActive: true } },
+      { $unwind: '$sizes' },
+      { $group: { _id: '$sizes', count: { $sum: 1 } } }
+    ]),
+    Product.aggregate([
+      { $match: { isActive: true } },
+      { $unwind: '$colors' },
+      { $group: { _id: '$colors', count: { $sum: 1 } } }
+    ]),
+    Category.find({ isActive: true }).sort({ order: 1, name: 1 })
+  ]);
+
+  const toMap = (rows) => {
+    const map = {};
+    rows.forEach((row) => {
+      if (row._id) map[row._id] = row.count;
+    });
+    return map;
+  };
+
+  const categoryCounts = toMap(categoryRows);
+
+  // Start from the admin's own ordered category list, then append anything that
+  // products still reference but has no Category document yet — so a category is
+  // never silently missing from the filter while stock is sitting in it.
+  const listed = categories.map((cat) => ({
+    name: cat.name,
+    label: cat.label || cat.name,
+    slug: cat.slug,
+    image: cat.image || '',
+    count: categoryCounts[cat.name] || 0
+  }));
+  const known = new Set(listed.map((c) => c.name));
+  Object.keys(categoryCounts)
+    .filter((name) => !known.has(name))
+    .sort()
+    .forEach((name) => {
+      listed.push({ name, label: name, slug: '', image: '', count: categoryCounts[name] });
+    });
+
+  res.json({
+    success: true,
+    total: await Product.countDocuments({ isActive: true }),
+    categories: listed,
+    sizes: toMap(sizeRows),
+    colors: toMap(colorRows)
+  });
+});
+
+// @desc   Every product including deactivated ones — the dashboard's catalogue list
+// @route  GET /api/products/admin/all
+// @access Private/Admin
+exports.getProductsAdmin = asyncHandler(async (req, res) => {
+  const products = await Product.find({}).sort('-createdAt -_id').limit(500);
+  res.json({ success: true, count: products.length, products });
+});
+
+/**
+ * Normalise whatever the dashboard sent for `category` into a clean array, and
+ * check every value against the live Category collection. The model no longer
+ * carries an enum (it can't — the admin owns the list now), so this is the one
+ * place a typo like "Wall art" gets caught before it becomes an orphan filter
+ * row holding one lost product.
+ */
+async function assertCategoriesExist(value) {
+  const list = (Array.isArray(value) ? value : [value])
+    .map((c) => String(c == null ? '' : c).trim())
+    .filter(Boolean);
+
+  if (!list.length) throw new ApiError(400, 'Please choose at least one category for this product.');
+
+  const found = await Category.find({ name: { $in: list } }).select('name');
+  const known = new Set(found.map((c) => c.name));
+  const unknown = list.filter((name) => !known.has(name));
+
+  if (unknown.length) {
+    throw new ApiError(
+      400,
+      `Unknown categor${unknown.length === 1 ? 'y' : 'ies'}: ${unknown.join(', ')}. Add ${unknown.length === 1 ? 'it' : 'them'} under Categories first.`
+    );
+  }
+  return list;
+}
+
 // @desc   Create a product
 // @route  POST /api/products
 // @access Private/Admin
 exports.createProduct = asyncHandler(async (req, res) => {
-  const product = await Product.create(req.body);
+  const payload = { ...req.body };
+  payload.category = await assertCategoriesExist(payload.category);
+
+  // The slug is derived from the name and is unique, so two products with the
+  // same name collide on save. Check first, because the raw duplicate-key error
+  // surfaces as "slug already in use", which means nothing to the admin who just
+  // typed a name into the form.
+  const name = String(payload.name || '').trim();
+  if (name) {
+    const clash = await Product.findOne({
+      name: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+    }).select('name isActive');
+    if (clash) {
+      throw new ApiError(
+        409,
+        clash.isActive
+          ? `A product called "${clash.name}" already exists. Please use a different name.`
+          : `A hidden product called "${clash.name}" already exists — edit that one and mark it visible instead.`
+      );
+    }
+  }
+
+  const product = await Product.create(payload);
   res.status(201).json({ success: true, product });
 });
 
@@ -234,7 +358,48 @@ exports.createProduct = asyncHandler(async (req, res) => {
 // @route  PUT /api/products/:id
 // @access Private/Admin
 exports.updateProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+  const payload = { ...req.body };
+  if (payload.category !== undefined) {
+    payload.category = await assertCategoriesExist(payload.category);
+  }
+
+  // BUG FIX (product URL/slug frozen after a rename): this save goes through
+  // findByIdAndUpdate, which runs as QUERY middleware — the slug-generation hook
+  // on Product's schema (models/Product.js, registered on 'validate') is DOCUMENT
+  // middleware, so it never fires here even with runValidators:true. The result:
+  // editing a product's name in the dashboard changed the displayed name but left
+  // its slug (and therefore product.html?slug=...) pointing at the old name forever.
+  // categoryController.updateCategory doesn't have this problem because it calls
+  // category.save() instead of a query-based update, which does run the hook — so
+  // this mirrors that: recompute the slug explicitly whenever the name actually
+  // changes, and (matching createProduct's existing check) reject the rename up
+  // front with a clear message if another product already has that name, rather
+  // than letting the unique-slug index throw a raw, confusing duplicate-key error.
+  if (payload.name !== undefined) {
+    const nextName = String(payload.name).trim();
+    if (nextName) {
+      payload.name = nextName;
+      const current = await Product.findById(req.params.id).select('name');
+      if (!current) throw new ApiError(404, 'Product not found.');
+      if (current.name !== nextName) {
+        const clash = await Product.findOne({
+          _id: { $ne: req.params.id },
+          name: new RegExp(`^${nextName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+        }).select('name isActive');
+        if (clash) {
+          throw new ApiError(
+            409,
+            clash.isActive
+              ? `A product called "${clash.name}" already exists. Please use a different name.`
+              : `A hidden product called "${clash.name}" already exists — edit that one and mark it visible instead.`
+          );
+        }
+        payload.slug = slugify(nextName, { lower: true, strict: true });
+      }
+    }
+  }
+
+  const product = await Product.findByIdAndUpdate(req.params.id, payload, {
     new: true,
     runValidators: true
   });

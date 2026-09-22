@@ -6,6 +6,13 @@ const reviewCtrl = require('../controllers/reviewController');
 const router = express.Router();
 
 router.get('/', ctrl.getProducts);
+
+// IMPORTANT: both of these must stay ABOVE '/:idOrSlug'. Express matches routes
+// in order, so if they came after, "facets" and "admin" would be swallowed by
+// the :idOrSlug parameter and answered with "Product not found."
+router.get('/facets', ctrl.getFacets);
+router.get('/admin/all', protect, adminOnly, ctrl.getProductsAdmin);
+
 router.get('/:idOrSlug', ctrl.getProduct);
 router.get('/:idOrSlug/related', ctrl.getRelatedProducts);
 

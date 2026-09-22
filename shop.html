@@ -236,10 +236,16 @@
         </div>
         <div class="filter-group">
           <h4>Category</h4>
-          <label><input type="checkbox" data-filter="category" value="Wall Art"> Wall Art <span class="filter-count">12</span></label>
-          <label><input type="checkbox" data-filter="category" value="Accessories"> Accessories <span class="filter-count">3</span></label>
-          <label><input type="checkbox" data-filter="category" value="Clothing"> Clothing <span class="filter-count">3</span></label>
-          <label><input type="checkbox" data-filter="category" value="Kidswear"> Kids Wear <span class="filter-count">8</span></label>
+          <!-- Filled at runtime by js/shop-categories.js from GET /api/products/facets,
+               so a category the admin adds in the dashboard appears here automatically,
+               with a live product count instead of a number hand-typed into this file.
+               The markup below is only the pre-JS fallback (and what a crawler sees). -->
+          <div id="shopCategoryFilters" data-category-filters>
+            <label><input type="checkbox" data-filter="category" value="Wall Art"> Wall Art</label>
+            <label><input type="checkbox" data-filter="category" value="Accessories"> Accessories</label>
+            <label><input type="checkbox" data-filter="category" value="Clothing"> Clothing</label>
+            <label><input type="checkbox" data-filter="category" value="Kidswear"> Kids Wear</label>
+          </div>
         </div>
         <div class="filter-group">
           <h4>Size</h4>
@@ -669,5 +675,7 @@
 <script src="js/theme-toggle.js?v=20260812" defer></script>
 <script src="js/shop-mobile.js?v=20260810" defer></script>
 <script src="js/shop-view-toggle.js?v=20260810" defer></script>
+<!-- Must load AFTER main.js: it calls window.__ttApplyShopFilters, which main.js exposes. -->
+<script src="js/shop-categories.js?v=20260921" defer></script>
 </body>
 </html>

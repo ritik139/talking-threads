@@ -20,6 +20,8 @@ const User = require('./models/User');
 
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 const orderRoutes = require('./routes/orderRoutes');
@@ -139,6 +141,14 @@ app.use(
 // Razorpay webhook (backend/controllers/paymentController.js#razorpayWebhook), which must
 // HMAC the *raw* JSON to check X-Razorpay-Signature; re-serializing the parsed object can
 // produce different bytes (key order, spacing) and would make a legitimate webhook fail.
+// Admin photo uploads arrive as a base64 data URL in the JSON body, which is ~33%
+// larger than the file itself — an 8 MB photo needs roughly 11 MB of room. This
+// parser is mounted FIRST and scoped to /api/uploads only, so that one route gets
+// the headroom while every other endpoint keeps the tight 1 MB cap below. (Express's
+// body parser marks a request as parsed and the generic parser then skips it, so a
+// request is never read twice.)
+app.use('/api/uploads', express.json({ limit: '12mb' }));
+
 app.use(express.json({
   limit: '1mb',
   verify: (req, res, buf) => { req.rawBody = buf; }
@@ -198,6 +208,8 @@ app.use('/api', (req, res, next) => {
 // ---- API routes ----
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/uploads', uploadRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/orders', orderRoutes);

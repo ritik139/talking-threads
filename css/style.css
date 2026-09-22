@@ -100,3 +100,14 @@ html[data-theme="luxury"] .nav-links a::after{background-image:repeating-linear-
 html[data-theme="luxury"] .eyebrow{color:#4A90D9}
 html[data-theme="luxury"] .eyebrow::before{background:#4A90D9}
 html[data-theme="luxury"] ::selection{background:#4A90D9;color:#FFFFFF}
+/* ---- WhatsApp enquiry / share buttons (product page, cart, order confirmation) ---- */
+.btn-whatsapp{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:15px 28px;margin-top:12px;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;font-weight:600;border-radius:var(--radius);background:#25D366;color:#fff;border:1px solid #1EBE5B;overflow:hidden;isolation:isolate;touch-action:manipulation;transition:background .3s var(--ease),transform .25s var(--ease),box-shadow .3s var(--ease),border-color .3s var(--ease)}
+.btn-whatsapp::before{content:"";position:absolute;inset:0;z-index:-1;background:#1DA851;transform:translateX(-101%);transition:transform .45s var(--ease)}
+.btn-whatsapp:hover{border-color:#1DA851;transform:translateY(-2px);box-shadow:0 14px 30px -16px rgba(29,168,81,.55)}
+.btn-whatsapp:hover::before{transform:translateX(0)}
+.btn-whatsapp:active{transform:translateY(0);box-shadow:none}
+.btn-whatsapp:focus-visible{outline:2px solid #128C7E;outline-offset:3px}
+.btn-whatsapp .wa-btn-icon{width:19px;height:19px;fill:#fff;flex-shrink:0}
+.btn-whatsapp span{position:relative}
+.pd-actions-whatsapp{margin-bottom:24px}
+@media (max-width:480px){.btn-whatsapp{padding:14px 20px;font-size:.72rem;letter-spacing:.08em}}

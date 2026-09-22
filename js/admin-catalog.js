@@ -251,6 +251,7 @@
   var pmThumbs = el('pmThumbs');
 
   var draftImages = []; // paths for the product currently open in the modal
+  var pendingDeletes = []; // photos removed in this edit session, not yet deleted server-side
 
   // Keeps every place that lists categories (the filter dropdown and the modal's
   // tick boxes) in step with the Category collection, so a category added on the
@@ -313,17 +314,18 @@
     if (button.getAttribute('data-act') === 'remove-photo') {
       var removed = draftImages.splice(index, 1)[0];
       renderThumbs();
-      // BUG FIX (orphaned images piling up in /images): this used to only drop the
-      // path from the in-browser draft list. The file itself was never told to go
-      // away, so removing a photo (or replacing one — remove, then add a new one)
-      // silently left the old upload sitting on disk forever. The backend already
-      // has DELETE /api/uploads/image for exactly this; it was just never called.
-      // Best-effort and non-blocking: if the delete fails (e.g. a network hiccup),
-      // the admin's edit still goes through fine — it just leaves that one file
-      // orphaned instead of blocking the save.
-      if (removed) {
-        api('/uploads/image?path=' + encodeURIComponent(removed), { method: 'DELETE' }).catch(function () {});
-      }
+      // BUG FIX (photos vanishing even when the edit was never saved): this used
+      // to call DELETE /api/uploads/image the instant the × was clicked — the
+      // photo's bytes were gone from MongoDB right away, regardless of whether
+      // the admin went on to click "Save Product". A misclick, a validation
+      // error on save (e.g. no category ticked), or just closing the modal to
+      // cancel the edit still left that photo permanently deleted while the
+      // product document kept pointing at it — showing up as a broken/missing
+      // image on the live site, repeatedly, for edits that were never even
+      // confirmed. Fix: only remember the removal here; the actual server-side
+      // delete now fires from the form's submit handler, and only after the
+      // save itself has succeeded.
+      if (removed) pendingDeletes.push(removed);
     } else {
       // Promote to first: the shop grid and product page both use images[0].
       draftImages.unshift(draftImages.splice(index, 1)[0]);
@@ -451,6 +453,9 @@
     el('pmActive').checked = product ? !!product.isActive : true;
 
     draftImages = product ? (product.images || []).slice() : [];
+    // Start a clean slate every time the modal opens — any removal from a
+    // previous, unsaved edit of a different product must never carry over.
+    pendingDeletes = [];
     renderThumbs();
     renderColourInputs(product ? product.colors : []);
 
@@ -508,6 +513,15 @@
         await api('/products', { method: 'POST', body: JSON.stringify(payload) });
       }
       closeModal(pmModal);
+      // Only now, with the save confirmed, is it safe to actually delete the
+      // photos the admin removed during this edit — best-effort and
+      // non-blocking, same as before, just moved to after a real save.
+      if (pendingDeletes.length) {
+        pendingDeletes.forEach(function (removedPath) {
+          api('/uploads/image?path=' + encodeURIComponent(removedPath), { method: 'DELETE' }).catch(function () {});
+        });
+        pendingDeletes = [];
+      }
       await loadProducts();
       // Counts on the Categories tab move whenever stock does.
       if (loaded.categories) await loadCategories();

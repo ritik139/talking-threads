@@ -1,38 +1,25 @@
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
+const Upload = require('../models/Upload');
 
-// Images live in the same /images folder the rest of the site already serves
-// (see server.js's express.static mount), so an uploaded photo is reachable at
-// exactly the same kind of path as the seeded ones: images/<file>.jpg
+// Legacy support only: some existing Product/Category documents still hold
+// paths like "images/hoop-abc123.jpg" from BEFORE this file stored uploads in
+// MongoDB (see the comment on models/Upload.js for why that changed). Photos
+// uploaded going forward never touch this folder, but deleteImage() below
+// still knows how to clean up an old disk-based entry if someone removes one.
 const IMAGES_DIR = path.join(__dirname, '..', '..', 'images');
 
-const EXT_BY_MIME = {
-  'image/jpeg': 'jpg',
-  'image/jpg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-  'image/avif': 'avif'
-};
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif']);
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8 MB per photo
 
-function safeBaseName(input) {
-  return String(input || '')
-    .toLowerCase()
-    .replace(/\.[a-z0-9]+$/i, '')      // drop any extension the browser sent
-    .replace(/[^a-z0-9]+/g, '-')        // no slashes, dots or spaces survive → no path traversal
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60) || 'photo';
-}
-
-// @desc   Accept one image as a data URL and write it into /images
+// @desc   Accept one image as a data URL and store it in MongoDB
 // @route  POST /api/uploads/image
 // @access Private/Admin
 exports.uploadImage = asyncHandler(async (req, res) => {
-  const { dataUrl, filename } = req.body || {};
+  const { dataUrl } = req.body || {};
 
   if (!dataUrl || typeof dataUrl !== 'string') {
     throw new ApiError(400, 'No image was received. Please choose a photo and try again.');
@@ -42,8 +29,7 @@ exports.uploadImage = asyncHandler(async (req, res) => {
   if (!match) throw new ApiError(400, 'That file could not be read as an image.');
 
   const mime = match[1].toLowerCase();
-  const ext = EXT_BY_MIME[mime];
-  if (!ext) {
+  if (!ALLOWED_MIME.has(mime)) {
     throw new ApiError(400, 'Please upload a JPG, PNG or WebP image.');
   }
 
@@ -53,47 +39,64 @@ exports.uploadImage = asyncHandler(async (req, res) => {
     throw new ApiError(413, 'That photo is larger than 8 MB — please use a smaller version.');
   }
 
-  await fs.promises.mkdir(IMAGES_DIR, { recursive: true });
+  const doc = await Upload.create({ mimeType: mime, data: buffer });
 
-  // A short random suffix keeps two uploads called "hoop.jpg" from overwriting
-  // each other, and means a replaced photo gets a brand-new URL (so no browser
-  // or CDN can serve the previous image from cache).
-  const base = safeBaseName(filename);
-  const name = `${base}-${crypto.randomBytes(4).toString('hex')}.${ext}`;
-
-  await fs.promises.writeFile(path.join(IMAGES_DIR, name), buffer);
+  // Relative-from-root on purpose — the front end stores exactly this on
+  // Product.images / Category.image and the existing card/detail renderers
+  // already resolve any string that looks like a path, so nothing else in
+  // the front end needs to change.
+  const url = `/api/uploads/${doc._id}`;
 
   res.status(201).json({
     success: true,
-    // Relative on purpose — the front end stores exactly this on Product.images
-    // and the existing card/detail renderers already resolve it.
-    path: `images/${name}`,
-    url: `/images/${name}`,
+    path: url,
+    url,
+    id: String(doc._id),
     bytes: buffer.length
   });
 });
 
-// @desc   Delete an uploaded image
-// @route  DELETE /api/uploads/image?path=images/foo.jpg
+// @desc   Serve a previously uploaded image by its Mongo id
+// @route  GET /api/uploads/:id
+// @access Public
+exports.getImage = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  if (!/^[a-f0-9]{24}$/i.test(id)) throw new ApiError(404, 'Image not found.');
+
+  const doc = await Upload.findById(id).select('mimeType data');
+  if (!doc) throw new ApiError(404, 'Image not found.');
+
+  // Every uploadImage response is a brand-new id — an id can never point to
+  // different bytes later — so this is safe to cache aggressively forever,
+  // the same guarantee the old disk-based /images route relied on.
+  res.set('Content-Type', doc.mimeType);
+  res.set('Cache-Control', 'public, max-age=31536000, immutable');
+  res.send(doc.data);
+});
+
+// @desc   Delete a previously uploaded image (DB-stored, or a legacy disk file)
+// @route  DELETE /api/uploads/image?path=/api/uploads/<id>
 // @access Private/Admin
 exports.deleteImage = asyncHandler(async (req, res) => {
-  const name = path.basename(String(req.query.path || ''));
+  const raw = String(req.query.path || '');
+  const last = raw.split('/').filter(Boolean).pop() || '';
 
-  // basename() already strips directories, but it happily returns ".." for an
-  // input of "..", which would resolve to the folder ABOVE /images. Require a
-  // plain filename so only a real uploaded file can ever be the target.
+  // New-style entry: "/api/uploads/<mongo id>" — delete the MongoDB document.
+  if (/^[a-f0-9]{24}$/i.test(last)) {
+    await Upload.findByIdAndDelete(last).catch(() => {});
+    return res.json({ success: true, message: 'Image removed.' });
+  }
+
+  // Legacy entry: "images/<file>.jpg" — delete the old disk file, same as before.
+  const name = path.basename(last);
   if (!/^[A-Za-z0-9._-]+$/.test(name) || name === '.' || name === '..') {
     throw new ApiError(400, 'Invalid image path.');
   }
-
   const target = path.join(IMAGES_DIR, name);
-
   try {
     await fs.promises.unlink(target);
   } catch (err) {
-    // Already gone is the desired end state, so treat it as success.
-    if (err.code !== 'ENOENT') throw err;
+    if (err.code !== 'ENOENT') throw err; // already gone is the desired end state
   }
-
   res.json({ success: true, message: 'Image removed.' });
 });

@@ -70,7 +70,8 @@ body.admin-modal-open{overflow:hidden}
 .admin-thumb{position:relative;width:84px;height:104px;border:1px solid var(--line);overflow:hidden;background:var(--ivory)}
 .admin-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .admin-thumb-flag{position:absolute;top:0;left:0;background:var(--thread);color:var(--paper);font-size:.56rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 6px}
-.admin-thumb-remove{position:absolute;top:2px;right:2px;width:20px;height:20px;border:none;border-radius:50%;background:rgba(33,28,21,.72);color:#fff;font-size:.9rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.admin-thumb-remove{position:absolute;top:4px;right:4px;width:30px;height:30px;border:2px solid #fff;border-radius:50%;background:var(--thread,#8B2E3A);color:#fff;font-size:1.15rem;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.45);z-index:2}
+.admin-thumb-remove:hover{background:#6e2430}
 .admin-thumb-main{position:absolute;left:0;right:0;bottom:0;border:none;background:rgba(33,28,21,.72);color:#fff;font:inherit;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;padding:4px 0;cursor:pointer}
 
 .admin-form-error{background:rgba(179,65,58,.08);border:1px solid rgba(179,65,58,.35);color:#b3413a;padding:11px 14px;font-size:.82rem;margin-bottom:16px;line-height:1.5}

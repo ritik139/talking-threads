@@ -162,14 +162,18 @@
 
 <section class="section section-flush-top">
   <div class="container">
-    <!-- Collection-to-filter mapping note: the backend (backend/models/Product.js)
-         only accepts 8 exact collection values: Floral Reverie, Monogram Edit,
-         Table & Linen, Wall Art Hoops, Bridal Trousseau, Little Ones, Festive
-         Table, Everyday Carry. The marketing names below don't all line up with
-         that list 1:1. Where a card has no clean backend match (Nature's Poetry,
-         Home & Living, Gifts & Hampers) it still links to the unfiltered shop —
-         someone with catalog ownership should either rename these cards to match
-         the real collections or extend the backend enum. -->
+    <!-- Collection-to-filter mapping note: backend/models/Product.js has no enum on
+         `collections` (free-form strings), but the products actually seeded
+         (backend/seed/seed.js) only ever use 7 values: Bridal Trousseau, Everyday
+         Carry, Floral Reverie, Kids & Playful, Little Ones, Personalised Keepsakes,
+         Wall Art Hoops. "Monogram Edit", "Table & Linen" and "Festive Table" don't
+         exist on any product, so cards were previously linking to those and landing
+         on an empty "No pieces match these filters just yet." shop page. Cards whose
+         marketing name matches a real collection now link to that collection
+         (Floral Reverie, Regal Heritage → Bridal Trousseau, Personalised Keepsakes,
+         Kids & Playful, Bridal Edit → Bridal Trousseau, Wall Art & Hoops). Cards with
+         no real backend match (Nature's Poetry, Home & Living, Minimal Muse, Table &
+         Decor, Gifts & Hampers) link to the unfiltered shop instead. -->
     <h2 class="visually-hidden">Our collections</h2>
     <div class="collection-grid">
       <a href="shop.html?collection=Floral%20Reverie" class="collection-card reveal">
@@ -186,9 +190,9 @@
   </div>
         <div class="cc-caption"><h3>Nature's Poetry</h3><span class="cc-count">14 Pieces</span></div>
         <p class="cc-desc">Birds, branches and garden motifs, stitched in earthy botanical tones.</p>
-      </a><a href="shop.html?collection=Table%20%26%20Linen" class="collection-card reveal">
+      </a><a href="shop.html" class="collection-card reveal">
         <div class="cc-frame"><div class="img-placeholder ar-tall">
-  <img src="images/about-hero.jpg?v=20260810" width="1024" height="572" alt="Home &amp; Living" loading="lazy">
+  <img src="images/new-home-hoop.jpg?v=20260810" width="768" height="1024" alt="Home &amp; Living" loading="lazy">
 </div>
   </div>
         <div class="cc-caption"><h3>Home &amp; Living</h3><span class="cc-count">22 Pieces</span></div>
@@ -200,14 +204,14 @@
   </div>
         <div class="cc-caption"><h3>Regal Heritage</h3><span class="cc-count">16 Pieces</span></div>
         <p class="cc-desc">Zardozi and metallic thread work inspired by Mumbai's royal courts.</p>
-      </a><a href="shop.html?collection=Monogram%20Edit" class="collection-card reveal">
+      </a><a href="shop.html" class="collection-card reveal">
         <div class="cc-frame"><div class="img-placeholder ar-tall">
   <img src="images/embroidered-shirt-sketch-sample.jpg?v=20260810" width="768" height="729" alt="Minimal Muse" loading="lazy">
 </div>
   </div>
         <div class="cc-caption"><h3>Minimal Muse</h3><span class="cc-count">12 Pieces</span></div>
         <p class="cc-desc">Single-line botanicals on natural linen, pared back and quietly elegant.</p>
-      </a><a href="shop.html?collection=Monogram%20Edit" class="collection-card reveal">
+      </a><a href="shop.html?collection=Personalised%20Keepsakes" class="collection-card reveal">
         <div class="cc-frame"><div class="img-placeholder ar-tall">
   <img src="images/monogram-letter-cloth.jpg?v=20260810" width="768" height="1024" alt="Personalised Keepsakes" loading="lazy">
 </div>
@@ -218,7 +222,7 @@
     </div>
 
     <div class="cc-subrow">
-      <a href="shop.html?collection=Little%20Ones" class="cc-subcard">
+      <a href="shop.html?collection=Kids%20%26%20Playful" class="cc-subcard">
         <div class="cc-subcard-media"><img src="images/panda-embroidered-hoodie.jpg?v=20260810" width="400" height="400" alt="Kids &amp; Playful" loading="lazy"></div>
         <h3>Kids &amp; Playful</h3>
         <span class="cc-count">10 Pieces</span>
@@ -230,7 +234,7 @@
         <span class="cc-count">15 Pieces</span>
         <span class="cc-subcard-explore">Explore &rarr;</span>
       </a>
-      <a href="shop.html?collection=Table%20%26%20Linen" class="cc-subcard">
+      <a href="shop.html" class="cc-subcard">
         <div class="cc-subcard-media"><img src="images/housewarming-hoop.jpg?v=20260810" width="400" height="400" alt="Table &amp; Decor" loading="lazy"></div>
         <h3>Table &amp; Decor</h3>
         <span class="cc-count">18 Pieces</span>

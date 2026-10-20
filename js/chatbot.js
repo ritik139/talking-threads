@@ -73,7 +73,7 @@
       id: "payment",
       keywords: ["payment", "pay", "cod", "cash on delivery", "razorpay", "upi"],
       reply:
-        "We accept online payments as well as Cash on Delivery on eligible orders — you'll see all available options at checkout."
+        "Every order is confirmed with a 50% advance payment — the owner sends you a payment QR code as soon as you place your order, and the remaining 50% is paid at dispatch. We don't offer Cash on Delivery."
     },
     {
       id: "contact",

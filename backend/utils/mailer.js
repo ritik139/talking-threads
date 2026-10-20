@@ -23,6 +23,12 @@
 
 const RESEND_API_URL = 'https://api.resend.com/emails';
 
+// Friendly payment label for emails (the stored value 'cod' is just the internal default for
+// orders confirmed with the 50% advance + QR payment — we do not offer Cash on Delivery).
+function paymentLabel(method) {
+  return method === 'razorpay' ? 'Online payment (Razorpay)' : '50% advance (QR code)';
+}
+
 function escapeHtml(str) {
   return String(str == null ? '' : str)
     .replace(/&/g, '&amp;')
@@ -192,7 +198,7 @@ async function sendNewOrderEmail({ order, customerName, customerEmail }) {
       `Order: ${order.orderNumber}`,
       `Customer: ${customerName || 'N/A'} (${customerEmail || 'N/A'})`,
       `Phone: ${customerPhone}`,
-      `Payment: ${order.paymentMethod} — ${order.paymentStatus}`,
+      `Payment: ${paymentLabel(order.paymentMethod)} — ${order.paymentStatus}`,
       '',
       'Items:',
       itemsText,
@@ -206,7 +212,7 @@ async function sendNewOrderEmail({ order, customerName, customerEmail }) {
         <h2 style="margin:0 0 16px;">New Order — ${escapeHtml(order.orderNumber)}</h2>
         <p style="margin:0 0 6px;"><strong>Customer:</strong> ${escapeHtml(customerName || 'N/A')} (${escapeHtml(customerEmail || 'N/A')})</p>
         <p style="margin:0 0 6px;"><strong>Phone:</strong> ${escapeHtml(customerPhone)}</p>
-        <p style="margin:0 0 16px;"><strong>Payment:</strong> ${escapeHtml(order.paymentMethod)} — ${escapeHtml(order.paymentStatus)}</p>
+        <p style="margin:0 0 16px;"><strong>Payment:</strong> ${paymentLabel(order.paymentMethod)} — ${escapeHtml(order.paymentStatus)}</p>
         <table style="border-collapse:collapse;width:100%;max-width:480px;">
           <thead>
             <tr>
@@ -264,7 +270,7 @@ async function sendOrderConfirmationEmail({ order, customerName, customerEmail }
       `Thank you for shopping with Talking-Thread, ${customerName || 'there'}!`,
       '',
       `Order: ${order.orderNumber}`,
-      `Payment: ${order.paymentMethod} — ${order.paymentStatus}`,
+      `Payment: ${paymentLabel(order.paymentMethod)} — ${order.paymentStatus}`,
       '',
       'Items:',
       itemsText,
@@ -295,7 +301,7 @@ async function sendOrderConfirmationEmail({ order, customerName, customerEmail }
         <p style="margin:16px 0 0;"><strong>Subtotal:</strong> ${order.subtotal}</p>
         <p style="margin:0;"><strong>Shipping:</strong> ${order.shipping}</p>
         <p style="margin:0;"><strong>Total:</strong> ${order.total}</p>
-        <p style="margin:0;"><strong>Payment:</strong> ${escapeHtml(order.paymentMethod)} — ${escapeHtml(order.paymentStatus)}</p>
+        <p style="margin:0;"><strong>Payment:</strong> ${paymentLabel(order.paymentMethod)} — ${escapeHtml(order.paymentStatus)}</p>
         ${shippingLines.length ? `<p style="margin:16px 0 0;"><strong>Shipping to:</strong><br>${shippingLines.map(escapeHtml).join('<br>')}</p>` : ''}
         <p style="margin:20px 0 0;">You can track this order any time from "My Orders" on the site.</p>
         <p style="margin:16px 0 0;">With thread and thanks,<br>Talking-Thread</p>

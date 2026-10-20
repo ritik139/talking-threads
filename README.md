@@ -143,7 +143,7 @@ JSON body as `token` if you'd rather use `Authorization: Bearer <token>` from a 
 | | `/api/wishlist/toggle` | POST | Private |
 | | `/api/wishlist/merge` | POST | Private |
 | | `/api/wishlist/:index` | DELETE | Private |
-| Orders | `/api/orders` | GET / POST (COD only — see Payments) | Private |
+| Orders | `/api/orders` | GET / POST (advance-payment orders — see Payments) | Private |
 | | `/api/orders/:id` | GET | Private |
 | | `/api/orders/:id/cancel` | PUT | Private (own) / Admin |
 | | `/api/orders/admin/all` | GET | Admin |
@@ -173,7 +173,7 @@ JSON body as `token` if you'd rather use `Authorization: Bearer <token>` from a 
 
 ## Payments (Razorpay)
 
-Cash on Delivery still goes straight through `POST /api/orders`, unchanged. "Pay Online" on
+Non-online (50% advance, QR) orders still go straight through `POST /api/orders`, unchanged. "Pay Online" on
 `cart.html` now uses a real Razorpay Checkout flow instead of the old fake card/UPI/PayPal form
 fields, which were never sent to the server or actually verified:
 

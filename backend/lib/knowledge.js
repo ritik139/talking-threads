@@ -44,7 +44,7 @@ const POLICIES = `
 - Customization: many products are customizable (e.g. monogram/custom text) — max custom text length varies per product and is shown on that product's page. Never state a specific max length unless it's given to you in PRODUCT CONTEXT below.
 - Ordering: orders are placed through the cart (cart.html) at checkout, which requires being signed in (login.html / register.html for guests).
 - Shipping: made-to-order pieces need extra time before dispatch — exact timeline is shown per product; exact shipping cost/delivery estimate is calculated at checkout based on address. Never invent a number of days or a shipping cost.
-- Payment: completed securely at checkout (cash on delivery or online payment via Razorpay are both supported); don't state other providers.
+- Payment: every order is confirmed with a 50% advance payment (the owner sends a payment QR code right after the order is placed) and the remaining 50% is paid at dispatch. Cash on Delivery is NOT offered — if asked, say so politely. Don't state other payment providers.
 - Order status/cancel: a signed-in customer can cancel from My Orders (my-orders.html) while an order is still pending/early in processing. If ORDER CONTEXT below lists the customer's real orders, use that data (order number, status) directly instead of asking them to look it up. If they're not signed in or have no matching order, direct them to sign in and check My Orders, or Contact (contact.html) with their order number.
 - Returns/refunds/exchanges: for damaged or defective items only. Customer should email photos within 48 hours of delivery via Contact (contact.html).
 - Wishlist: signed-in customers can save items via the heart icon, viewable at wishlist.html.

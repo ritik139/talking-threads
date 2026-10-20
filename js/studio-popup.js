@@ -8,7 +8,7 @@
  *  - Appears ~2.5 s after the page opens, closes by itself after ~10 s
  *    (pauses while the visitor hovers over it or touches it).
  *  - Closes with the cross, a tap outside the card, the Esc key, or by tapping
- *    "Explore collection".
+ *    "Explore collection" (which opens the Shop page).
  *  - Shown once per browser session for a given date, so coming back to the
  *    home page does not repeat it. A NEW date shows it again.
  *  - Live: if the admin saves a new date while the visitor is on the page, it
@@ -21,7 +21,7 @@
   var FIRST_DELAY = 2500;     // ms after page open
   var LIVE_DELAY = 800;       // ms after a date change arrives while the page is open
   var VISIBLE_MS = 10000;     // how long it stays before closing itself
-  var CTA_HREF = 'collections.html';
+  var CTA_HREF = 'shop.html';
   var SEEN_KEY = 'tt_studio_popup_seen';
 
   var SVG_NS = 'http://www.w3.org/2000/svg';
@@ -96,13 +96,19 @@
       [{ tag: 'path', d: 'M6 6l12 12M18 6L6 18' }]));
     x.addEventListener('click', function () { close(); });
 
-    // little needle-and-thread mark
-    var mark = svg({ 'class': 'tt-pop-mark', viewBox: '0 0 48 48', 'aria-hidden': 'true', focusable: 'false' }, [
-      { tag: 'circle', cx: '24', cy: '24', r: '20' },
-      { tag: 'path', d: 'M33 11 17 33' },
-      { tag: 'ellipse', cx: '34.2', cy: '12.6', rx: '1.3', ry: '2.6', transform: 'rotate(35 34.2 12.6)' },
-      { tag: 'path', d: 'M17 33c-3 4-7 4-8 1.5S12 30 15 31' },
-      { tag: 'path', d: 'M27 29l3.5 3.5M30.5 29 27 32.5' }
+    // the same needle-and-thread logo as the site header
+    var mark = svg({ 'class': 'tt-pop-mark', viewBox: '0 0 64 68', 'aria-hidden': 'true', focusable: 'false' }, [
+      { tag: 'circle', cx: '29', cy: '35', r: '21', 'stroke-width': '1.7' },
+      { tag: 'circle', cx: '29', cy: '37.4', r: '17.3', 'stroke-width': '1' },
+      { tag: 'path', d: 'M45 20 L51.5 13.5', 'stroke-width': '1.7' },
+      { tag: 'circle', cx: '53.5', cy: '11.5', r: '2.7', 'stroke-width': '1.3' },
+      { tag: 'path', d: 'M8.5 55.5 L44.5 12', 'stroke-width': '1.3' },
+      { tag: 'ellipse', cx: '41.7', cy: '15.2', rx: '2.7', ry: '1.5', transform: 'rotate(-42 41.7 15.2)', 'stroke-width': '1' },
+      { tag: 'path', d: 'M40 17 C 32.5 24, 37 31.5, 27.5 35.5 C 19.5 38.8, 23 47.5, 14.5 51', 'stroke-width': '1' },
+      { tag: 'path', d: 'M22 33.5 L27 39', 'stroke-width': '0.9' },
+      { tag: 'path', d: 'M27 33.5 L22 39', 'stroke-width': '0.9' },
+      { tag: 'path', d: 'M33 40 L36.5 44', 'stroke-width': '0.9' },
+      { tag: 'path', d: 'M36.5 40 L33 44', 'stroke-width': '0.9' }
     ]);
 
     var eyebrow = el('p', 'tt-pop-eyebrow', 'Booking announcement');

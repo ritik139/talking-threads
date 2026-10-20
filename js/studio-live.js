@@ -143,18 +143,34 @@
     };
   }
 
+  // Ask the browser to look for a newer service worker (sw.js). When the site is updated, the new worker
+  // takes over and reloads idle open pages / the installed app, so they get the new code by themselves.
+  var lastUpdateCheck = 0;
+  function checkForSiteUpdate() {
+    if (!('serviceWorker' in navigator) || Date.now() - lastUpdateCheck < 60000) return;
+    lastUpdateCheck = Date.now();
+    try {
+      navigator.serviceWorker.getRegistration().then(function (reg) {
+        if (reg) reg.update().catch(function () { /* offline: try again later */ });
+      }).catch(function () { /* ignore */ });
+    } catch (e) { /* ignore */ }
+
+  }
+
   function start() {
     if (started) return;
     started = true;
     refresh();
     connect();
+    checkForSiteUpdate();
     document.addEventListener('visibilitychange', function () {
-      if (!document.hidden) { refresh(); if (loaded) emit(); }   // emit() re-checks the date after a sleep
+      if (!document.hidden) { refresh(); checkForSiteUpdate(); if (loaded) emit(); }   // emit() re-checks the date after a sleep
     });
-    window.addEventListener('focus', function () { refresh(); if (loaded) emit(); });
+    window.addEventListener('focus', function () { refresh(); checkForSiteUpdate(); if (loaded) emit(); });
     window.addEventListener('online', refresh);
     window.addEventListener('pageshow', function (e) { if (e.persisted) { refresh(); if (loaded) emit(); } });
     setInterval(function () { if (!document.hidden) refresh(); }, POLL_MS);
+    setInterval(checkForSiteUpdate, 10 * 60000);
   }
 
   window.TTStudio = {

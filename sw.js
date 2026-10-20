@@ -14,7 +14,7 @@
  *    so cart/orders/auth data stays live and correct.
  */
 
-const CACHE_NAME = 'tt-shell-v2'; // bumped so installed apps drop old cached pages and pick up the new popup
+const CACHE_NAME = 'tt-shell-v3'; // bumped so installed apps / open tabs drop old cached pages and pick up the new popup
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -31,15 +31,29 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
+// Pages where a visitor may be typing (address, login, admin). We never reload these while they are on screen;
+// they simply get the new version the next time they open or refresh them.
+const BUSY_PAGES = /\/(cart|login|register|admin-login|admin-dashboard)(\.html)?$/i;
+
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
+  event.waitUntil((async () => {
     // Drop any caches from a previous worker version before claiming clients.
-    caches.keys()
-      .then((keys) => Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      ))
-      .then(() => self.clients.claim())
-  );
+    const keys = await caches.keys();
+    const isUpgrade = keys.some((key) => key !== CACHE_NAME); // an older version was installed before
+    await Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
+    await self.clients.claim();
+
+    // Site was updated: refresh pages that are already open / the installed app so they run the new code
+    // (popup, checkout notices, ...) without the visitor doing anything.
+    if (!isUpgrade) return;
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    await Promise.all(wins.map((client) => {
+      let busy = false;
+      try { busy = BUSY_PAGES.test(new URL(client.url).pathname); } catch (e) { /* ignore */ }
+      if (client.visibilityState === 'visible' && busy) return null;
+      return client.navigate(client.url).catch(() => {});
+    }));
+  })());
 });
 
 self.addEventListener('fetch', (event) => {

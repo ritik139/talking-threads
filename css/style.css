@@ -111,3 +111,16 @@ html[data-theme="luxury"] ::selection{background:#4A90D9;color:#FFFFFF}
 .btn-whatsapp span{position:relative}
 .pd-actions-whatsapp{margin-bottom:24px}
 @media (max-width:480px){.btn-whatsapp{padding:14px 20px;font-size:.72rem;letter-spacing:.08em}}
+
+/* ---- Order confirmation: tidy, on-brand action buttons (cart.html only) ----
+   Root cause of the odd look: ".empty-state svg" (56px, margin-bottom, stroke) leaked onto the
+   WhatsApp icon, and the two buttons sat side-by-side wider than the order box. Now: stacked,
+   same width, centred, refined outline style with a green icon instead of a flat neon block. */
+#orderConfirmation .btn-whatsapp,#orderConfirmation .btn.btn-primary{display:flex;width:100%;max-width:340px;min-height:52px;margin:14px auto 0;padding:14px 24px;box-sizing:border-box;justify-content:center;align-items:center;gap:10px;text-align:center}
+#orderConfirmation .btn-whatsapp{margin-top:26px;background:var(--paper);color:var(--ink);border:1px solid var(--ink)}
+#orderConfirmation .btn-whatsapp::before{background:#1E7B4B}
+#orderConfirmation .btn-whatsapp:hover{border-color:#1E7B4B;color:#fff;box-shadow:0 14px 30px -16px rgba(30,123,75,.5)}
+#orderConfirmation .btn-whatsapp .wa-btn-icon{width:20px;height:20px;margin:0;fill:#1FA855;stroke:none;stroke-width:0;flex-shrink:0;transition:fill .3s var(--ease)}
+#orderConfirmation .btn-whatsapp:hover .wa-btn-icon{fill:#fff}
+@media (max-width:480px){#orderConfirmation .btn-whatsapp,#orderConfirmation .btn.btn-primary{max-width:100%!important;border-radius:999px;min-height:50px;font-size:.72rem;letter-spacing:.06em;padding:14px 16px;white-space:nowrap}#orderConfirmation .btn-whatsapp{margin-top:22px}}
+@media (max-width:360px){#orderConfirmation .btn-whatsapp,#orderConfirmation .btn.btn-primary{font-size:.66rem;letter-spacing:.03em;gap:8px}#orderConfirmation .btn-whatsapp .wa-btn-icon{width:18px;height:18px}}

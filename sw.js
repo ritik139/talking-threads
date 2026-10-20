@@ -14,7 +14,7 @@
  *    so cart/orders/auth data stays live and correct.
  */
 
-const CACHE_NAME = 'tt-shell-v1';
+const CACHE_NAME = 'tt-shell-v2'; // bumped so installed apps drop old cached pages and pick up the new popup
 const APP_SHELL = [
   '/',
   '/index.html',

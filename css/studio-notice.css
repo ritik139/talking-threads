@@ -1,0 +1,103 @@
+/* ============================================================
+   Talking-Thread — "studio booked until <date>" notices
+   1. slim black banner at the very top of the cart page
+   2. small note above "Proceed to Checkout"
+   3. small note above "Payment Policy" in the checkout popup
+   4. one-line message on the thank-you screen
+   Uses the site's colour tokens, so light / dark / luxury work.
+   ============================================================ */
+
+/* ---- shared ---------------------------------------------------------- */
+.tt-banner[hidden],.tt-note[hidden],.tt-thanks[hidden]{display:none!important}
+.tt-banner .tt-ic,.tt-note .tt-ic,.tt-thanks .tt-ic{
+  display:block;margin:0;max-width:none;flex:0 0 auto;
+  fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:1
+}
+.tt-banner p,.tt-note p,.tt-thanks p{margin:0}
+
+.tt-x{
+  position:absolute;top:50%;right:8px;
+  width:30px;height:30px;margin-top:-15px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  border:none;border-radius:50%;background:transparent;
+  color:inherit;opacity:.7;cursor:pointer;touch-action:manipulation;
+  transition:opacity .2s var(--ease),background-color .2s var(--ease)
+}
+.tt-x::before{content:"";position:absolute;inset:-6px}
+.tt-x .tt-ic{width:15px;height:15px;stroke-width:1.9}
+.tt-x:hover{opacity:1;background:rgba(127,127,127,.18)}
+.tt-x:focus-visible{outline:2px solid var(--gold);outline-offset:1px;opacity:1}
+
+/* fade in / collapse out (max-height is pinned from JS while closing) */
+.tt-banner,.tt-note,.tt-thanks{
+  overflow:hidden;
+  opacity:0;
+  transform:translateY(6px);
+  transition:opacity .4s var(--ease),transform .4s var(--ease),max-height .4s var(--ease),margin .4s var(--ease),padding .4s var(--ease),border-width .4s var(--ease)
+}
+.tt-banner.is-in,.tt-note.is-in,.tt-thanks.is-in{opacity:1;transform:none}
+.tt-banner.is-leaving,.tt-note.is-leaving,.tt-thanks.is-leaving{
+  opacity:0;max-height:0!important;
+  margin-top:0!important;margin-bottom:0!important;
+  padding-top:0!important;padding-bottom:0!important;border-width:0!important
+}
+
+/* ---- 1. slim banner (black) ------------------------------------------ */
+.tt-banner{
+  position:relative;z-index:41;
+  background:#211C15;color:#F2EBDC;
+  border-bottom:1px solid rgba(220,199,147,.22);
+  padding:9px 46px 9px 18px;
+  text-align:center;
+  font-size:.82rem;line-height:1.5;letter-spacing:.01em;
+  box-sizing:border-box
+}
+.tt-banner .tt-date{color:#DCC793;font-weight:700;white-space:nowrap}
+.tt-banner .tt-x{color:#F2EBDC}
+
+/* ---- 2 + 3. small note ------------------------------------------------ */
+.tt-note{
+  position:relative;
+  display:flex;align-items:flex-start;gap:10px;
+  width:100%;min-width:0;max-width:100%;box-sizing:border-box;
+  padding:11px 38px 11px 13px;
+  text-align:left;
+  background:var(--ivory);
+  border:1px solid var(--gold-soft);
+  border-radius:8px;
+  font-size:.84rem;line-height:1.55;color:var(--ink-soft);
+  overflow-wrap:anywhere
+}
+.tt-note .tt-ic{width:18px;height:18px;margin-top:2px;color:var(--gold-text)}
+.tt-note .tt-text{flex:1 1 auto;min-width:0}
+.tt-note .tt-date{color:var(--gold-text);font-weight:700;white-space:nowrap}
+.tt-note .tt-x{color:var(--ink-faint);right:6px}
+
+.summary-card .tt-note{margin:2px 0 18px}
+.modal .tt-note{margin:4px 0 16px}
+
+/* ---- 4. thank-you screen ---------------------------------------------- */
+.tt-thanks{
+  display:flex;align-items:flex-start;justify-content:center;gap:10px;
+  width:100%;max-width:480px;margin:18px auto 0;box-sizing:border-box;
+  padding:11px 16px;text-align:left;
+  background:var(--ivory);
+  border:1px solid var(--gold-soft);
+  border-radius:12px;
+  font-size:.88rem;line-height:1.55;color:var(--ink-soft);
+  overflow-wrap:anywhere
+}
+.tt-thanks .tt-ic{width:18px;height:18px;margin-top:2px;color:var(--gold-text)}
+.tt-thanks .tt-text{min-width:0}
+.tt-thanks .tt-date{color:var(--gold-text);font-weight:700;white-space:nowrap}
+
+/* ---- small screens ----------------------------------------------------- */
+@media (max-width:640px){
+  .tt-banner{padding:8px 40px 8px 12px;font-size:.78rem}
+  .tt-note{font-size:.82rem;padding:10px 36px 10px 12px}
+  .tt-thanks{font-size:.84rem;padding:10px 14px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .tt-banner,.tt-note,.tt-thanks{transform:none;transition:opacity .15s linear}
+}

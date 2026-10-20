@@ -43,6 +43,20 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&amp;family=Instrument+Sans:wght@400;500;600&amp;display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&amp;family=Instrument+Sans:wght@400;500;600&amp;display=swap"></noscript>
 <link rel="stylesheet" href="css/style.css?v=20260922">
   <link rel="stylesheet" href="css/responsive-fixes.css?v=20260810">
+  <link rel="stylesheet" href="css/studio-notice.css?v=20261020">
+  <style>
+    /* Payment notice shown above the Place Order button in the checkout modal */
+    .pay-notice{margin:0 0 6px;padding:16px 18px;background:var(--ivory);border:1px solid var(--gold-soft);border-left:3px solid var(--thread);border-radius:var(--radius);min-width:0;max-width:100%}
+    .pay-notice-title{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:1rem;color:var(--ink)}
+    .pay-notice-title svg{width:18px;height:18px;flex-shrink:0;fill:none;stroke:var(--thread);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+    .pay-notice-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+    .pay-notice-list li{position:relative;padding-left:16px;font-size:.86rem;line-height:1.55;color:var(--ink-soft);overflow-wrap:anywhere}
+    .pay-notice-list li::before{content:"";position:absolute;left:2px;top:.62em;width:5px;height:5px;border-radius:50%;background:var(--gold)}
+    .pay-notice-list b{color:var(--ink);font-weight:600}
+    .pay-notice-wa{margin-top:14px}
+    .pay-notice-wa svg{width:16px;height:16px;flex-shrink:0;fill:currentColor}
+    @media (max-width:480px){.pay-notice{padding:14px}.pay-notice-wa{width:100%}}
+  </style>
   <!-- Leaflet (map UI) — used only on this page, for the delivery-location picker in the checkout modal.
        BUG FIX ("wrong page flashes for ~1s before the real cart page shows"): a plain
        <link rel="stylesheet"> here is render-blocking — the browser holds off painting
@@ -238,14 +252,21 @@
       </div>
       <div class="field"><label for="co-country">Country</label><input id="co-country" name="country" type="text" value="India" required autocomplete="country-name"></div>
 
-      <h4 class="checkout-section-title">Payment Method</h4>
-      <div class="payment-methods" role="radiogroup" aria-label="Payment method">
-        <label class="payment-option"><input type="radio" name="paymentMethod" value="cod" checked> Cash on Delivery</label>
-        <label class="payment-option"><input type="radio" name="paymentMethod" value="razorpay"> Pay Online — Card / UPI / Netbanking (Razorpay)</label>
-      </div>
-      <p class="field-optional" id="pf-razorpay-note" style="display:none">You'll enter your card, UPI, or netbanking details on Razorpay's secure payment screen — we never see or store them.</p>
-
       <div class="field"><label for="co-notes">Order Notes <span class="field-optional">(optional)</span></label><textarea id="co-notes" name="notes" placeholder="Delivery instructions, gift note, etc."></textarea></div>
+
+      <div class="pay-notice" role="note" aria-label="Payment policy">
+        <h4 class="pay-notice-title"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>Payment Policy</h4>
+        <ul class="pay-notice-list">
+          <li><b>50% advance</b> confirms your order. The remaining 50% is paid at dispatch.</li>
+          <li>You’ll receive a photo of the finished piece before it ships.</li>
+          <li>As soon as you place your order, the owner will <b>send you a payment QR code</b>.</li>
+          <li>You can also chat with the owner directly on WhatsApp.</li>
+        </ul>
+        <a class="btn btn-secondary btn-sm pay-notice-wa" href="https://wa.me/917021312553?text=Hi%2C%20I%20am%20placing%20an%20order%20on%20Talking-Thread.%20Please%20share%20the%20payment%20QR%20for%20the%20advance%20payment." target="_blank" rel="noopener noreferrer" aria-label="Chat with the owner on WhatsApp">
+          <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16.004 3C9.377 3 4 8.377 4 15.004c0 2.363.685 4.566 1.87 6.42L4 29l7.77-1.84a11.93 11.93 0 004.234.77H16c6.627 0 12-5.377 12-12.003C28 8.377 22.627 3 16.004 3zm6.965 17.02c-.294.826-1.457 1.513-2.386 1.71-.635.134-1.463.24-4.252-.913-3.567-1.476-5.86-5.09-6.04-5.324-.177-.234-1.443-1.92-1.443-3.664 0-1.744.914-2.6 1.238-2.958.324-.358.71-.448.947-.448.236 0 .473.002.68.012.218.01.512-.083.8.61.294.71.998 2.454 1.086 2.633.088.18.147.393.03.627-.118.235-.177.383-.353.588-.176.206-.37.46-.53.617-.176.176-.36.367-.155.72.206.353.914 1.51 1.963 2.446 1.35 1.204 2.49 1.578 2.843 1.755.353.176.56.147.766-.088.206-.235.883-1.03 1.118-1.383.235-.353.47-.294.794-.176.324.118 2.06.97 2.413 1.147.353.176.588.264.676.412.088.147.088.85-.206 1.676z"/></svg>
+          Chat on WhatsApp
+        </a>
+      </div>
 
       <button type="submit" class="btn btn-primary btn-block mt-10" id="placeOrderBtn">Place Order</button>
     </form>
@@ -366,6 +387,8 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="js/delivery-map.js?v=20260922" defer></script>
 <script src="js/whatsapp-share.js?v=20260922c" defer></script>
+<script src="js/studio-live.js?v=20261020" defer></script>
+<script src="js/studio-notice.js?v=20261021" defer></script>
   <nav class="mobile-tabbar" aria-label="Mobile primary">
     <a href="index.html" class="mtb-link" data-tab="home">
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 11.5L12 4l8 7.5"/><path d="M6 10v10h5v-6h2v6h5V10"/></svg>

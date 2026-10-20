@@ -31,6 +31,7 @@ const contactRoutes = require('./routes/contactRoutes');
 const newsletterRoutes = require('./routes/newsletterRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const settingRoutes = require('./routes/settingRoutes');
 
 const app = express();
 
@@ -219,6 +220,7 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/settings', settingRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Talking-Thread API is running.' });

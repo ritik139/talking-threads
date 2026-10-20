@@ -23,6 +23,22 @@
 <link rel="stylesheet" href="css/style.css?v=20260810">
 <link rel="stylesheet" href="css/admin.css?v=20260810">
   <link rel="stylesheet" href="css/responsive-fixes.css?v=20260810">
+  <style>
+    /* Studio Notice tab */
+    .studio-card{max-width:560px;background:var(--white);border:1px solid var(--line);padding:26px 26px 24px}
+    .studio-card .admin-hint{margin:0 0 18px}
+    .studio-card input[type="date"]{width:100%;max-width:260px;border:1px solid var(--line);background:var(--paper);padding:11px 14px;font:inherit;font-size:.92rem;color:var(--ink);border-radius:2px}
+    .studio-card input[type="date"]:focus{border-color:var(--thread);outline:none}
+    .studio-status{display:inline-block;margin:0 0 18px;padding:6px 12px;font-size:.78rem;border-radius:999px;background:var(--ivory);color:var(--ink-soft);border:1px solid var(--line-soft)}
+    .studio-status:empty{display:none}
+    .studio-status.is-on{background:rgba(110,122,92,.18);color:var(--sage-text);border-color:rgba(110,122,92,.35)}
+    .studio-status.is-off{background:var(--ivory-deep);color:var(--ink-soft)}
+    .studio-preview{margin:2px 0 18px;padding:12px 14px;font-size:.84rem;line-height:1.6;color:var(--ink-soft);background:var(--ivory);border-left:3px solid var(--gold);font-style:italic}
+    .studio-preview strong{font-style:normal;color:var(--gold-text)}
+    .studio-ok{margin:0 0 14px;padding:10px 14px;font-size:.84rem;color:var(--sage-text);background:rgba(110,122,92,.14);border:1px solid rgba(110,122,92,.35)}
+    .studio-actions{display:flex;flex-wrap:wrap;gap:10px}
+    @media (max-width:560px){.studio-card{padding:20px 16px}.studio-card input[type="date"]{max-width:none}.studio-actions .admin-btn{flex:1 1 100%}}
+  </style>
 </head>
 <body class="admin-body">
 
@@ -51,6 +67,10 @@
       <button type="button" data-admin-view="categories">
         <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
         Categories
+      </button>
+      <button type="button" data-admin-view="studio">
+        <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+        Studio Notice
       </button>
     </nav>
     <div class="admin-sidebar-foot">Signed in as<br><strong id="adminWhoName" style="color:var(--ivory)">—</strong></div>
@@ -126,6 +146,31 @@
       </div>
       <div class="admin-cards" id="cmList">
         <div class="admin-loading">Loading categories…</div>
+      </div>
+    </section>
+
+    <!-- STUDIO NOTICE ------------------------------------------------------- -->
+    <section data-view-panel="studio" hidden>
+      <div class="studio-card">
+        <p class="admin-hint">Set the date your studio is booked until. The website shows it in the welcome popup on the home page, and in the notices on the cart page, the checkout popup and the order-confirmation screen. Change the date here and every one of them updates live, with no refresh. On the date you choose they all disappear by themselves (for 7 Nov, from 12:00 am on 7 Nov, India time).</p>
+
+        <div class="studio-status" id="studioStatus" role="status" aria-live="polite"></div>
+
+        <label class="admin-field" for="studioDate">
+          <span>Studio booked until</span>
+          <input type="date" id="studioDate">
+          <small>The notice hides itself automatically once this date has passed.</small>
+        </label>
+
+        <div class="studio-preview" id="studioPreview">Pick a date to see how the message will read.</div>
+
+        <div class="admin-form-error" id="studioError" hidden></div>
+        <div class="studio-ok" id="studioOk" hidden></div>
+
+        <div class="studio-actions">
+          <button type="button" class="admin-btn admin-btn-primary" id="studioSave">Save Date</button>
+          <button type="button" class="admin-btn admin-btn-danger" id="studioClear" disabled>Remove notice</button>
+        </div>
       </div>
     </section>
 
@@ -260,6 +305,7 @@
 <!-- Served automatically by our own backend's socket.io server — no external CDN, works locally and in production alike -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="js/admin.js?v=20260810" defer></script>
-<script src="js/admin-catalog.js?v=20260922" defer></script>
+<script src="js/admin-catalog.js?v=20261019" defer></script>
+<script src="js/admin-studio.js?v=20261019" defer></script>
 </body>
 </html>

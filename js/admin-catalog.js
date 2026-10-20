@@ -98,6 +98,10 @@
     categories: {
       title: 'Categories',
       subtitle: 'Your own shop categories. These drive the Shop page filter and its counts.'
+    },
+    studio: {
+      title: 'Studio Notice',
+      subtitle: 'Set the date your studio is booked until. It shows on the cart page, checkout popup and order confirmation.'
     }
   };
 
